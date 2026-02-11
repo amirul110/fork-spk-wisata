@@ -1,0 +1,131 @@
+/* ===============================
+   LAYOUT UTAMA
+=============================== */
+.page {
+  min-height: 100vh;
+  display: flex;
+  background: #f2f2f2;
+}
+
+/* ===============================
+   SIDEBAR
+=============================== */
+.sidebar {
+  width: 220px;
+  background: #e9e9e9;
+  border-right: 2px solid #333;
+}
+
+.sidebar a,
+.sidebar button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 2px solid #333;
+  background: #efefef;
+  color: #111;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.sidebar a:hover {
+  background: #ddd;
+}
+
+.sidebar a.active {
+  background: #cfcfcf;
+}
+
+/* ===============================
+   AREA KONTEN (KANAN SIDEBAR)
+=============================== */
+.content {
+  flex: 1;
+  background: #fff;
+  padding: 22px;
+}
+
+/* ===============================
+   JUDUL & GARIS
+=============================== */
+.content h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #111;
+}
+
+.hrline {
+  height: 2px;
+  background: #333;
+  margin: 10px 0 16px;
+}
+
+/* ===============================
+   BOX / CARD
+=============================== */
+.box {
+  border: 2px solid #333;
+  background: #fff;
+  padding: 16px;
+  max-width: 520px;
+}
+
+/* ===============================
+   TABLE
+=============================== */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.table th,
+.table td {
+  border: 2px solid #333;
+  padding: 10px;
+  font-size: 13px;
+  vertical-align: top;
+}
+
+.table th {
+  font-weight: 900;
+  text-align: left;
+}
+
+/* ===============================
+   BUTTON
+=============================== */
+.btn {
+  margin-top: 14px;
+  padding: 8px 18px;
+  border: 2px solid #333;
+  background: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: #eee;
+}
+
+/* ===============================
+   LOGOUT PAGE
+=============================== */
+.logout-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logout-box {
+  text-align: center;
+  padding: 28px;
+  border: 2px solid #333;
+  background: #fff;
+  min-width: 320px;
+}
