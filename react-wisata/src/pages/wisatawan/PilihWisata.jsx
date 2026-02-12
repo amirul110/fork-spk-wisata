@@ -9,8 +9,6 @@ import api from "../../services/api";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
 import { Dialog } from "primereact/dialog";
@@ -175,20 +173,6 @@ export default function PilihWisata() {
       : locationStatus === "gagal"
         ? "Gagal mendapatkan lokasi GPS. Silakan coba lagi dengan metode manual."
         : "Browser Anda tidak mendukung Geolocation. Gunakan metode manual.";
-
-  const bobotTemplate = (rowData) => (
-    <Dropdown
-      value={preferensi[rowData.id]}
-      options={BOBOT_OPTIONS}
-      optionLabel="label"
-      optionValue="value"
-      onChange={(e) => handleBobotChange(rowData.id, e.value)}
-      placeholder="-- Pilih Bobot --"
-      className="w-full"
-    />
-  );
-
-  const nomorTemplate = (_rowData, options) => options.rowIndex + 1;
 
   // Jika belum pilih wisata, tampilkan pesan
   if (belumPilihWisata) {
@@ -357,12 +341,36 @@ export default function PilihWisata() {
             Tentukan tingkat kepentingan untuk setiap kriteria:
           </h3>
 
-          <DataTable value={KRITERIA_LIST} stripedRows showGridlines>
-            <Column header="No" body={nomorTemplate} style={{ width: "60px" }} />
-            <Column field="nama" header="Kriteria" />
-            <Column field="deskripsi" header="Keterangan" />
-            <Column header="Bobot Kepentingan" body={bobotTemplate} style={{ width: "250px" }} />
-          </DataTable>
+          <table className="w-full" style={{ borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                <th className="border-1 border-300 p-3 text-left surface-100" style={{ width: "60px" }}>No</th>
+                <th className="border-1 border-300 p-3 text-left surface-100">Kriteria</th>
+                <th className="border-1 border-300 p-3 text-left surface-100">Keterangan</th>
+                <th className="border-1 border-300 p-3 text-left surface-100" style={{ width: "250px" }}>Bobot Kepentingan</th>
+              </tr>
+            </thead>
+            <tbody>
+              {KRITERIA_LIST.map((k, idx) => (
+                <tr key={k.id} className={idx % 2 === 1 ? "surface-50" : ""}>
+                  <td className="border-1 border-300 p-3">{idx + 1}</td>
+                  <td className="border-1 border-300 p-3 font-medium">{k.nama}</td>
+                  <td className="border-1 border-300 p-3 text-600">{k.deskripsi}</td>
+                  <td className="border-1 border-300 p-3">
+                    <Dropdown
+                      value={preferensi[k.id]}
+                      options={BOBOT_OPTIONS}
+                      optionLabel="label"
+                      optionValue="value"
+                      onChange={(e) => handleBobotChange(k.id, e.value)}
+                      placeholder="-- Pilih Bobot --"
+                      className="w-full"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </Card>
 
         {/* Pesan Error */}

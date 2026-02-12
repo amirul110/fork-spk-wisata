@@ -79,18 +79,19 @@ export default function WisatawanDashboard() {
           ) : (
             <div className="grid">
               {wisataList.map((w) => (
-                <div key={w.id_alternatif} className="col-12 md:col-6 lg:col-4 xl:col-3">
+                <div key={w.id_alternatif} className="col-12 md:col-6 lg:col-4 p-2">
                   <div
-                    className={`border-round border-1 cursor-pointer transition-colors transition-duration-200 overflow-hidden h-full flex flex-column ${
+                    className={`border-round-lg border-1 cursor-pointer transition-colors transition-duration-200 overflow-hidden flex flex-column shadow-1 ${
                       selected.includes(w.id_alternatif)
                         ? "border-primary bg-blue-50"
                         : "border-300 hover:border-primary"
                     }`}
+                    style={{ minHeight: "360px" }}
                     onClick={() => toggle(w.id_alternatif)}
                   >
                     {/* Judul wisata + Checkbox */}
                     <div className="flex align-items-center justify-content-between p-3 border-bottom-1 border-200">
-                      <div className="font-bold text-800">{w.nama_wisata}</div>
+                      <div className="font-bold text-800 text-lg">{w.nama_wisata}</div>
                       <div onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={selected.includes(w.id_alternatif)}
@@ -100,7 +101,7 @@ export default function WisatawanDashboard() {
                     </div>
 
                     {/* Gambar wisata */}
-                    <div className="relative surface-200 flex align-items-center justify-content-center" style={{ height: "160px", overflow: "hidden" }}>
+                    <div className="relative surface-200 flex align-items-center justify-content-center" style={{ height: "200px", overflow: "hidden" }}>
                       {w.gambar ? (
                         <img
                           src={`${BACKEND_URL}/uploads/${w.gambar}`}
@@ -117,16 +118,14 @@ export default function WisatawanDashboard() {
 
                     {/* Deskripsi wisata */}
                     <div className="p-3 flex-1 flex flex-column">
-                      {w.deskripsi && (
-                        <p className="text-sm text-600 mt-0 mb-0 line-height-3" style={{
-                          display: "-webkit-box",
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                        }}>
-                          {w.deskripsi}
-                        </p>
-                      )}
+                      <p className="text-sm text-600 mt-0 mb-0 line-height-3" style={{
+                        display: "-webkit-box",
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}>
+                        {w.deskripsi || "Deskripsi wisata belum tersedia."}
+                      </p>
                     </div>
                   </div>
                 </div>
