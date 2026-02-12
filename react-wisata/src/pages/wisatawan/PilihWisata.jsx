@@ -3,7 +3,16 @@ import { useNavigate } from "react-router-dom";
 import "../dashboard.css";
 import Sidebar from "../../components/Sidebar";
 import { wisatawanMenu } from "../../app/wisatawanMenu";
+import { getSelectedWisata } from "../../store/wisataStore";
 import api from "../../services/api";
+import { Card } from "primereact/card";
+import { Button } from "primereact/button";
+import { Dropdown } from "primereact/dropdown";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+import { Message } from "primereact/message";
+import { Tag } from "primereact/tag";
+import { ProgressSpinner } from "primereact/progressspinner";
 
 const KRITERIA_LIST = [
   { id: 1, nama: "Harga Tiket", deskripsi: "Seberapa penting harga tiket bagi Anda?" },
@@ -28,6 +37,14 @@ export default function PilihWisata() {
   const [preferensi, setPreferensi] = useState({ 1: 3, 2: 3, 3: 3, 4: 3, 5: 3 });
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Guard: redirect jika belum memilih wisata di dashboard
+  useEffect(() => {
+    const selected = getSelectedWisata();
+    if (!selected || selected.length === 0) {
+      nav("/wisatawan/dashboard", { replace: true });
+    }
+  }, [nav]);
 
   useEffect(() => {
     const mintaLokasi = () => {
@@ -70,13 +87,23 @@ export default function PilihWisata() {
     setErrorMsg("");
 
     try {
+      const selectedIds = getSelectedWisata();
       const res = await api.post("/rekomendasi/hitung", {
         preferensi,
         userLocation,
       });
 
       const hasilData = res.data?.data?.hasil_rekomendasi || [];
-      nav("/wisatawan/hasil", { state: { hasil: hasilData } });
+      // Filter hanya wisata yang dipilih di dashboard
+      const filtered = hasilData.filter((item) =>
+        selectedIds.includes(item.id_alternatif)
+      );
+      // Re-rank setelah filter
+      const reranked = filtered.map((item, idx) => ({
+        ...item,
+        peringkat_ke: idx + 1,
+      }));
+      nav("/wisatawan/hasil", { state: { hasil: reranked } });
     } catch (err) {
       const pesan =
         err?.response?.data?.message || err?.message || "Gagal menghitung rekomendasi";
@@ -86,82 +113,83 @@ export default function PilihWisata() {
     }
   };
 
+  const locationSeverity =
+    locationStatus === "aktif" ? "success" :
+    locationStatus === "memuat" || locationStatus === "belum" ? "info" : "error";
+
+  const locationText =
+    locationStatus === "belum" ? "Menunggu izin lokasi..." :
+    locationStatus === "memuat" ? "Sedang mendapatkan lokasi..." :
+    locationStatus === "aktif" && userLocation
+      ? `Aktif (Lat: ${userLocation.latitude.toFixed(6)}, Lng: ${userLocation.longitude.toFixed(6)})`
+      : locationStatus === "gagal"
+        ? "Gagal mendapatkan lokasi. Pastikan GPS aktif dan izinkan akses lokasi, lalu muat ulang halaman."
+        : "Browser Anda tidak mendukung Geolocation.";
+
+  const bobotTemplate = (rowData) => (
+    <Dropdown
+      value={preferensi[rowData.id]}
+      options={BOBOT_OPTIONS}
+      optionLabel="label"
+      optionValue="value"
+      onChange={(e) => handleBobotChange(rowData.id, e.value)}
+      className="w-full"
+    />
+  );
+
+  const nomorTemplate = (_rowData, options) => options.rowIndex + 1;
+
   return (
     <div className="page">
       <Sidebar items={wisatawanMenu} />
 
       <main className="content">
-        <h2>Masukan Preferensi Wisata</h2>
-        <div className="hrline" />
-
-        {/* Status Lokasi GPS */}
-        <div style={{ marginBottom: 16, padding: "10px 14px", border: "2px solid #333", background: "#fafafa" }}>
-          <strong>📍 Status Lokasi GPS:</strong>{" "}
-          {locationStatus === "belum" && "Menunggu izin..."}
-          {locationStatus === "memuat" && "Sedang mendapatkan lokasi..."}
-          {locationStatus === "aktif" && (
-            <span style={{ color: "#1f7a1f" }}>
-              ✅ Aktif (Lat: {userLocation.latitude.toFixed(6)}, Lng: {userLocation.longitude.toFixed(6)})
-            </span>
-          )}
-          {locationStatus === "gagal" && (
-            <span style={{ color: "#b00020" }}>❌ Gagal mendapatkan lokasi. Pastikan GPS aktif dan izinkan akses lokasi, lalu muat ulang halaman.</span>
-          )}
-          {locationStatus === "tidak_didukung" && (
-            <span style={{ color: "#b00020" }}>❌ Browser Anda tidak mendukung Geolocation.</span>
-          )}
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
+            <i className="pi pi-sliders-h mr-2"></i>Masukan Preferensi Wisata
+          </h2>
+          <hr className="border-top-1 border-300" />
         </div>
 
-        {/* Tabel Preferensi Kriteria */}
-        <p style={{ fontWeight: 800, fontSize: 14, marginBottom: 8 }}>
-          Tentukan tingkat kepentingan untuk setiap kriteria berikut:
-        </p>
+        {/* Status Lokasi GPS */}
+        <Card className="mb-4 shadow-1">
+          <div className="flex align-items-center gap-3">
+            <i className={`pi pi-map-marker text-2xl ${locationStatus === "aktif" ? "text-green-500" : "text-500"}`}></i>
+            <div>
+              <div className="font-bold mb-1">Status Lokasi GPS</div>
+              <Tag severity={locationSeverity} value={locationText} />
+            </div>
+          </div>
+        </Card>
 
-        <table className="table">
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Kriteria</th>
-              <th>Keterangan</th>
-              <th>Bobot Kepentingan</th>
-            </tr>
-          </thead>
-          <tbody>
-            {KRITERIA_LIST.map((k, idx) => (
-              <tr key={k.id}>
-                <td>{idx + 1}</td>
-                <td>{k.nama}</td>
-                <td>{k.deskripsi}</td>
-                <td>
-                  <select
-                    value={preferensi[k.id]}
-                    onChange={(e) => handleBobotChange(k.id, e.target.value)}
-                    style={{ padding: "4px 8px", fontWeight: 700 }}
-                  >
-                    {BOBOT_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Tabel Preferensi Kriteria */}
+        <Card className="mb-4 shadow-1">
+          <h3 className="text-lg font-semibold text-700 mt-0 mb-3">
+            Tentukan tingkat kepentingan untuk setiap kriteria:
+          </h3>
+
+          <DataTable value={KRITERIA_LIST} stripedRows showGridlines>
+            <Column header="No" body={nomorTemplate} style={{ width: "60px" }} />
+            <Column field="nama" header="Kriteria" />
+            <Column field="deskripsi" header="Keterangan" />
+            <Column header="Bobot Kepentingan" body={bobotTemplate} style={{ width: "250px" }} />
+          </DataTable>
+        </Card>
 
         {/* Pesan Error */}
         {errorMsg && (
-          <div style={{ marginTop: 12, color: "#b00020", fontWeight: 800, fontSize: 14 }}>
-            ⚠️ {errorMsg}
-          </div>
+          <Message severity="error" text={errorMsg} className="w-full mb-3" />
         )}
 
         {/* Tombol Simpan */}
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <button className="btn" onClick={handleSimpan} disabled={loading}>
-            {loading ? "Memproses..." : "Simpan & Lihat Hasil"}
-          </button>
+        <div className="flex justify-content-center">
+          <Button
+            label={loading ? "Memproses..." : "Simpan & Lihat Hasil"}
+            icon={loading ? "pi pi-spin pi-spinner" : "pi pi-check"}
+            onClick={handleSimpan}
+            disabled={loading}
+            className="px-5"
+          />
         </div>
       </main>
     </div>

@@ -2,6 +2,10 @@ import { useState } from "react";
 import "../dashboard.css";
 import Sidebar from "../../components/Sidebar";
 import { wisatawanMenu } from "../../app/wisatawanMenu";
+import { Card } from "primereact/card";
+import { InputText } from "primereact/inputtext";
+import { Password } from "primereact/password";
+import { Button } from "primereact/button";
 
 export default function Profile() {
   const [profile, setProfile] = useState({
@@ -12,7 +16,6 @@ export default function Profile() {
 
   const [form, setForm] = useState(profile);
   const [isEdit, setIsEdit] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // 👈 tambahan
 
   const handleChange = (e) => {
     setForm({
@@ -24,13 +27,11 @@ export default function Profile() {
   const handleSave = () => {
     setProfile(form);
     setIsEdit(false);
-    setShowPassword(false);
   };
 
   const handleCancel = () => {
     setForm(profile);
     setIsEdit(false);
-    setShowPassword(false);
   };
 
   return (
@@ -38,80 +39,91 @@ export default function Profile() {
       <Sidebar items={wisatawanMenu} />
 
       <main className="content">
-        <h2>Data Profile</h2>
-        <div className="hrline" />
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
+            <i className="pi pi-user mr-2"></i>Data Profile
+          </h2>
+          <hr className="border-top-1 border-300" />
+        </div>
 
         {/* MODE VIEW */}
         {!isEdit && (
           <>
-            <div className="box">
-              <p><strong>Username :</strong> {profile.username}</p>
-              <p><strong>Email :</strong> {profile.email}</p>
-              <p><strong>Password :</strong> ********</p>
-            </div>
+            <Card className="shadow-1 mb-3" style={{ maxWidth: 500 }}>
+              <div className="flex flex-column gap-3">
+                <div>
+                  <span className="font-bold text-500 text-sm">Username</span>
+                  <div className="text-800 font-semibold mt-1">{profile.username}</div>
+                </div>
+                <div>
+                  <span className="font-bold text-500 text-sm">Email</span>
+                  <div className="text-800 font-semibold mt-1">{profile.email}</div>
+                </div>
+                <div>
+                  <span className="font-bold text-500 text-sm">Password</span>
+                  <div className="text-800 font-semibold mt-1">********</div>
+                </div>
+              </div>
+            </Card>
 
-            <button className="btn" onClick={() => setIsEdit(true)}>
-              Edit Profile
-            </button>
+            <Button
+              label="Edit Profile"
+              icon="pi pi-pencil"
+              severity="info"
+              onClick={() => setIsEdit(true)}
+            />
           </>
         )}
 
         {/* MODE EDIT */}
         {isEdit && (
-          <div className="box">
-            <div style={{ marginBottom: 10 }}>
-              <label>Username</label><br />
-              <input
-                type="text"
-                name="username"
-                value={form.username}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div style={{ marginBottom: 10 }}>
-              <label>Email</label><br />
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div style={{ marginBottom: 10 }}>
-              <label>Password</label><br />
-              <input
-                type={showPassword ? "text" : "password"} // 👈 toggle
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-              />
-
-              <div style={{ marginTop: 6 }}>
-                <input
-                  type="checkbox"
-                  id="showPassword"
-                  checked={showPassword}
-                  onChange={() => setShowPassword(!showPassword)}
+          <Card className="shadow-1" style={{ maxWidth: 500 }}>
+            <div className="flex flex-column gap-3">
+              <div className="flex flex-column gap-2">
+                <label className="font-bold text-sm">Username</label>
+                <InputText
+                  name="username"
+                  value={form.username}
+                  onChange={handleChange}
+                  className="w-full"
                 />
-                <label htmlFor="showPassword" style={{ marginLeft: 6 }}>
-                  Tampilkan sandi
-                </label>
+              </div>
+
+              <div className="flex flex-column gap-2">
+                <label className="font-bold text-sm">Email</label>
+                <InputText
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="flex flex-column gap-2">
+                <label className="font-bold text-sm">Password</label>
+                <Password
+                  name="password"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  toggleMask
+                  feedback={false}
+                  className="w-full"
+                  inputClassName="w-full"
+                />
+              </div>
+
+              <div className="flex gap-2 mt-2">
+                <Button label="Simpan" icon="pi pi-check" onClick={handleSave} />
+                <Button
+                  label="Batal"
+                  icon="pi pi-times"
+                  severity="secondary"
+                  onClick={handleCancel}
+                />
               </div>
             </div>
-
-            <button className="btn" onClick={handleSave}>
-              Simpan
-            </button>
-            <button
-              className="btn"
-              style={{ marginLeft: 10 }}
-              onClick={handleCancel}
-            >
-              Batal
-            </button>
-          </div>
+          </Card>
         )}
       </main>
     </div>

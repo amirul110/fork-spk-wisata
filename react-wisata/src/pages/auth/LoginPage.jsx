@@ -2,12 +2,17 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginRequest } from "../../services/auth.service";
 import { setAuth } from "../../store/authStore";
+import { clearSelectedWisata } from "../../store/wisataStore";
+import { Card } from "primereact/card";
+import { InputText } from "primereact/inputtext";
+import { Password } from "primereact/password";
+import { Button } from "primereact/button";
+import { Message } from "primereact/message";
 
 export default function LoginPage() {
   const nav = useNavigate();
   const [email, setEmail] = useState("budi@gmail.com");
   const [password, setPassword] = useState("");
-const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ type: "idle", text: "" });
 
@@ -26,6 +31,7 @@ const [showPassword, setShowPassword] = useState(false);
       if (!token || !role) throw new Error("Token / role tidak ditemukan");
 
       setAuth({ token, role, user });
+      clearSelectedWisata();
 
       if (role === "admin") {
         nav("/admin/dashboard", { replace: true });
@@ -50,135 +56,61 @@ const [showPassword, setShowPassword] = useState(false);
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>
-          SPK REKOMENDASI DESTINASI WISATA
-          <br />
-          DI KABUPATEN MAGETAN
-        </h1>
+    <div className="flex align-items-center justify-content-center min-h-screen surface-200 p-3">
+      <Card className="w-full shadow-4" style={{ maxWidth: 480 }}>
+        <div className="text-center mb-4">
+          <i className="pi pi-map-marker text-primary text-4xl mb-2"></i>
+          <h1 className="text-xl font-bold text-800 m-0 line-height-3">
+            SPK REKOMENDASI DESTINASI WISATA
+            <br />
+            DI KABUPATEN MAGETAN
+          </h1>
+        </div>
 
-        <form onSubmit={handleLogin} style={styles.form}>
-          <label style={styles.label}>Email</label>
-          <input
-            style={styles.input}
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="contoh: budi@gmail.com"
-            required
-          />
+        <form onSubmit={handleLogin} className="flex flex-column gap-3">
+          <div className="flex flex-column gap-2">
+            <label className="font-bold text-800 text-sm">Email</label>
+            <InputText
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="contoh: budi@gmail.com"
+              required
+              className="w-full"
+            />
+          </div>
 
-          <label style={styles.label}>Password</label>
-
-          {/* PASSWORD + TOGGLE */}
-          <div style={styles.passwordWrapper}>
-            <input
-              style={{ ...styles.input, paddingRight: 44 }}
-              type={showPassword ? "text" : "password"}
+          <div className="flex flex-column gap-2">
+            <label className="font-bold text-800 text-sm">Password</label>
+            <Password
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="masukkan password"
+              toggleMask
+              feedback={false}
               required
+              className="w-full"
+              inputClassName="w-full"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={styles.toggleBtn}
-              aria-label="Tampilkan sandi"
-            >
-              {showPassword ? "🙈" : "👁️"}
-            </button>
           </div>
 
-          <button style={styles.button} disabled={loading} type="submit">
-            {loading ? "Memproses..." : "Login"}
-          </button>
+          <Button
+            label={loading ? "Memproses..." : "Login"}
+            icon={loading ? "pi pi-spin pi-spinner" : "pi pi-sign-in"}
+            disabled={loading}
+            type="submit"
+            className="w-full mt-2"
+          />
 
           {msg.type !== "idle" && (
-            <div
-              style={{
-                ...styles.alert,
-                borderColor: msg.type === "error" ? "#b00020" : "#1f7a1f",
-                color: msg.type === "error" ? "#b00020" : "#1f7a1f",
-              }}
-            >
-              {msg.text}
-            </div>
+            <Message
+              severity={msg.type === "error" ? "error" : "success"}
+              text={msg.text}
+              className="w-full"
+            />
           )}
         </form>
-      </div>
+      </Card>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    height: "100vh",
-    width: "100vw",
-    display: "grid",
-    placeItems: "center",
-    background: "#f2f2f2",
-    padding: 18,
-  },
-  card: {
-    width: 520,
-    maxWidth: "92vw",
-    background: "#fff",
-    border: "2px solid #333",
-    padding: 28,
-    boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
-  },
-  title: {
-    margin: 0,
-    marginBottom: 18,
-    textAlign: "center",
-    fontSize: 18,
-    lineHeight: 1.3,
-    fontWeight: 800,
-    color: "#111",
-  },
-  form: { display: "grid", gap: 10 },
-  label: { fontSize: 14, fontWeight: 800, color: "#111" },
-  input: {
-    height: 42,
-    border: "2px solid #333",
-    padding: "0 12px",
-    outline: "none",
-    fontSize: 14,
-    background: "#fff",
-    color: "#111",
-    width: "100%",
-  },
-  passwordWrapper: {
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
-  },
-  toggleBtn: {
-    position: "absolute",
-    right: 8,
-    background: "transparent",
-    border: "none",
-    cursor: "pointer",
-    fontSize: 18,
-  },
-  button: {
-    height: 44,
-    border: "2px solid #333",
-    background: "#fff",
-    fontWeight: 900,
-    cursor: "pointer",
-    marginTop: 6,
-    fontSize: 14,
-    color: "#111",
-  },
-  alert: {
-    marginTop: 8,
-    border: "2px solid",
-    padding: "10px 12px",
-    fontWeight: 800,
-    fontSize: 14,
-    background: "#fff",
-  },
-};
