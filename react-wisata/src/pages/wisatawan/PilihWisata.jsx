@@ -36,15 +36,6 @@ export default function PilihWisata() {
         return;
       }
 
-      const konfirmasi = window.confirm(
-        "Aplikasi ini memerlukan akses lokasi GPS Anda untuk menghitung jarak ke tempat wisata.\n\nApakah Anda mengizinkan mengaktifkan GPS?"
-      );
-
-      if (!konfirmasi) {
-        setLocationStatus("ditolak");
-        return;
-      }
-
       setLocationStatus("memuat");
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -61,7 +52,7 @@ export default function PilihWisata() {
       );
     };
 
-    // Delay agar halaman selesai render sebelum dialog konfirmasi muncul
+    // Delay agar halaman selesai render sebelum dialog izin lokasi muncul
     setTimeout(mintaLokasi, 500);
   }, []);
 
@@ -113,11 +104,8 @@ export default function PilihWisata() {
               ✅ Aktif (Lat: {userLocation.latitude.toFixed(6)}, Lng: {userLocation.longitude.toFixed(6)})
             </span>
           )}
-          {locationStatus === "ditolak" && (
-            <span style={{ color: "#b00020" }}>❌ Anda menolak akses lokasi. Muat ulang halaman untuk mencoba lagi.</span>
-          )}
           {locationStatus === "gagal" && (
-            <span style={{ color: "#b00020" }}>❌ Gagal mendapatkan lokasi. Pastikan GPS aktif dan muat ulang halaman.</span>
+            <span style={{ color: "#b00020" }}>❌ Gagal mendapatkan lokasi. Pastikan GPS aktif dan izinkan akses lokasi, lalu muat ulang halaman.</span>
           )}
           {locationStatus === "tidak_didukung" && (
             <span style={{ color: "#b00020" }}>❌ Browser Anda tidak mendukung Geolocation.</span>
