@@ -30,7 +30,7 @@ const [showPassword, setShowPassword] = useState(false);
       if (role === "admin") {
         nav("/admin/dashboard", { replace: true });
       } else if (role === "wisatawan") {
-        nav("/wisatawan/dashboard", { replace: true });
+        nav("/wisatawan/preferensi", { replace: true });
       } else {
         throw new Error("Role tidak dikenal");
       }
