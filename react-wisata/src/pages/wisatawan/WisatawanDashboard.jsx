@@ -11,6 +11,8 @@ import { Button } from "primereact/button";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
 
+const BACKEND_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1").replace("/api/v1", "");
+
 export default function WisatawanDashboard() {
   const nav = useNavigate();
   const [wisataList, setWisataList] = useState([]);
@@ -77,29 +79,56 @@ export default function WisatawanDashboard() {
           ) : (
             <div className="grid">
               {wisataList.map((w) => (
-                <div key={w.id_alternatif} className="col-12 md:col-6 lg:col-4">
+                <div key={w.id_alternatif} className="col-12 md:col-6 lg:col-4 xl:col-3">
                   <div
-                    className={`p-3 border-round border-1 cursor-pointer transition-colors transition-duration-200 ${
+                    className={`border-round border-1 cursor-pointer transition-colors transition-duration-200 overflow-hidden h-full flex flex-column ${
                       selected.includes(w.id_alternatif)
                         ? "border-primary bg-blue-50"
                         : "border-300 hover:border-primary"
                     }`}
                     onClick={() => toggle(w.id_alternatif)}
                   >
-                    <div className="flex align-items-center gap-3">
-                      <Checkbox
-                        checked={selected.includes(w.id_alternatif)}
-                        onChange={() => toggle(w.id_alternatif)}
-                      />
-                      <div>
-                        <div className="font-bold text-800">{w.nama_wisata}</div>
-                        {w.rating_gmaps && (
-                          <div className="text-sm text-500 mt-1">
-                            <i className="pi pi-star-fill text-yellow-500 mr-1"></i>
-                            {w.rating_gmaps}
-                          </div>
-                        )}
+                    {/* Gambar wisata */}
+                    <div className="relative surface-200 flex align-items-center justify-content-center" style={{ height: "160px", overflow: "hidden" }}>
+                      {w.gambar ? (
+                        <img
+                          src={`${BACKEND_URL}/uploads/${w.gambar}`}
+                          alt={w.nama_wisata}
+                          className="w-full h-full"
+                          style={{ objectFit: "cover", display: "block" }}
+                          onError={(e) => {
+                            e.target.style.display = "none";
+                          }}
+                        />
+                      ) : null}
+                      <i className="pi pi-image text-400" style={{ fontSize: "2.5rem", position: "absolute", zIndex: 0 }}></i>
+                      {/* Checkbox di pojok kanan atas */}
+                      <div
+                        className="absolute"
+                        style={{ top: "8px", right: "8px", zIndex: 1 }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Checkbox
+                          checked={selected.includes(w.id_alternatif)}
+                          onChange={() => toggle(w.id_alternatif)}
+                          className="p-checkbox-lg"
+                        />
                       </div>
+                    </div>
+
+                    {/* Info wisata */}
+                    <div className="p-3 flex-1 flex flex-column">
+                      <div className="font-bold text-800 mb-2">{w.nama_wisata}</div>
+                      {w.deskripsi && (
+                        <p className="text-sm text-600 mt-0 mb-0 line-height-3" style={{
+                          display: "-webkit-box",
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}>
+                          {w.deskripsi}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

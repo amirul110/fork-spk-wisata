@@ -17,13 +17,6 @@ export default function HasilRekomendasi() {
   const hargaTemplate = (rowData) =>
     `Rp ${Number(rowData.harga_tiket).toLocaleString("id-ID")}`;
 
-  const ratingTemplate = (rowData) => (
-    <div className="flex align-items-center gap-1">
-      <i className="pi pi-star-fill text-yellow-500"></i>
-      {rowData.rating_gmaps}
-    </div>
-  );
-
   const peringkatTemplate = (rowData) => (
     <Tag
       value={`#${rowData.peringkat_ke}`}
@@ -70,7 +63,6 @@ export default function HasilRekomendasi() {
               <DataTable value={hasil} stripedRows showGridlines responsiveLayout="scroll">
                 <Column header="Peringkat" body={peringkatTemplate} style={{ width: "100px" }} />
                 <Column field="nama_wisata" header="Nama Wisata" />
-                <Column header="Rating GMaps" body={ratingTemplate} style={{ width: "130px" }} />
                 <Column header="Harga Tiket" body={hargaTemplate} style={{ width: "150px" }} />
                 <Column field="jarak_dari_anda" header="Jarak dari Anda" style={{ width: "150px" }} />
                 <Column field="skor_rekomendasi" header="Skor Akhir WP" style={{ width: "140px" }} />

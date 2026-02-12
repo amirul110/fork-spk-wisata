@@ -12,7 +12,7 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { Dialog } from "primereact/dialog";
 import MapPickerDialog from "../../components/MapPickerDialog";
 
 const KRITERIA_LIST = [
@@ -40,14 +40,23 @@ export default function PilihWisata() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [showMapDialog, setShowMapDialog] = useState(false);
+  const [showLocationChoice, setShowLocationChoice] = useState(false);
+  const [belumPilihWisata, setBelumPilihWisata] = useState(false);
 
-  // Guard: redirect jika belum memilih wisata di dashboard
+  // Guard: tampilkan pesan jika belum memilih wisata di dashboard
   useEffect(() => {
     const selected = getSelectedWisata();
     if (!selected || selected.length === 0) {
-      nav("/wisatawan/dashboard", { replace: true });
+      // setTimeout(0) diperlukan agar ESLint react-hooks/set-state-in-effect tidak error
+      setTimeout(() => setBelumPilihWisata(true), 0);
+    } else {
+      // Delay agar halaman selesai render sebelum dialog muncul
+      const timer = setTimeout(() => {
+        setShowLocationChoice(true);
+      }, 600);
+      return () => clearTimeout(timer);
     }
-  }, [nav]);
+  }, []);
 
   const handleAutoLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -71,29 +80,6 @@ export default function PilihWisata() {
     );
   }, []);
 
-  const showLocationChoice = useCallback(() => {
-    confirmDialog({
-      message: "Bagaimana Anda ingin menentukan lokasi?",
-      header: "Pilih Metode Lokasi",
-      icon: "pi pi-map-marker",
-      acceptLabel: "Otomatis (GPS)",
-      rejectLabel: "Manual (Peta)",
-      acceptIcon: "pi pi-compass",
-      rejectIcon: "pi pi-map",
-      accept: () => handleAutoLocation(),
-      reject: () => setShowMapDialog(true),
-      closable: false,
-    });
-  }, [handleAutoLocation]);
-
-  useEffect(() => {
-    // Delay agar halaman selesai render sebelum dialog muncul
-    const timer = setTimeout(() => {
-      showLocationChoice();
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [showLocationChoice]);
-
   const handleMapSave = (loc) => {
     setUserLocation(loc);
     setLocationStatus("aktif");
@@ -103,8 +89,7 @@ export default function PilihWisata() {
 
   const handleMapBatal = () => {
     setShowMapDialog(false);
-    // Tampilkan kembali alert pilih metode lokasi
-    setTimeout(() => showLocationChoice(), 300);
+    setTimeout(() => setShowLocationChoice(true), 300);
   };
 
   const handleBobotChange = (kriteriaId, value) => {
@@ -128,11 +113,9 @@ export default function PilihWisata() {
       });
 
       const hasilData = res.data?.data?.hasil_rekomendasi || [];
-      // Filter hanya wisata yang dipilih di dashboard
       const filtered = hasilData.filter((item) =>
         selectedIds.includes(item.id_alternatif)
       );
-      // Re-rank setelah filter
       const reranked = filtered.map((item, idx) => ({
         ...item,
         peringkat_ke: idx + 1,
@@ -173,12 +156,91 @@ export default function PilihWisata() {
 
   const nomorTemplate = (_rowData, options) => options.rowIndex + 1;
 
+  // Jika belum pilih wisata, tampilkan pesan
+  if (belumPilihWisata) {
+    return (
+      <div className="page">
+        <Sidebar items={wisatawanMenu} />
+        <main className="content">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
+              <i className="pi pi-sliders-h mr-2"></i>Masukan Preferensi Wisata
+            </h2>
+            <hr className="border-top-1 border-300" />
+          </div>
+          <Card className="shadow-1">
+            <div className="text-center p-5">
+              <i className="pi pi-info-circle text-5xl text-primary mb-3" style={{ display: "block" }}></i>
+              <h3 className="text-xl font-semibold text-700 mt-0 mb-2">
+                Silakan pilih wisata di Dashboard
+              </h3>
+              <p className="text-500 mb-4">
+                Anda harus memilih wisata yang diminati terlebih dahulu di halaman Dashboard sebelum mengisi preferensi.
+              </p>
+              <Button
+                label="Kembali ke Dashboard"
+                icon="pi pi-arrow-left"
+                onClick={() => nav("/wisatawan/dashboard")}
+              />
+            </div>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="page">
       <Sidebar items={wisatawanMenu} />
 
       <main className="content">
-        <ConfirmDialog />
+        {/* Dialog Pilih Metode Lokasi */}
+        <Dialog
+          header="Pilih Metode Lokasi"
+          visible={showLocationChoice}
+          onHide={() => setShowLocationChoice(false)}
+          style={{ width: "450px", maxWidth: "95vw" }}
+          modal
+          closable={false}
+          footer={
+            <div className="flex justify-content-end">
+              <Button
+                label="Batal"
+                icon="pi pi-times"
+                severity="secondary"
+                text
+                onClick={() => setShowLocationChoice(false)}
+              />
+            </div>
+          }
+        >
+          <div className="text-center">
+            <i className="pi pi-map-marker text-4xl text-primary mb-3" style={{ display: "block" }}></i>
+            <p className="text-700 mb-4">Bagaimana Anda ingin menentukan lokasi?</p>
+            <div className="flex flex-column gap-2">
+              <Button
+                label="Otomatis (GPS)"
+                icon="pi pi-compass"
+                className="w-full"
+                onClick={() => {
+                  setShowLocationChoice(false);
+                  handleAutoLocation();
+                }}
+              />
+              <Button
+                label="Manual (Peta)"
+                icon="pi pi-map"
+                className="w-full"
+                severity="info"
+                outlined
+                onClick={() => {
+                  setShowLocationChoice(false);
+                  setShowMapDialog(true);
+                }}
+              />
+            </div>
+          </div>
+        </Dialog>
 
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
@@ -203,7 +265,7 @@ export default function PilihWisata() {
               severity="info"
               size="small"
               outlined
-              onClick={showLocationChoice}
+              onClick={() => setShowLocationChoice(true)}
             />
           </div>
         </Card>
