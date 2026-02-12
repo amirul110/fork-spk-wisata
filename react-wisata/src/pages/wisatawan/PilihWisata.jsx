@@ -61,6 +61,7 @@ export default function PilihWisata() {
       );
     };
 
+    // Delay agar halaman selesai render sebelum dialog konfirmasi muncul
     setTimeout(mintaLokasi, 500);
   }, []);
 
