@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "../dashboard.css";
 import Sidebar from "../../components/Sidebar";
@@ -12,7 +12,8 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
-import { ProgressSpinner } from "primereact/progressspinner";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import MapPickerDialog from "../../components/MapPickerDialog";
 
 const KRITERIA_LIST = [
   { id: 1, nama: "Harga Tiket", deskripsi: "Seberapa penting harga tiket bagi Anda?" },
@@ -34,9 +35,11 @@ export default function PilihWisata() {
   const nav = useNavigate();
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState("belum");
+  const [locationMode, setLocationMode] = useState("");
   const [preferensi, setPreferensi] = useState({ 1: 3, 2: 3, 3: 3, 4: 3, 5: 3 });
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showMapDialog, setShowMapDialog] = useState(false);
 
   // Guard: redirect jika belum memilih wisata di dashboard
   useEffect(() => {
@@ -46,32 +49,63 @@ export default function PilihWisata() {
     }
   }, [nav]);
 
-  useEffect(() => {
-    const mintaLokasi = () => {
-      if (!navigator.geolocation) {
-        setLocationStatus("tidak_didukung");
-        return;
-      }
-
-      setLocationStatus("memuat");
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setUserLocation({
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-          });
-          setLocationStatus("aktif");
-        },
-        () => {
-          setLocationStatus("gagal");
-        },
-        { enableHighAccuracy: true, timeout: 15000 }
-      );
-    };
-
-    // Delay agar halaman selesai render sebelum dialog izin lokasi muncul
-    setTimeout(mintaLokasi, 500);
+  const handleAutoLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationStatus("tidak_didukung");
+      return;
+    }
+    setLocationStatus("memuat");
+    setLocationMode("otomatis");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        });
+        setLocationStatus("aktif");
+      },
+      () => {
+        setLocationStatus("gagal");
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
   }, []);
+
+  const showLocationChoice = useCallback(() => {
+    confirmDialog({
+      message: "Bagaimana Anda ingin menentukan lokasi?",
+      header: "Pilih Metode Lokasi",
+      icon: "pi pi-map-marker",
+      acceptLabel: "Otomatis (GPS)",
+      rejectLabel: "Manual (Peta)",
+      acceptIcon: "pi pi-compass",
+      rejectIcon: "pi pi-map",
+      accept: () => handleAutoLocation(),
+      reject: () => setShowMapDialog(true),
+      closable: false,
+    });
+  }, [handleAutoLocation]);
+
+  useEffect(() => {
+    // Delay agar halaman selesai render sebelum dialog muncul
+    const timer = setTimeout(() => {
+      showLocationChoice();
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [showLocationChoice]);
+
+  const handleMapSave = (loc) => {
+    setUserLocation(loc);
+    setLocationStatus("aktif");
+    setLocationMode("manual");
+    setShowMapDialog(false);
+  };
+
+  const handleMapBatal = () => {
+    setShowMapDialog(false);
+    // Tampilkan kembali alert pilih metode lokasi
+    setTimeout(() => showLocationChoice(), 300);
+  };
 
   const handleBobotChange = (kriteriaId, value) => {
     setPreferensi((prev) => ({ ...prev, [kriteriaId]: Number(value) }));
@@ -79,7 +113,7 @@ export default function PilihWisata() {
 
   const handleSimpan = async () => {
     if (!userLocation) {
-      setErrorMsg("Lokasi GPS belum aktif. Mohon izinkan akses lokasi terlebih dahulu.");
+      setErrorMsg("Lokasi belum ditentukan. Mohon pilih lokasi terlebih dahulu.");
       return;
     }
 
@@ -118,13 +152,13 @@ export default function PilihWisata() {
     locationStatus === "memuat" || locationStatus === "belum" ? "info" : "error";
 
   const locationText =
-    locationStatus === "belum" ? "Menunggu izin lokasi..." :
-    locationStatus === "memuat" ? "Sedang mendapatkan lokasi..." :
+    locationStatus === "belum" ? "Menunggu pilihan metode lokasi..." :
+    locationStatus === "memuat" ? "Sedang mendapatkan lokasi GPS..." :
     locationStatus === "aktif" && userLocation
-      ? `Aktif (Lat: ${userLocation.latitude.toFixed(6)}, Lng: ${userLocation.longitude.toFixed(6)})`
+      ? `Aktif - ${locationMode === "manual" ? "Manual (Peta)" : "Otomatis (GPS)"} (Lat: ${userLocation.latitude.toFixed(6)}, Lng: ${userLocation.longitude.toFixed(6)})`
       : locationStatus === "gagal"
-        ? "Gagal mendapatkan lokasi. Pastikan GPS aktif dan izinkan akses lokasi, lalu muat ulang halaman."
-        : "Browser Anda tidak mendukung Geolocation.";
+        ? "Gagal mendapatkan lokasi GPS. Silakan coba lagi dengan metode manual."
+        : "Browser Anda tidak mendukung Geolocation. Gunakan metode manual.";
 
   const bobotTemplate = (rowData) => (
     <Dropdown
@@ -144,6 +178,8 @@ export default function PilihWisata() {
       <Sidebar items={wisatawanMenu} />
 
       <main className="content">
+        <ConfirmDialog />
+
         <div className="mb-4">
           <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
             <i className="pi pi-sliders-h mr-2"></i>Masukan Preferensi Wisata
@@ -151,14 +187,24 @@ export default function PilihWisata() {
           <hr className="border-top-1 border-300" />
         </div>
 
-        {/* Status Lokasi GPS */}
+        {/* Status Lokasi */}
         <Card className="mb-4 shadow-1">
-          <div className="flex align-items-center gap-3">
-            <i className={`pi pi-map-marker text-2xl ${locationStatus === "aktif" ? "text-green-500" : "text-500"}`}></i>
-            <div>
-              <div className="font-bold mb-1">Status Lokasi GPS</div>
-              <Tag severity={locationSeverity} value={locationText} />
+          <div className="flex align-items-center justify-content-between">
+            <div className="flex align-items-center gap-3">
+              <i className={`pi pi-map-marker text-2xl ${locationStatus === "aktif" ? "text-green-500" : "text-500"}`}></i>
+              <div>
+                <div className="font-bold mb-1">Status Lokasi</div>
+                <Tag severity={locationSeverity} value={locationText} />
+              </div>
             </div>
+            <Button
+              label="Ubah Lokasi"
+              icon="pi pi-map"
+              severity="info"
+              size="small"
+              outlined
+              onClick={showLocationChoice}
+            />
           </div>
         </Card>
 
@@ -191,6 +237,13 @@ export default function PilihWisata() {
             className="px-5"
           />
         </div>
+
+        {/* Map Picker Dialog */}
+        <MapPickerDialog
+          visible={showMapDialog}
+          onHide={handleMapBatal}
+          onSave={handleMapSave}
+        />
       </main>
     </div>
   );

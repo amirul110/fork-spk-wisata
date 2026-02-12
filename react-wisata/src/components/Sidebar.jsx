@@ -10,14 +10,12 @@ export default function Sidebar({ items }) {
         <NavLink
           key={it.path}
           to={it.path}
-          className={({ isActive }) =>
-            `flex align-items-center gap-2 p-3 no-underline border-bottom-1 border-300 font-semibold text-sm transition-colors transition-duration-200 ${
-              isActive
-                ? "bg-primary text-white"
-                : "text-800 hover:surface-200"
-            }`
+          className="flex align-items-center gap-2 p-3 no-underline border-bottom-1 border-300 font-semibold text-sm transition-colors transition-duration-200"
+          style={({ isActive }) =>
+            isActive
+              ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
+              : { color: "#333333" }
           }
-          end
         >
           {it.icon && <i className={it.icon}></i>}
           {it.label}
