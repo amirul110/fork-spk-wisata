@@ -88,6 +88,17 @@ export default function WisatawanDashboard() {
                     }`}
                     onClick={() => toggle(w.id_alternatif)}
                   >
+                    {/* Judul wisata + Checkbox */}
+                    <div className="flex align-items-center justify-content-between p-3 border-bottom-1 border-200">
+                      <div className="font-bold text-800">{w.nama_wisata}</div>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selected.includes(w.id_alternatif)}
+                          onChange={() => toggle(w.id_alternatif)}
+                        />
+                      </div>
+                    </div>
+
                     {/* Gambar wisata */}
                     <div className="relative surface-200 flex align-items-center justify-content-center" style={{ height: "160px", overflow: "hidden" }}>
                       {w.gambar ? (
@@ -102,23 +113,10 @@ export default function WisatawanDashboard() {
                         />
                       ) : null}
                       <i className="pi pi-image text-400" style={{ fontSize: "2.5rem", position: "absolute", zIndex: 0 }}></i>
-                      {/* Checkbox di pojok kanan atas */}
-                      <div
-                        className="absolute"
-                        style={{ top: "8px", right: "8px", zIndex: 1 }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Checkbox
-                          checked={selected.includes(w.id_alternatif)}
-                          onChange={() => toggle(w.id_alternatif)}
-                          className="p-checkbox-lg"
-                        />
-                      </div>
                     </div>
 
-                    {/* Info wisata */}
+                    {/* Deskripsi wisata */}
                     <div className="p-3 flex-1 flex flex-column">
-                      <div className="font-bold text-800 mb-2">{w.nama_wisata}</div>
                       {w.deskripsi && (
                         <p className="text-sm text-600 mt-0 mb-0 line-height-3" style={{
                           display: "-webkit-box",

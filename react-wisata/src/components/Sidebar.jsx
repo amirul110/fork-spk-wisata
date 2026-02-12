@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 
-export default function Sidebar({ items }) {
+export default function Sidebar({ items, onItemClick }) {
   return (
     <aside className="sidebar surface-100 border-right-1 border-300">
       <div className="p-3 text-center font-bold text-lg border-bottom-1 border-300 surface-200">
@@ -16,6 +16,7 @@ export default function Sidebar({ items }) {
               ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
               : { color: "#333333" }
           }
+          onClick={(e) => onItemClick && onItemClick(it, e)}
         >
           {it.icon && <i className={it.icon}></i>}
           {it.label}

@@ -4,6 +4,7 @@ import "../dashboard.css";
 import Sidebar from "../../components/Sidebar";
 import { wisatawanMenu } from "../../app/wisatawanMenu";
 import { getSelectedWisata } from "../../store/wisataStore";
+import { getAllWisata } from "../../services/wisata.service";
 import api from "../../services/api";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
@@ -13,6 +14,7 @@ import { Column } from "primereact/column";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
 import { Dialog } from "primereact/dialog";
+import { Chip } from "primereact/chip";
 import MapPickerDialog from "../../components/MapPickerDialog";
 
 const KRITERIA_LIST = [
@@ -36,12 +38,14 @@ export default function PilihWisata() {
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState("belum");
   const [locationMode, setLocationMode] = useState("");
-  const [preferensi, setPreferensi] = useState({ 1: 3, 2: 3, 3: 3, 4: 3, 5: 3 });
+  const [preferensi, setPreferensi] = useState({ 1: null, 2: null, 3: null, 4: null, 5: null });
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [showMapDialog, setShowMapDialog] = useState(false);
   const [showLocationChoice, setShowLocationChoice] = useState(false);
   const [belumPilihWisata, setBelumPilihWisata] = useState(false);
+  const [namaWisataDipilih, setNamaWisataDipilih] = useState([]);
+  const [showConfirmDashboard, setShowConfirmDashboard] = useState(false);
 
   // Guard: tampilkan pesan jika belum memilih wisata di dashboard
   useEffect(() => {
@@ -50,6 +54,20 @@ export default function PilihWisata() {
       // setTimeout(0) diperlukan agar ESLint react-hooks/set-state-in-effect tidak error
       setTimeout(() => setBelumPilihWisata(true), 0);
     } else {
+      // Ambil nama wisata yang dipilih dari backend
+      getAllWisata()
+        .then((res) => {
+          const allWisata = res.data?.data?.list_wisata || [];
+          const names = allWisata
+            .filter((w) => selected.includes(w.id_alternatif))
+            .map((w) => w.nama_wisata);
+          setNamaWisataDipilih(names);
+        })
+        .catch(() => {
+          // Fallback jika API gagal
+          setNamaWisataDipilih(selected.map((id) => `Wisata #${id}`));
+        });
+
       // Delay agar halaman selesai render sebelum dialog muncul
       const timer = setTimeout(() => {
         setShowLocationChoice(true);
@@ -102,6 +120,13 @@ export default function PilihWisata() {
       return;
     }
 
+    // Validasi semua bobot harus diisi
+    const belumDiisi = KRITERIA_LIST.filter((k) => preferensi[k.id] === null);
+    if (belumDiisi.length > 0) {
+      setErrorMsg(`Mohon isi bobot untuk semua kriteria. Kriteria yang belum diisi: ${belumDiisi.map((k) => k.nama).join(", ")}`);
+      return;
+    }
+
     setLoading(true);
     setErrorMsg("");
 
@@ -130,6 +155,14 @@ export default function PilihWisata() {
     }
   };
 
+  // Handler sidebar navigation: intercept Dashboard click
+  const handleSidebarClick = (item, e) => {
+    if (item.path === "/wisatawan/dashboard") {
+      e.preventDefault();
+      setShowConfirmDashboard(true);
+    }
+  };
+
   const locationSeverity =
     locationStatus === "aktif" ? "success" :
     locationStatus === "memuat" || locationStatus === "belum" ? "info" : "error";
@@ -150,6 +183,7 @@ export default function PilihWisata() {
       optionLabel="label"
       optionValue="value"
       onChange={(e) => handleBobotChange(rowData.id, e.value)}
+      placeholder="-- Pilih Bobot --"
       className="w-full"
     />
   );
@@ -191,9 +225,39 @@ export default function PilihWisata() {
 
   return (
     <div className="page">
-      <Sidebar items={wisatawanMenu} />
+      <Sidebar items={wisatawanMenu} onItemClick={handleSidebarClick} />
 
       <main className="content">
+        {/* Dialog Konfirmasi Kembali ke Dashboard */}
+        <Dialog
+          header="Konfirmasi"
+          visible={showConfirmDashboard}
+          onHide={() => setShowConfirmDashboard(false)}
+          style={{ width: "400px", maxWidth: "95vw" }}
+          modal
+          footer={
+            <div className="flex justify-content-end gap-2">
+              <Button
+                label="Batal"
+                icon="pi pi-times"
+                severity="secondary"
+                text
+                onClick={() => setShowConfirmDashboard(false)}
+              />
+              <Button
+                label="OK"
+                icon="pi pi-check"
+                onClick={() => nav("/wisatawan/dashboard")}
+              />
+            </div>
+          }
+        >
+          <div className="flex align-items-center gap-3">
+            <i className="pi pi-exclamation-triangle text-3xl text-yellow-500"></i>
+            <p className="text-700 m-0">Apakah Anda ingin memilih wisata yang berbeda? Data preferensi yang sudah diisi akan hilang.</p>
+          </div>
+        </Dialog>
+
         {/* Dialog Pilih Metode Lokasi */}
         <Dialog
           header="Pilih Metode Lokasi"
@@ -248,6 +312,23 @@ export default function PilihWisata() {
           </h2>
           <hr className="border-top-1 border-300" />
         </div>
+
+        {/* Informasi Wisata yang Dipilih */}
+        {namaWisataDipilih.length > 0 && (
+          <Card className="mb-4 shadow-1">
+            <div className="flex align-items-start gap-3">
+              <i className="pi pi-check-circle text-2xl text-green-500 mt-1"></i>
+              <div>
+                <div className="font-bold mb-2">Wisata yang Anda Pilih ({namaWisataDipilih.length})</div>
+                <div className="flex flex-wrap gap-2">
+                  {namaWisataDipilih.map((nama, idx) => (
+                    <Chip key={idx} label={nama} icon="pi pi-map-marker" className="text-sm" />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Status Lokasi */}
         <Card className="mb-4 shadow-1">
