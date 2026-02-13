@@ -12,6 +12,7 @@ import { Message } from "primereact/message";
 import "../dashboard.css";
 import Sidebar from "../../components/Sidebar";
 import { adminMenu } from "../../app/adminMenu";
+
 import {
   getAllAlternatif,
   createAlternatif,
@@ -28,6 +29,7 @@ const emptyForm = {
   fasilitas: "",
   waktu_kunjungan: "",
 };
+
 
 export default function AdminAlternatif() {
   const [data, setData] = useState([]);
@@ -221,6 +223,9 @@ export default function AdminAlternatif() {
           </span>
           <Button label="Tambah Data" icon="pi pi-plus" onClick={openNew} />
         </div>
+   
+
+       
 
         {loading ? (
           <div className="flex justify-content-center align-items-center py-6">

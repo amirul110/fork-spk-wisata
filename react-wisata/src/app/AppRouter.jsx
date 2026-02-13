@@ -6,6 +6,7 @@ import AdminAlternatif from "../pages/admin/AdminAlternatif";
 import AdminKriteria from "../pages/admin/AdminKriteria";
 import AdminSubKriteria from "../pages/admin/AdminSubKriteria";
 import AdminHasilRekomendasi from "../pages/admin/AdminHasilRekomendasi";
+import AdminProfile from "../pages/admin/AdminProfile";
 import AdminLogout from "../pages/admin/AdminLogout";
 import WisatawanDashboard from "../pages/wisatawan/WisatawanDashboard";
 import PilihWisata from "../pages/wisatawan/PilihWisata";
@@ -27,6 +28,7 @@ export default function AppRouter() {
         <Route path="/admin/kriteria" element={<AdminKriteria />} />
         <Route path="/admin/sub-kriteria" element={<AdminSubKriteria />} />
         <Route path="/admin/hasil" element={<AdminHasilRekomendasi />} />
+        <Route path="/admin/profile" element={<AdminProfile />} />
         <Route path="/admin/logout" element={<AdminLogout />} />
 
         <Route path="/wisatawan/dashboard" element={<WisatawanDashboard />} />

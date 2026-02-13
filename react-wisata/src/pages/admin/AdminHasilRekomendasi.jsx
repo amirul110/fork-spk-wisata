@@ -13,6 +13,7 @@ import { Message } from "primereact/message";
 
 export default function AdminHasilRekomendasi() {
   const [data, setData] = useState([]);
+  const [totalWisatawan, setTotalWisatawan] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const toast = useRef(null);
@@ -24,6 +25,7 @@ export default function AdminHasilRekomendasi() {
       const res = await getHasilRekomendasiGlobal();
       const list = res.data.data || [];
       setData(list.slice(0, 5));
+      setTotalWisatawan(res.data.total_wisatawan || 0);
     } catch (err) {
       console.error("Gagal mengambil data hasil rekomendasi:", err);
       setError("Gagal mengambil data hasil rekomendasi dari server.");
@@ -74,7 +76,7 @@ export default function AdminHasilRekomendasi() {
           <>
             <Message
               severity="success"
-              text="Berikut adalah 5 besar wisata berdasarkan rata-rata skor WP dari seluruh inputan wisatawan:"
+              text={`Berikut adalah 5 besar wisata berdasarkan rata-rata skor WP dari ${totalWisatawan} wisatawan:`}
               className="w-full mb-3"
             />
 
@@ -100,11 +102,6 @@ export default function AdminHasilRekomendasi() {
                 header="Skor Akhir WP"
                 sortable
                 style={{ width: "150px" }}
-              />
-              <Column
-                field="jumlah_direkomendasikan"
-                header="Frekuensi"
-                style={{ width: "130px" }}
               />
             </DataTable>
           </>

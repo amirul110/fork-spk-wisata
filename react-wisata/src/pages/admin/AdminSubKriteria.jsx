@@ -217,7 +217,7 @@ export default function AdminSubKriteria() {
       <div className="flex gap-2">
         <Button
           icon="pi pi-pencil"
-          className="p-button-rounded p-button-warning p-button-sm"
+          className="p-button-rounded p-button-info p-button-sm"
           tooltip="Edit"
           tooltipOptions={{ position: "top" }}
           onClick={() => openEditDialog(rowData)}
@@ -295,14 +295,6 @@ export default function AdminSubKriteria() {
 
             {selectedKriteria && (
               <>
-                <div className="mb-3">
-                  <Button
-                    label="Tambah Data"
-                    icon="pi pi-plus"
-                    onClick={openAddDialog}
-                  />
-                </div>
-
                 {loadingSub ? (
                   <div className="flex justify-content-center p-5">
                     <ProgressSpinner />

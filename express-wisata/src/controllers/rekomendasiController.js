@@ -266,13 +266,17 @@ module.exports = {
   // [GET] SEMUA RIWAYAT (Admin Only)
   getAllRiwayat: async (req, res) => {
     try {
+      // Hitung jumlah wisatawan unik yang pernah melakukan perhitungan
+      const wisatawanCountResult = await db('preferensi_wisatawan')
+        .countDistinct('id_wisatawan as total')
+        .first();
+
       const data = await db(TABLES.HASIL_REKOMENDASI)
         .join(TABLES.WISATA, `${TABLES.HASIL_REKOMENDASI}.id_alternatif`, '=', `${TABLES.WISATA}.id_alternatif`)
         .select(
             `${TABLES.WISATA}.nama_wisata`,
             db.raw('AVG(hasil_rekomendasi.skor_akhir_wp) as rata_rata_skor'),
-            db.raw('AVG(hasil_rekomendasi.ranking) as rata_rata_ranking_asli'),
-            db.raw('COUNT(hasil_rekomendasi.id_hasil) as frekuensi_muncul')
+            db.raw('AVG(hasil_rekomendasi.ranking) as rata_rata_ranking_asli')
         )
         .groupBy(`${TABLES.WISATA}.id_alternatif`, `${TABLES.WISATA}.nama_wisata`)
         .orderBy('rata_rata_skor', 'desc');
@@ -281,14 +285,14 @@ module.exports = {
         global_ranking: index + 1,
         nama_wisata: item.nama_wisata,
         skor_rata_rata: parseFloat(item.rata_rata_skor).toFixed(4),
-        ranking_rata_rata: parseFloat(item.rata_rata_ranking_asli).toFixed(1),
-        jumlah_direkomendasikan: item.frekuensi_muncul + " kali"
+        ranking_rata_rata: parseFloat(item.rata_rata_ranking_asli).toFixed(1)
       }));
 
       return res.json({
         status: API_STATUS.SUCCESS,
         message: 'Laporan Analitik Performa Wisata (Rata-rata Global)',
-        data: formattedData
+        data: formattedData,
+        total_wisatawan: parseInt(wisatawanCountResult.total) || 0
       });
 
     } catch (error) {
