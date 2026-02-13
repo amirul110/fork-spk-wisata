@@ -1,7 +1,7 @@
 export const wisatawanMenu = [
-  { label: "Dashboard", path: "/wisatawan" },
-  { label: "Masukan Preferensi", path: "/wisatawan/preferensi" },
-  { label: "Hasil Rekomendasi", path: "/wisatawan/hasil" },
-  { label: "Profile", path: "/wisatawan/profile" },
-  { label: "Logout", path: "/wisatawan/logout" },
+  { label: "Dashboard", icon: "pi pi-home", path: "/wisatawan/dashboard" },
+  { label: "Masukan Preferensi", icon: "pi pi-sliders-h", path: "/wisatawan/preferensi" },
+  { label: "Hasil Rekomendasi", icon: "pi pi-chart-bar", path: "/wisatawan/hasil" },
+  { label: "Profile", icon: "pi pi-user", path: "/wisatawan/profile" },
+  { label: "Logout", icon: "pi pi-sign-out", path: "/wisatawan/logout" },
 ];

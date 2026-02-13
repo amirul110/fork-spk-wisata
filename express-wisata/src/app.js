@@ -4,6 +4,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const corsOptions = require("./config/cors");
 const cookieParser = require('cookie-parser'); // Opsional, tapi bagus ada
 const app = express();
@@ -31,6 +32,9 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Serve static files dari folder uploads
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // 3. HEALTH CHECK (Root URL)
 // Cek apakah server nyala tanpa prefix api

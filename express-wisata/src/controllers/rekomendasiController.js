@@ -200,7 +200,7 @@ module.exports = {
         status: API_STATUS.SUCCESS,
         message: 'Perhitungan Weighted Product Selesai',
         data: {
-          id_riwayat: historyId,
+          id_riwayat: preferensiId,
           [RESPONSE_DATA_KEYS.REKOMENDASI]: responseData
         }
       });
