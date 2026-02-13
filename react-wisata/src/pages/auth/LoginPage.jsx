@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { loginRequest } from "../../services/auth.service";
 import { setAuth } from "../../store/authStore";
 import { clearSelectedWisata } from "../../store/wisataStore";
@@ -11,7 +11,9 @@ import { Message } from "primereact/message";
 
 export default function LoginPage() {
   const nav = useNavigate();
-  const [email, setEmail] = useState("budi@gmail.com");
+  const location = useLocation();
+  const successMsg = location.state?.successMsg || "";
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ type: "idle", text: "" });
@@ -102,6 +104,10 @@ export default function LoginPage() {
             className="w-full mt-2"
           />
 
+          {successMsg && msg.type === "idle" && (
+            <Message severity="success" text={successMsg} className="w-full" />
+          )}
+
           {msg.type !== "idle" && (
             <Message
               severity={msg.type === "error" ? "error" : "success"}
@@ -109,6 +115,13 @@ export default function LoginPage() {
               className="w-full"
             />
           )}
+
+          <div className="text-center mt-2">
+            <span className="text-600 text-sm">Belum punya akun? </span>
+            <Link to="/register" className="text-primary text-sm font-bold no-underline">
+              Register di sini
+            </Link>
+          </div>
         </form>
       </Card>
     </div>
