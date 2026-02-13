@@ -10,6 +10,7 @@ import { Checkbox } from "primereact/checkbox";
 import { Button } from "primereact/button";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
+import { formatTanggalIndonesia } from "../../utils/formatTanggal";
 
 const BACKEND_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1").replace("/api/v1", "");
 
@@ -41,7 +42,7 @@ export default function WisatawanDashboard() {
   };
 
   const handleSave = () => {
-    if (selected.length === 0) {
+    if (selected.length < 2) {
       return;
     }
     setSelectedWisata(selected);
@@ -54,6 +55,9 @@ export default function WisatawanDashboard() {
 
       <main className="content">
         <div className="mb-4">
+          <div className="mb-2" style={{ fontSize: "36px", fontWeight: "bold", color: "var(--text-color)" }}>
+            {formatTanggalIndonesia()}
+          </div>
           <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
             <i className="pi pi-home mr-2"></i>Halaman Dashboard
           </h2>
@@ -118,12 +122,7 @@ export default function WisatawanDashboard() {
 
                     {/* Deskripsi wisata */}
                     <div className="p-3 flex-1 flex flex-column">
-                      <p className="text-sm text-600 mt-0 mb-0 line-height-3" style={{
-                        display: "-webkit-box",
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}>
+                      <p className="text-sm text-600 mt-0 mb-0 line-height-3">
                         {w.deskripsi || "Deskripsi wisata belum tersedia."}
                       </p>
                     </div>
@@ -134,10 +133,10 @@ export default function WisatawanDashboard() {
           )}
         </Card>
 
-        {selected.length === 0 && !loadingData && wisataList.length > 0 && (
+        {selected.length < 2 && !loadingData && wisataList.length > 0 && (
           <Message
             severity="info"
-            text="Silakan pilih minimal 1 wisata terlebih dahulu sebelum melanjutkan."
+            text="Silakan pilih minimal 2 wisata terlebih dahulu sebelum melanjutkan."
             className="w-full mb-3"
           />
         )}
@@ -148,7 +147,7 @@ export default function WisatawanDashboard() {
             icon="pi pi-arrow-right"
             iconPos="right"
             onClick={handleSave}
-            disabled={selected.length === 0}
+            disabled={selected.length < 2}
             className="px-5"
           />
         </div>

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../dashboard.css";
 import Sidebar from "../../components/Sidebar";
 import { wisatawanMenu } from "../../app/wisatawanMenu";
-import { getSelectedWisata } from "../../store/wisataStore";
+import { getSelectedWisata, clearSelectedWisata } from "../../store/wisataStore";
 import { getAllWisata } from "../../services/wisata.service";
 import api from "../../services/api";
 import { Card } from "primereact/card";
@@ -14,6 +14,7 @@ import { Tag } from "primereact/tag";
 import { Dialog } from "primereact/dialog";
 import { Chip } from "primereact/chip";
 import MapPickerDialog from "../../components/MapPickerDialog";
+import { formatTanggalIndonesia } from "../../utils/formatTanggal";
 
 const KRITERIA_LIST = [
   { id: 1, nama: "Harga Tiket", deskripsi: "Seberapa penting harga tiket bagi Anda?" },
@@ -198,6 +199,9 @@ export default function PilihWisata() {
         <Sidebar items={wisatawanMenu} />
         <main className="content">
           <div className="mb-4">
+            <div className="mb-2" style={{ fontSize: "36px", fontWeight: "bold", color: "var(--text-color)" }}>
+              {formatTanggalIndonesia()}
+            </div>
             <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
               <i className="pi pi-sliders-h mr-2"></i>Masukan Preferensi Wisata
             </h2>
@@ -248,7 +252,10 @@ export default function PilihWisata() {
               <Button
                 label="OK"
                 icon="pi pi-check"
-                onClick={() => nav("/wisatawan/dashboard")}
+                onClick={() => {
+                  clearSelectedWisata();
+                  nav("/wisatawan/dashboard");
+                }}
               />
             </div>
           }
@@ -307,6 +314,9 @@ export default function PilihWisata() {
         </Dialog>
 
         <div className="mb-4">
+          <div className="mb-2" style={{ fontSize: "36px", fontWeight: "bold", color: "var(--text-color)" }}>
+            {formatTanggalIndonesia()}
+          </div>
           <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
             <i className="pi pi-sliders-h mr-2"></i>Masukan Preferensi Wisata
           </h2>

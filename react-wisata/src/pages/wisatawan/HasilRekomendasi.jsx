@@ -8,6 +8,7 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
+import { formatTanggalIndonesia } from "../../utils/formatTanggal";
 
 export default function HasilRekomendasi() {
   const location = useLocation();
@@ -30,6 +31,9 @@ export default function HasilRekomendasi() {
 
       <main className="content">
         <div className="mb-4">
+          <div className="mb-2" style={{ fontSize: "36px", fontWeight: "bold", color: "var(--text-color)" }}>
+            {formatTanggalIndonesia()}
+          </div>
           <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
             <i className="pi pi-chart-bar mr-2"></i>Hasil Rekomendasi Wisata
           </h2>
