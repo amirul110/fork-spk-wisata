@@ -170,8 +170,8 @@ module.exports = {
         code_kriteria: code_kriteria || '',
         nama_sub_kriteria,
         nilai_bobot,
-        batas_bawah: batas_bawah || 0,
-        batas_atas: batas_atas || 0
+        batas_bawah: batas_bawah != null ? batas_bawah : 0,
+        batas_atas: batas_atas != null ? batas_atas : 0
       });
 
       return res.status(201).json({
@@ -189,7 +189,14 @@ module.exports = {
     try {
       const { id } = req.params;
 
-      await db(SUB_KRITERIA_TABLE).where('id_sub', id).del();
+      const deleted = await db(SUB_KRITERIA_TABLE).where('id_sub', id).del();
+
+      if (!deleted) {
+        return res.status(404).json({
+          status: API_STATUS.NOT_FOUND,
+          message: 'Sub-Kriteria tidak ditemukan'
+        });
+      }
 
       return res.json({
         status: API_STATUS.SUCCESS,
