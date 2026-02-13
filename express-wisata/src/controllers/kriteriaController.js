@@ -156,6 +156,58 @@ module.exports = {
     }
   },
 
+  // [POST] Tambah Sub-Kriteria Baru
+  createSubKriteria: async (req, res) => {
+    try {
+      const { id_kriteria, code_kriteria, nama_sub_kriteria, nilai_bobot, batas_bawah, batas_atas } = req.body;
+
+      if (!id_kriteria || !nama_sub_kriteria || nilai_bobot === undefined || nilai_bobot === null) {
+        return res.status(400).json({ status: API_STATUS.BAD_REQUEST, message: 'Field id_kriteria, nama_sub_kriteria, dan nilai_bobot wajib diisi' });
+      }
+
+      await db(SUB_KRITERIA_TABLE).insert({
+        id_kriteria,
+        code_kriteria: code_kriteria || '',
+        nama_sub_kriteria,
+        nilai_bobot,
+        batas_bawah: batas_bawah != null ? batas_bawah : 0,
+        batas_atas: batas_atas != null ? batas_atas : 0
+      });
+
+      return res.status(201).json({
+        status: API_STATUS.SUCCESS,
+        message: 'Sub-Kriteria berhasil ditambahkan'
+      });
+    } catch (error) {
+      console.error("Error Create Sub-Kriteria:", error);
+      return res.status(500).json({ message: 'Gagal menambah sub-kriteria', error: error.message });
+    }
+  },
+
+  // [DELETE] Hapus Sub-Kriteria
+  deleteSubKriteria: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const deleted = await db(SUB_KRITERIA_TABLE).where('id_sub', id).del();
+
+      if (!deleted) {
+        return res.status(404).json({
+          status: API_STATUS.NOT_FOUND,
+          message: 'Sub-Kriteria tidak ditemukan'
+        });
+      }
+
+      return res.json({
+        status: API_STATUS.SUCCESS,
+        message: 'Sub-Kriteria berhasil dihapus'
+      });
+    } catch (error) {
+      console.error("Error Delete Sub-Kriteria:", error);
+      return res.status(500).json({ message: 'Gagal menghapus sub-kriteria' });
+    }
+  },
+
   // [PUT] Update Sub-Kriteria (Nilai/Nama)
   updateSubKriteria: async (req, res) => {
     try {

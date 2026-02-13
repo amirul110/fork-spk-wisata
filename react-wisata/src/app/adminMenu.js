@@ -5,5 +5,5 @@ export const adminMenu = [
   { label: "Data Sub Kriteria", path: "/admin/sub-kriteria" },
   { label: "Hasil Rekomendasi", path: "/admin/hasil" },
   { label: "Profile", path: "/admin/profile" },
-  { label: "Logout", path: "/login" },
+  { label: "Logout", path: "/admin/logout" },
 ];

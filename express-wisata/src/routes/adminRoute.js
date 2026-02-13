@@ -21,7 +21,13 @@ router.put('/kriteria/:id', kriteriaController.updateKriteria);
 router.delete('/kriteria/:id', kriteriaController.deleteKriteria);
 
 // --- MANAJEMEN SUB-KRITERIA ---
+// POST /api/v1/admin/subkriteria
+router.post('/subkriteria', kriteriaController.createSubKriteria);
+
 // PUT /api/v1/admin/subkriteria/:id (id_sub)
 router.put('/subkriteria/:id', kriteriaController.updateSubKriteria);
+
+// DELETE /api/v1/admin/subkriteria/:id (id_sub)
+router.delete('/subkriteria/:id', kriteriaController.deleteSubKriteria);
 
 module.exports = router;
