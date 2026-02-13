@@ -87,18 +87,6 @@ export default function AdminSubKriteria() {
     }
   };
 
-  const openAddDialog = () => {
-    setForm({
-      ...emptySubKriteria,
-      id_kriteria: selectedKriteria?.id_kriteria || null,
-      code_kriteria: selectedKriteria
-        ? `C${selectedKriteria.id_kriteria}`
-        : "",
-    });
-    setIsEdit(false);
-    setSubmitted(false);
-    setDialogVisible(true);
-  };
 
   const openEditDialog = (rowData) => {
     setForm({ ...rowData });
