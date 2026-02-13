@@ -94,8 +94,8 @@ export default function WisatawanDashboard() {
                     onClick={() => toggle(w.id_alternatif)}
                   >
                     {/* Judul wisata + Checkbox */}
-                    <div className="flex align-items-center justify-content-between p-3 border-bottom-1 border-200">
-                      <div className="font-bold text-800 text-lg">{w.nama_wisata}</div>
+                    <div className="flex align-items-center justify-content-between p-3 border-bottom-1 border-200" style={{ minHeight: "56px" }}>
+                      <div className="font-bold text-800 text-lg" style={{ lineHeight: "1.3" }}>{w.nama_wisata}</div>
                       <div onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={selected.includes(w.id_alternatif)}
@@ -105,7 +105,7 @@ export default function WisatawanDashboard() {
                     </div>
 
                     {/* Gambar wisata */}
-                    <div className="relative surface-200 flex align-items-center justify-content-center" style={{ height: "200px", overflow: "hidden" }}>
+                    <div className="surface-200 flex align-items-center justify-content-center" style={{ height: "200px", overflow: "hidden" }}>
                       {w.gambar ? (
                         <img
                           src={`${BACKEND_URL}/uploads/${w.gambar}`}
@@ -116,8 +116,9 @@ export default function WisatawanDashboard() {
                             e.target.style.display = "none";
                           }}
                         />
-                      ) : null}
-                      <i className="pi pi-image text-400" style={{ fontSize: "2.5rem", position: "absolute", zIndex: 0 }}></i>
+                      ) : (
+                        <i className="pi pi-image text-400" style={{ fontSize: "2.5rem" }}></i>
+                      )}
                     </div>
 
                     {/* Deskripsi wisata */}
