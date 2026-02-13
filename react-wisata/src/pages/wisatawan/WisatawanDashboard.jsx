@@ -94,9 +94,9 @@ export default function WisatawanDashboard() {
                     onClick={() => toggle(w.id_alternatif)}
                   >
                     {/* Judul wisata + Checkbox */}
-                    <div className="flex align-items-center justify-content-between p-3 border-bottom-1 border-200" style={{ minHeight: "60px", flexShrink: 0 }}>
-                      <div className="font-bold text-800 text-lg" style={{ lineHeight: "1.3" }}>{w.nama_wisata}</div>
-                      <div onClick={(e) => e.stopPropagation()}>
+                    <div className="flex align-items-start justify-content-between p-3 border-bottom-1 border-200" style={{ height: "64px", overflow: "hidden" }}>
+                      <div className="font-bold text-800" style={{ fontSize: "0.95rem", lineHeight: "1.3", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{w.nama_wisata}</div>
+                      <div className="ml-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={selected.includes(w.id_alternatif)}
                           onChange={() => toggle(w.id_alternatif)}
@@ -105,7 +105,7 @@ export default function WisatawanDashboard() {
                     </div>
 
                     {/* Gambar wisata */}
-                    <div className="surface-200 flex align-items-center justify-content-center" style={{ height: "200px", flexShrink: 0, overflow: "hidden" }}>
+                    <div className="surface-200 flex align-items-center justify-content-center" style={{ height: "200px", overflow: "hidden" }}>
                       {w.gambar ? (
                         <img
                           src={`${BACKEND_URL}/uploads/${w.gambar}`}
@@ -122,7 +122,7 @@ export default function WisatawanDashboard() {
                     </div>
 
                     {/* Deskripsi wisata */}
-                    <div className="p-3 overflow-auto" style={{ flex: "1 1 auto" }}>
+                    <div className="p-3" style={{ height: "120px", overflow: "hidden" }}>
                       <p className="text-sm text-600 mt-0 mb-0 line-height-3">
                         {w.deskripsi || "Deskripsi wisata belum tersedia."}
                       </p>
