@@ -122,7 +122,7 @@ export default function WisatawanDashboard() {
                     </div>
 
                     {/* Deskripsi wisata */}
-                    <div className="p-3" style={{ height: "120px", overflow: "hidden" }}>
+                    <div className="p-3" style={{ height: "160px", overflow: "hidden" }}>
                       <p className="text-sm text-600 mt-0 mb-0 line-height-3">
                         {w.deskripsi || "Deskripsi wisata belum tersedia."}
                       </p>
