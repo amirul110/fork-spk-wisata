@@ -44,6 +44,8 @@ export default function PilihWisata() {
   const [belumPilihWisata, setBelumPilihWisata] = useState(false);
   const [namaWisataDipilih, setNamaWisataDipilih] = useState([]);
   const [showConfirmDashboard, setShowConfirmDashboard] = useState(false);
+  const [gpsInitialPos, setGpsInitialPos] = useState(null);
+  const [mapDialogTitle, setMapDialogTitle] = useState("");
 
   // Guard: tampilkan pesan jika belum memilih wisata di dashboard
   useEffect(() => {
@@ -80,32 +82,47 @@ export default function PilihWisata() {
       return;
     }
     setLocationStatus("memuat");
-    setLocationMode("otomatis");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setUserLocation({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        });
-        setLocationStatus("aktif");
+        const gpsPos = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        };
+        // Tampilkan map dengan posisi GPS untuk konfirmasi
+        setGpsInitialPos(gpsPos);
+        setMapDialogTitle("Konfirmasi Lokasi GPS");
+        setLocationMode("otomatis");
+        setLocationStatus("belum");
+        setShowMapDialog(true);
       },
       () => {
         setLocationStatus("gagal");
       },
-      { enableHighAccuracy: true, timeout: 15000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
     );
   }, []);
 
   const handleMapSave = (loc) => {
     setUserLocation(loc);
     setLocationStatus("aktif");
-    setLocationMode("manual");
+    // Preserve locationMode set before opening dialog
+    if (!locationMode) setLocationMode("manual");
     setShowMapDialog(false);
+    setGpsInitialPos(null);
   };
 
   const handleMapBatal = () => {
     setShowMapDialog(false);
+    setGpsInitialPos(null);
     setTimeout(() => setShowLocationChoice(true), 300);
+  };
+
+  const handleManualMap = () => {
+    setShowLocationChoice(false);
+    setGpsInitialPos(null);
+    setMapDialogTitle("Pilih Lokasi Manual");
+    setLocationMode("manual");
+    setShowMapDialog(true);
   };
 
   const handleBobotChange = (kriteriaId, value) => {
@@ -282,8 +299,7 @@ export default function PilihWisata() {
                 severity="info"
                 outlined
                 onClick={() => {
-                  setShowLocationChoice(false);
-                  setShowMapDialog(true);
+                  handleManualMap();
                 }}
               />
             </div>
@@ -394,6 +410,8 @@ export default function PilihWisata() {
           visible={showMapDialog}
           onHide={handleMapBatal}
           onSave={handleMapSave}
+          initialPosition={gpsInitialPos}
+          headerTitle={mapDialogTitle}
         />
       </main>
     </div>

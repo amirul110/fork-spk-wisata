@@ -61,13 +61,22 @@ function FlyToPosition({ position }) {
   return null;
 }
 
-export default function MapPickerDialog({ visible, onHide, onSave }) {
+export default function MapPickerDialog({ visible, onHide, onSave, initialPosition, headerTitle }) {
   // Default: Kabupaten Magetan, Jawa Timur
-  const [markerPos, setMarkerPos] = useState({ lat: -7.6467, lng: 111.3593 });
+  const defaultPos = { lat: -7.6467, lng: 111.3593 };
+  const [markerPos, setMarkerPos] = useState(initialPosition || defaultPos);
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [flyTarget, setFlyTarget] = useState(null);
+
+  // Update marker when initialPosition changes (e.g. GPS auto result)
+  useEffect(() => {
+    if (initialPosition) {
+      setMarkerPos(initialPosition);
+      setFlyTarget(initialPosition);
+    }
+  }, [initialPosition]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -122,7 +131,7 @@ export default function MapPickerDialog({ visible, onHide, onSave }) {
 
   return (
     <Dialog
-      header="Pilih Lokasi Manual"
+      header={headerTitle || "Pilih Lokasi Manual"}
       visible={visible}
       onHide={onHide}
       style={{ width: "700px", maxWidth: "95vw" }}
