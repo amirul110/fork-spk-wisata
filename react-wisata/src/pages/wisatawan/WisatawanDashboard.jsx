@@ -81,20 +81,20 @@ export default function WisatawanDashboard() {
               className="w-full"
             />
           ) : (
-            <div className="grid">
+            <div className="grid" style={{ alignItems: "stretch" }}>
               {wisataList.map((w) => (
-                <div key={w.id_alternatif} className="col-12 md:col-6 lg:col-4 p-2">
+                <div key={w.id_alternatif} className="col-12 md:col-6 lg:col-4 p-2" style={{ display: "flex" }}>
                   <div
-                    className={`border-round-lg border-1 cursor-pointer transition-colors transition-duration-200 overflow-hidden flex flex-column shadow-1 ${
+                    className={`border-round-lg border-1 cursor-pointer transition-colors transition-duration-200 overflow-hidden shadow-1 ${
                       selected.includes(w.id_alternatif)
                         ? "border-primary bg-blue-50"
                         : "border-300 hover:border-primary"
                     }`}
-                    style={{ height: "420px" }}
+                    style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}
                     onClick={() => toggle(w.id_alternatif)}
                   >
                     {/* Judul wisata + Checkbox */}
-                    <div className="flex align-items-center justify-content-between p-3 border-bottom-1 border-200" style={{ minHeight: "56px" }}>
+                    <div className="flex align-items-center justify-content-between p-3 border-bottom-1 border-200" style={{ minHeight: "60px", flexShrink: 0 }}>
                       <div className="font-bold text-800 text-lg" style={{ lineHeight: "1.3" }}>{w.nama_wisata}</div>
                       <div onClick={(e) => e.stopPropagation()}>
                         <Checkbox
@@ -105,7 +105,7 @@ export default function WisatawanDashboard() {
                     </div>
 
                     {/* Gambar wisata */}
-                    <div className="surface-200 flex align-items-center justify-content-center" style={{ height: "200px", overflow: "hidden" }}>
+                    <div className="surface-200 flex align-items-center justify-content-center" style={{ height: "200px", flexShrink: 0, overflow: "hidden" }}>
                       {w.gambar ? (
                         <img
                           src={`${BACKEND_URL}/uploads/${w.gambar}`}
@@ -122,7 +122,7 @@ export default function WisatawanDashboard() {
                     </div>
 
                     {/* Deskripsi wisata */}
-                    <div className="p-3 flex-1 overflow-hidden">
+                    <div className="p-3 overflow-auto" style={{ flex: "1 1 auto" }}>
                       <p className="text-sm text-600 mt-0 mb-0 line-height-3">
                         {w.deskripsi || "Deskripsi wisata belum tersedia."}
                       </p>
