@@ -1,6 +1,7 @@
 import "../dashboard.css";
 import Sidebar from "../../components/Sidebar";
 import { adminMenu } from "../../app/adminMenu";
+import { Button } from "primereact/button";
 
 export default function AdminAlternatif() {
   // dummy data (nanti ganti dari backend)
@@ -71,19 +72,22 @@ export default function AdminAlternatif() {
                   <td>{d.fasilitas}</td>
                   <td>{d.waktu}</td>
                   <td>
-                    <button
-                      className="btn"
-                      style={{ marginRight: 6 }}
-                      onClick={() => handleEdit(d.id)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn"
-                      onClick={() => handleDelete(d.id)}
-                    >
-                      Hapus
-                    </button>
+                    <div className="flex gap-2">
+                      <Button
+                        icon="pi pi-pencil"
+                        className="p-button-rounded p-button-info p-button-sm"
+                        tooltip="Edit"
+                        tooltipOptions={{ position: "top" }}
+                        onClick={() => handleEdit(d.id)}
+                      />
+                      <Button
+                        icon="pi pi-trash"
+                        className="p-button-rounded p-button-danger p-button-sm"
+                        tooltip="Hapus"
+                        tooltipOptions={{ position: "top" }}
+                        onClick={() => handleDelete(d.id)}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
