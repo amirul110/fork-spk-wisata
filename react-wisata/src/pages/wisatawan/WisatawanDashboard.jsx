@@ -90,7 +90,7 @@ export default function WisatawanDashboard() {
                         ? "border-primary bg-blue-50"
                         : "border-300 hover:border-primary"
                     }`}
-                    style={{ minHeight: "360px" }}
+                    style={{ height: "420px" }}
                     onClick={() => toggle(w.id_alternatif)}
                   >
                     {/* Judul wisata + Checkbox */}
@@ -121,7 +121,7 @@ export default function WisatawanDashboard() {
                     </div>
 
                     {/* Deskripsi wisata */}
-                    <div className="p-3 flex-1 flex flex-column">
+                    <div className="p-3 flex-1 overflow-hidden">
                       <p className="text-sm text-600 mt-0 mb-0 line-height-3">
                         {w.deskripsi || "Deskripsi wisata belum tersedia."}
                       </p>
