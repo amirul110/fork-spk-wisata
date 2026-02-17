@@ -215,6 +215,11 @@ export default function AdminKriteria() {
           placeholder="Cari kriteria..."
         />
       </span>
+      <Button 
+        label="Tambah Data" 
+        icon="pi pi-plus" 
+        onClick={openAddDialog}
+      />
     </div>
   );
 
