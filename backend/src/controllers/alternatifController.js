@@ -45,17 +45,20 @@ module.exports = {
   },
 
   // [POST] TAMBAH DATA BARU (CREATE)
-// [POST] TAMBAH DATA BARU (CREATE)
   createAlternatif: async (req, res) => {
     try {
       const { 
         nama_wisata, latitude, longitude, 
-        harga_tiket, fasilitas, rating_gmaps, waktu_kunjungan 
+        harga_tiket, fasilitas, rating_gmaps, waktu_kunjungan,
+        deskripsi
       } = req.body;
 
       if (!nama_wisata || !latitude || !longitude) {
         return res.status(400).json({ message: 'Nama dan Lokasi (Lat/Long) wajib diisi!' });
       }
+
+      // Get uploaded file path if exists
+      const gambar = req.file ? req.file.filename : null;
 
       // 1. Insert ke database
       const [newId] = await db(TABLES.WISATA).insert({
@@ -66,6 +69,8 @@ module.exports = {
         fasilitas: fasilitas || '',
         rating_gmaps: rating_gmaps || 0,
         waktu_kunjungan: waktu_kunjungan || '',
+        deskripsi: deskripsi || '',
+        gambar: gambar,
         created_at: new Date(),
         updated_at: new Date()
       });
@@ -76,7 +81,7 @@ module.exports = {
       return res.status(201).json({
         status: API_STATUS.SUCCESS,
         message: 'Berhasil menambahkan wisata baru',
-        data: newData // <--- Sekarang menampilkan full data
+        data: newData
       });
 
     } catch (error) {
@@ -91,7 +96,8 @@ module.exports = {
       const { id } = req.params;
       const { 
         nama_wisata, latitude, longitude, 
-        harga_tiket, fasilitas, rating_gmaps, waktu_kunjungan 
+        harga_tiket, fasilitas, rating_gmaps, waktu_kunjungan,
+        deskripsi
       } = req.body;
 
       const exists = await db(TABLES.WISATA).where('id_alternatif', id).first();
@@ -99,8 +105,8 @@ module.exports = {
         return res.status(404).json({ message: 'Data wisata tidak ditemukan' });
       }
 
-      // 1. Lakukan Update
-      await db(TABLES.WISATA).where('id_alternatif', id).update({
+      // Prepare update data
+      const updateData = {
         nama_wisata,
         latitude,
         longitude,
@@ -108,8 +114,17 @@ module.exports = {
         fasilitas,
         rating_gmaps,
         waktu_kunjungan,
+        deskripsi: deskripsi || '',
         updated_at: new Date()
-      });
+      };
+
+      // Add image if uploaded
+      if (req.file) {
+        updateData.gambar = req.file.filename;
+      }
+
+      // 1. Lakukan Update
+      await db(TABLES.WISATA).where('id_alternatif', id).update(updateData);
 
       // 2. Ambil Data Terbaru setelah diupdate
       const updatedData = await db(TABLES.WISATA).where('id_alternatif', id).first();
@@ -117,7 +132,7 @@ module.exports = {
       return res.json({
         status: API_STATUS.SUCCESS,
         message: 'Berhasil mengupdate data wisata',
-        data: updatedData // <--- Menampilkan data yang sudah berubah
+        data: updatedData
       });
 
     } catch (error) {

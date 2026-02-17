@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import "../dashboard.css";
 import Sidebar from "../../components/Sidebar";
 import { wisatawanMenu } from "../../app/wisatawanMenu";
@@ -8,12 +9,15 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
+import { Dialog } from "primereact/dialog";
 import { formatTanggalIndonesia } from "../../utils/formatTanggal";
 
 export default function HasilRekomendasi() {
   const location = useLocation();
   const nav = useNavigate();
   const hasil = location.state?.hasil || [];
+  const [detailDialog, setDetailDialog] = useState(false);
+  const [selectedWisata, setSelectedWisata] = useState(null);
 
   const hargaTemplate = (rowData) =>
     `Rp ${Number(rowData.harga_tiket).toLocaleString("id-ID")}`;
@@ -22,6 +26,20 @@ export default function HasilRekomendasi() {
     <Tag
       value={`#${rowData.peringkat_ke}`}
       severity={rowData.peringkat_ke === 1 ? "success" : rowData.peringkat_ke <= 3 ? "info" : null}
+    />
+  );
+
+  const detailTemplate = (rowData) => (
+    <Button
+      icon="pi pi-info-circle"
+      severity="info"
+      size="small"
+      rounded
+      onClick={() => {
+        setSelectedWisata(rowData);
+        setDetailDialog(true);
+      }}
+      tooltip="Lihat Detail Kriteria"
     />
   );
 
@@ -70,8 +88,85 @@ export default function HasilRekomendasi() {
                 <Column header="Harga Tiket" body={hargaTemplate} style={{ width: "150px" }} />
                 <Column field="jarak_dari_anda" header="Jarak dari Anda" style={{ width: "150px" }} />
                 <Column field="skor_rekomendasi" header="Skor Akhir WP" style={{ width: "140px" }} />
+                <Column header="Detail" body={detailTemplate} style={{ width: "80px" }} />
               </DataTable>
             </Card>
+
+            <Dialog
+              visible={detailDialog}
+              header="Detail Informasi Kriteria"
+              modal
+              style={{ width: "600px", maxWidth: "95vw" }}
+              onHide={() => setDetailDialog(false)}
+            >
+              {selectedWisata && (
+                <div className="flex flex-column gap-3">
+                  <h3 className="text-xl font-bold text-800 mt-0 mb-2">
+                    {selectedWisata.nama_wisata}
+                  </h3>
+                  <hr className="mt-0 mb-2" />
+                  
+                  <div className="grid">
+                    <div className="col-12 md:col-6">
+                      <div className="mb-3">
+                        <span className="font-bold text-600 text-sm">Harga Tiket</span>
+                        <div className="text-800 font-semibold mt-1">
+                          Rp {Number(selectedWisata.harga_tiket).toLocaleString("id-ID")}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="col-12 md:col-6">
+                      <div className="mb-3">
+                        <span className="font-bold text-600 text-sm">Rating Google Maps</span>
+                        <div className="text-800 font-semibold mt-1">
+                          <i className="pi pi-star-fill text-yellow-500 mr-1"></i>
+                          {selectedWisata.rating_gmaps}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="col-12 md:col-6">
+                      <div className="mb-3">
+                        <span className="font-bold text-600 text-sm">Jarak dari Anda</span>
+                        <div className="text-800 font-semibold mt-1">
+                          <i className="pi pi-map-marker text-red-500 mr-1"></i>
+                          {selectedWisata.jarak_dari_anda}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="col-12 md:col-6">
+                      <div className="mb-3">
+                        <span className="font-bold text-600 text-sm">Waktu Kunjungan</span>
+                        <div className="text-800 font-semibold mt-1">
+                          <i className="pi pi-clock text-blue-500 mr-1"></i>
+                          {selectedWisata.waktu_kunjungan}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="col-12">
+                      <div className="mb-3">
+                        <span className="font-bold text-600 text-sm">Fasilitas</span>
+                        <div className="text-800 mt-1">
+                          {selectedWisata.fasilitas}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="col-12">
+                      <div className="mb-0">
+                        <span className="font-bold text-600 text-sm">Skor Rekomendasi (WP)</span>
+                        <div className="text-800 font-semibold mt-1">
+                          <Tag value={selectedWisata.skor_rekomendasi} severity="success" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Dialog>
 
             <div className="flex justify-content-center gap-3">
               <Button

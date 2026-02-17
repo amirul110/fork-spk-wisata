@@ -5,6 +5,9 @@ import { Button } from 'primereact/button'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
 import { InputNumber } from 'primereact/inputnumber'
+import { InputTextarea } from 'primereact/inputtextarea'
+import { FileUpload } from 'primereact/fileupload'
+import { Image } from 'primereact/image'
 import { Toast } from 'primereact/toast'
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog'
 import { ProgressSpinner } from 'primereact/progressspinner'
@@ -28,7 +31,9 @@ const emptyForm = {
   rating_gmaps: null,
   harga_tiket: null,
   fasilitas: '',
-  waktu_kunjungan: ''
+  waktu_kunjungan: '',
+  deskripsi: '',
+  gambar: null
 }
 
 export default function AdminAlternatif () {
@@ -42,6 +47,8 @@ export default function AdminAlternatif () {
   const [globalFilter, setGlobalFilter] = useState('')
   const [first, setFirst] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const fileUploadRef = useRef(null)
   const toast = useRef(null)
 
   useEffect(() => {
@@ -63,6 +70,7 @@ export default function AdminAlternatif () {
 
   const openNew = () => {
     setForm({ ...emptyForm })
+    setSelectedFile(null)
     setIsEdit(false)
     setEditId(null)
     setDialogVisible(true)
@@ -70,6 +78,7 @@ export default function AdminAlternatif () {
 
   const openEdit = rowData => {
     setForm({ ...rowData })
+    setSelectedFile(null)
     setIsEdit(true)
     setEditId(rowData.id_alternatif)
     setDialogVisible(true)
@@ -78,6 +87,10 @@ export default function AdminAlternatif () {
   const hideDialog = () => {
     setDialogVisible(false)
     setForm({ ...emptyForm })
+    setSelectedFile(null)
+    if (fileUploadRef.current) {
+      fileUploadRef.current.clear()
+    }
   }
 
   const saveData = async () => {
@@ -97,10 +110,25 @@ export default function AdminAlternatif () {
 
     setSaving(true)
     try {
+      // Create FormData for multipart/form-data
+      const formData = new FormData()
+      formData.append('nama_wisata', form.nama_wisata)
+      formData.append('latitude', form.latitude)
+      formData.append('longitude', form.longitude)
+      formData.append('rating_gmaps', form.rating_gmaps || 0)
+      formData.append('harga_tiket', form.harga_tiket || 0)
+      formData.append('fasilitas', form.fasilitas || '')
+      formData.append('waktu_kunjungan', form.waktu_kunjungan || '')
+      formData.append('deskripsi', form.deskripsi || '')
+      
+      if (selectedFile) {
+        formData.append('gambar', selectedFile)
+      }
+
       if (isEdit) {
-        await updateAlternatif(editId, form)
+        await updateAlternatif(editId, formData)
       } else {
-        await createAlternatif(form)
+        await createAlternatif(formData)
       }
 
       toast.current.show({
@@ -156,6 +184,21 @@ export default function AdminAlternatif () {
     </div>
   )
 
+  const imageTemplate = (rowData) => {
+    if (rowData.gambar) {
+      const baseURL = import.meta.env.VITE_API_BASE_URL.replace('/api/v1', '')
+      return (
+        <Image 
+          src={`${baseURL}/uploads/${rowData.gambar}`} 
+          alt={rowData.nama_wisata}
+          width="80"
+          preview
+        />
+      )
+    }
+    return <span className="text-400">-</span>
+  }
+
   const rowNumber = (_rowData, options) => first + options.rowIndex + 1
 
   return (
@@ -199,6 +242,7 @@ export default function AdminAlternatif () {
           >
             <Column header='No' body={rowNumber} style={{ width: '60px' }} />
             <Column field='nama_wisata' header='Nama Wisata' sortable />
+            <Column header='Gambar' body={imageTemplate} style={{ width: '100px' }} />
             <Column field='latitude' header='Latitude' sortable />
             <Column field='longitude' header='Longitude' sortable />
             <Column field='rating_gmaps' header='Rating' sortable />
@@ -239,6 +283,33 @@ export default function AdminAlternatif () {
               onChange={e => setForm({ ...form, nama_wisata: e.target.value })}
               placeholder='Nama Wisata'
             />
+
+            <InputTextarea
+              value={form.deskripsi}
+              onChange={e => setForm({ ...form, deskripsi: e.target.value })}
+              placeholder='Deskripsi Wisata'
+              rows={3}
+            />
+
+            <div>
+              <label className='block mb-2 font-semibold text-sm'>Gambar Wisata</label>
+              <FileUpload
+                ref={fileUploadRef}
+                mode="basic"
+                name="gambar"
+                accept="image/*"
+                maxFileSize={5000000}
+                onSelect={(e) => setSelectedFile(e.files[0])}
+                onClear={() => setSelectedFile(null)}
+                chooseLabel={selectedFile ? selectedFile.name : "Pilih Gambar"}
+                auto={false}
+              />
+              {isEdit && form.gambar && !selectedFile && (
+                <div className="mt-2">
+                  <span className="text-sm text-500">Gambar saat ini: {form.gambar}</span>
+                </div>
+              )}
+            </div>
 
             <InputNumber
               value={form.latitude}
