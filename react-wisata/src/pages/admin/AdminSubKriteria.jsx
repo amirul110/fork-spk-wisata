@@ -445,7 +445,11 @@ export default function AdminSubKriteria() {
               mode="decimal"
               minFractionDigits={0}
               maxFractionDigits={2}
+              placeholder="Contoh: 8.00 atau 17.00"
             />
+            <small className="text-500 block mt-1">
+              Format: gunakan format 24 jam dalam desimal (misal: 8.00, 17.30)
+            </small>
           </div>
 
           <div className="field mb-3">
@@ -461,7 +465,11 @@ export default function AdminSubKriteria() {
               mode="decimal"
               minFractionDigits={0}
               maxFractionDigits={2}
+              placeholder="Contoh: 12.00 atau 22.00"
             />
+            <small className="text-500 block mt-1">
+              Format: gunakan format 24 jam dalam desimal (misal: 12.00, 22.00)
+            </small>
           </div>
         </Dialog>
       </main>

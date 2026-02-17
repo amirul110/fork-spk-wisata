@@ -24,6 +24,8 @@ import {
   deleteAlternatif
 } from '../../services/alternatif.service'
 
+import { getSubKriteriaByKriteria } from '../../services/subkriteria.service'
+
 const emptyForm = {
   nama_wisata: '',
   latitude: null,
@@ -50,12 +52,24 @@ export default function AdminAlternatif () {
   const [first, setFirst] = useState(0)
   const [saving, setSaving] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
+  const [waktuKunjunganSubKriteria, setWaktuKunjunganSubKriteria] = useState([])
   const fileUploadRef = useRef(null)
   const toast = useRef(null)
 
   useEffect(() => {
     fetchData()
+    fetchWaktuKunjunganSubKriteria()
   }, [])
+
+  const fetchWaktuKunjunganSubKriteria = async () => {
+    try {
+      // ID 5 is for "Waktu Kunjungan" criteria
+      const res = await getSubKriteriaByKriteria(5)
+      setWaktuKunjunganSubKriteria(res.data?.data?.list_sub_kriteria || [])
+    } catch (err) {
+      console.error('Gagal mengambil sub-kriteria waktu kunjungan:', err)
+    }
+  }
 
   const fetchData = async () => {
     setLoading(true)
@@ -204,6 +218,53 @@ export default function AdminAlternatif () {
     if (rating >= 3.5) return { category: 'Cukup (3.5 - 3.9)', bobot: 3 }
     if (rating >= 3.0) return { category: 'Buruk (3.0 - 3.4)', bobot: 2 }
     return { category: 'Sangat Buruk (< 3.0)', bobot: 1 }
+  }
+
+  const getWaktuKunjunganSubKriteria = (waktuText) => {
+    if (!waktuText || !waktuText.trim()) {
+      return { category: '-', bobot: 0, match: null }
+    }
+
+    // Parse time from text (e.g., "08.00 - 17.00" or "8:00 - 17:00")
+    const timePattern = /(\d{1,2})[\.:h](\d{0,2})\s*-\s*(\d{1,2})[\.:h](\d{0,2})/
+    const match = waktuText.match(timePattern)
+    
+    if (!match) {
+      // Check for special cases like "24 jam", "24 Jam", "Bebas", etc.
+      if (/24\s*jam|bebas|setiap\s*hari/i.test(waktuText)) {
+        const subKriteria = waktuKunjunganSubKriteria.find(sk => 
+          sk.batas_bawah === 0 && sk.batas_atas === 24
+        )
+        if (subKriteria) {
+          return {
+            category: subKriteria.nama_sub_kriteria,
+            bobot: subKriteria.nilai_bobot,
+            match: 'special'
+          }
+        }
+      }
+      return { category: 'Format tidak dikenali', bobot: 0, match: null }
+    }
+
+    // Convert to decimal hours
+    const startHour = parseInt(match[1]) + (match[2] ? parseInt(match[2]) / 60 : 0)
+    const endHour = parseInt(match[3]) + (match[4] ? parseInt(match[4]) / 60 : 0)
+    
+    // Find matching sub-kriteria based on time range
+    for (const subKriteria of waktuKunjunganSubKriteria) {
+      if (subKriteria.batas_bawah !== null && subKriteria.batas_atas !== null) {
+        // Check if the start time falls within the sub-kriteria range
+        if (startHour >= subKriteria.batas_bawah && startHour <= subKriteria.batas_atas) {
+          return {
+            category: subKriteria.nama_sub_kriteria,
+            bobot: subKriteria.nilai_bobot,
+            match: 'time'
+          }
+        }
+      }
+    }
+
+    return { category: 'Tidak ada kategori yang cocok', bobot: 0, match: null }
   }
 
   const showFacilityClassification = (rowData) => {
@@ -467,6 +528,14 @@ export default function AdminAlternatif () {
               <small className='text-500 block mt-1'>
                 Format: gunakan format 24 jam (misal: 17.00 - 22.00) atau string seperti "24 jam"
               </small>
+              {form.waktu_kunjungan && form.waktu_kunjungan.trim() && (
+                <div className='mt-2 p-2 bg-orange-50 border-round'>
+                  <small className='text-600'>
+                    <strong>Sub-Kriteria:</strong> {getWaktuKunjunganSubKriteria(form.waktu_kunjungan).category} 
+                    {' '}<span className='text-orange-600'>(Bobot: {getWaktuKunjunganSubKriteria(form.waktu_kunjungan).bobot})</span>
+                  </small>
+                </div>
+              )}
             </div>
           </div>
         </Dialog>
@@ -483,6 +552,7 @@ export default function AdminAlternatif () {
             const facilityClassification = calculateFacilitySubKriteria(selectedWisataForFacility.fasilitas)
             const ratingClassification = getRatingSubKriteria(selectedWisataForFacility.rating_gmaps)
             const hargaClassification = getHargaSubKriteria(selectedWisataForFacility.harga_tiket)
+            const waktuKunjunganClassification = getWaktuKunjunganSubKriteria(selectedWisataForFacility.waktu_kunjungan)
             
             return (
               <div className='flex flex-column gap-3'>
@@ -558,7 +628,7 @@ export default function AdminAlternatif () {
                 </div>
 
                 {/* Fasilitas Sub-Kriteria */}
-                <div className='surface-50 border-round p-3'>
+                <div className='surface-50 border-round p-3 mb-2'>
                   <h4 className='text-lg font-bold text-purple-700 mt-0 mb-2'>Fasilitas</h4>
                   <div className='grid'>
                     <div className='col-12'>
@@ -590,6 +660,39 @@ export default function AdminAlternatif () {
                         <p className='text-600 text-sm m-0'>
                           <strong>Keterangan:</strong> Berdasarkan kriteria fasilitas, wisata ini masuk kategori 
                           "<strong>{facilityClassification.category}</strong>" dengan {facilityClassification.count} fasilitas yang tersedia.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Waktu Kunjungan Sub-Kriteria */}
+                <div className='surface-50 border-round p-3'>
+                  <h4 className='text-lg font-bold text-orange-700 mt-0 mb-2'>Waktu Kunjungan</h4>
+                  <div className='grid'>
+                    <div className='col-12'>
+                      <span className='font-bold text-600 text-sm block mb-1'>Waktu Kunjungan</span>
+                      <div className='text-800 font-semibold text-xl'>
+                        {selectedWisataForFacility.waktu_kunjungan || '-'}
+                      </div>
+                    </div>
+                    <div className='col-12 md:col-6 mt-2'>
+                      <span className='font-bold text-600 text-sm block mb-1'>Kategori Sub-Kriteria</span>
+                      <div className='text-800 font-semibold text-lg'>
+                        {waktuKunjunganClassification.category}
+                      </div>
+                    </div>
+                    <div className='col-12 md:col-6 mt-2'>
+                      <span className='font-bold text-600 text-sm block mb-1'>Nilai Bobot</span>
+                      <div className='text-orange-600 font-semibold text-2xl'>
+                        {waktuKunjunganClassification.bobot}
+                      </div>
+                    </div>
+                    <div className='col-12 mt-2'>
+                      <div className='bg-orange-100 border-round p-2'>
+                        <p className='text-600 text-sm m-0'>
+                          <strong>Keterangan:</strong> Berdasarkan kriteria waktu kunjungan, wisata ini masuk kategori 
+                          "<strong>{waktuKunjunganClassification.category}</strong>" dengan waktu {selectedWisataForFacility.waktu_kunjungan || '-'}.
                         </p>
                       </div>
                     </div>
