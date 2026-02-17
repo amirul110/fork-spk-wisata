@@ -15,7 +15,8 @@ module.exports = {
             'id_kriteria', 
             'nama_kriteria', 
             'jenis',          // cost / benefit
-            'bobot_prioritas' 
+            'bobot_prioritas',
+            'deskripsi'       // Tambah deskripsi untuk preferensi
         ) 
         .orderBy('id_kriteria', 'asc');
 
@@ -86,7 +87,7 @@ module.exports = {
   // [POST] Tambah Kriteria Baru
   createKriteria: async (req, res) => {
     try {
-      const { nama_kriteria, jenis, bobot_prioritas } = req.body;
+      const { nama_kriteria, jenis, bobot_prioritas, deskripsi } = req.body;
 
       // Validasi sederhana
       if (!nama_kriteria || !jenis || !bobot_prioritas) {
@@ -96,7 +97,8 @@ module.exports = {
       await db(KRITERIA_TABLE).insert({
         nama_kriteria,
         jenis, // 'cost' atau 'benefit'
-        bobot_prioritas
+        bobot_prioritas,
+        deskripsi: deskripsi || null // Optional field
       });
 
       return res.status(201).json({
@@ -113,7 +115,7 @@ module.exports = {
   updateKriteria: async (req, res) => {
     try {
       const { id } = req.params; // id_kriteria dari URL
-      const { nama_kriteria, jenis, bobot_prioritas } = req.body;
+      const { nama_kriteria, jenis, bobot_prioritas, deskripsi } = req.body;
 
       await db(KRITERIA_TABLE)
         .where('id_kriteria', id)
@@ -121,6 +123,7 @@ module.exports = {
           nama_kriteria,
           jenis,
           bobot_prioritas,
+          deskripsi: deskripsi || null,
           updated_at: new Date()
         });
 
