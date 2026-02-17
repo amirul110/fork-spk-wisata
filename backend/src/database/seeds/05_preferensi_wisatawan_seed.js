@@ -1,0 +1,21 @@
+/**
+ * @param { import("knex").Knex } knex
+ * @returns { Promise<void> } 
+ */
+exports.seed = async function(knex) {
+  await knex('preferensi_wisatawan').insert([
+    {
+      id_preferensi: 1,
+      id_wisatawan: 1, // User Budi
+      waktu_akses: knex.fn.now(),
+      user_latitude: -8.650000,
+      user_longitude: 115.210000,
+      
+      // User memilih kriteria:
+      id_sub_harga: 2,             // Murah (ID 2)
+      id_sub_fasilitas: 7,         // Lengkap (ID 7)
+      id_sub_rating: 17,           // Baik (ID 17)
+      id_sub_waktu_kunjungan: 23   // Sore (ID 23)
+    }
+  ]);
+};
