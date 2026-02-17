@@ -146,6 +146,7 @@ module.exports = {
           user: {
             id: userId,
             email: user.email,
+            username: user.username,
             role: role
           }
         }

@@ -8,7 +8,7 @@ import { Password } from "primereact/password";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
 import { updateProfile } from "../../services/auth.service";
-import { getAuth } from "../../store/authStore";
+import { getAuth, setAuth } from "../../store/authStore";
 
 export default function AdminProfile() {
   const toast = useRef(null);
@@ -56,15 +56,36 @@ export default function AdminProfile() {
 
     setSaving(true);
     try {
-      await updateProfile(form.username, form.email, form.password || undefined);
-      setProfile({ ...form, password: "" });
-      setForm({ ...form, password: "" });
+      const response = await updateProfile(form.username, form.email, form.password || undefined);
+      
+      // Update localStorage with new user data
+      const auth = getAuth();
+      if (auth && response.data) {
+        const updatedAuth = {
+          ...auth,
+          user: {
+            ...auth.user,
+            username: response.data.username || form.username,
+            email: response.data.email || form.email,
+          }
+        };
+        setAuth(updatedAuth);
+      }
+      
+      // Update local state
+      const newProfile = { 
+        username: response.data.username || form.username, 
+        email: response.data.email || form.email, 
+        password: "" 
+      };
+      setProfile(newProfile);
+      setForm(newProfile);
       setIsEdit(false);
       
       toast.current.show({
         severity: "success",
         summary: "Berhasil",
-        detail: "Profil berhasil diperbarui. Silakan login kembali jika mengganti email/password.",
+        detail: "Profil berhasil diperbarui.",
         life: 5000,
       });
     } catch (error) {

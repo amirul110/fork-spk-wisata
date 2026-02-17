@@ -39,7 +39,8 @@ export default function HasilRekomendasi() {
         setSelectedWisata(rowData);
         setDetailDialog(true);
       }}
-      tooltip="Lihat Detail Kriteria"
+      tooltip="Lihat Detail Wisata"
+      tooltipOptions={{ position: "top" }}
     />
   );
 
@@ -94,7 +95,7 @@ export default function HasilRekomendasi() {
 
             <Dialog
               visible={detailDialog}
-              header="Detail Informasi Kriteria"
+              header="Detail Informasi Wisata"
               modal
               style={{ width: "600px", maxWidth: "95vw" }}
               onHide={() => setDetailDialog(false)}
