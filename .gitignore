@@ -1,6 +1,6 @@
-node_modules/
 *.zip
 *.sql
-.env
-express-wisata/
+node_modules/
 backendv1/
+express-wisata/
+.env
