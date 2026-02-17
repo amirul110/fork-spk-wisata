@@ -41,6 +41,8 @@ export default function AdminAlternatif () {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [dialogVisible, setDialogVisible] = useState(false)
+  const [facilityDialogVisible, setFacilityDialogVisible] = useState(false)
+  const [selectedWisataForFacility, setSelectedWisataForFacility] = useState(null)
   const [isEdit, setIsEdit] = useState(false)
   const [editId, setEditId] = useState(null)
   const [form, setForm] = useState({ ...emptyForm })
@@ -165,6 +167,31 @@ export default function AdminAlternatif () {
     })
   }
 
+  const calculateFacilitySubKriteria = (facilityText) => {
+    if (!facilityText || !facilityText.trim()) {
+      return { count: 0, category: 'Sangat Kurang', range: '0-1 item', bobot: 1 }
+    }
+    
+    const count = facilityText.split(',').map(f => f.trim()).filter(f => f).length
+    
+    if (count >= 6) {
+      return { count, category: 'Sangat Lengkap', range: '> 5 item', bobot: 5 }
+    } else if (count >= 4) {
+      return { count, category: 'Lengkap', range: '4-5 item', bobot: 4 }
+    } else if (count === 3) {
+      return { count, category: 'Cukup', range: '3 item', bobot: 3 }
+    } else if (count === 2) {
+      return { count, category: 'Kurang', range: '2 item', bobot: 2 }
+    } else {
+      return { count, category: 'Sangat Kurang', range: '0-1 item', bobot: 1 }
+    }
+  }
+
+  const showFacilityClassification = (rowData) => {
+    setSelectedWisataForFacility(rowData)
+    setFacilityDialogVisible(true)
+  }
+
   const actionTemplate = rowData => (
     <div className='flex gap-2'>
       <Button
@@ -173,6 +200,7 @@ export default function AdminAlternatif () {
         size='small'
         rounded
         onClick={() => openEdit(rowData)}
+        tooltip="Edit"
       />
       <Button
         icon='pi pi-trash'
@@ -180,6 +208,15 @@ export default function AdminAlternatif () {
         size='small'
         rounded
         onClick={() => confirmDelete(rowData)}
+        tooltip="Hapus"
+      />
+      <Button
+        icon='pi pi-chart-bar'
+        severity='warning'
+        size='small'
+        rounded
+        onClick={() => showFacilityClassification(rowData)}
+        tooltip="Klasifikasi Fasilitas"
       />
     </div>
   )
@@ -355,6 +392,83 @@ export default function AdminAlternatif () {
               placeholder='Waktu Kunjungan'
             />
           </div>
+        </Dialog>
+
+        {/* Dialog Klasifikasi Fasilitas */}
+        <Dialog
+          visible={facilityDialogVisible}
+          header="Klasifikasi Sub-Kriteria Fasilitas"
+          modal
+          style={{ width: '600px', maxWidth: '95vw' }}
+          onHide={() => setFacilityDialogVisible(false)}
+        >
+          {selectedWisataForFacility && (() => {
+            const classification = calculateFacilitySubKriteria(selectedWisataForFacility.fasilitas)
+            return (
+              <div className='flex flex-column gap-3'>
+                <h3 className='text-xl font-bold text-800 mt-0 mb-2'>
+                  {selectedWisataForFacility.nama_wisata}
+                </h3>
+                <hr className='mt-0 mb-2' />
+                
+                <div className='grid'>
+                  <div className='col-12'>
+                    <div className='mb-3'>
+                      <span className='font-bold text-600 text-sm'>Fasilitas</span>
+                      <div className='text-800 mt-1'>
+                        {selectedWisataForFacility.fasilitas || '-'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className='col-12 md:col-6'>
+                    <div className='mb-3'>
+                      <span className='font-bold text-600 text-sm'>Jumlah Fasilitas</span>
+                      <div className='text-800 font-semibold text-2xl mt-1'>
+                        {classification.count} item
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className='col-12 md:col-6'>
+                    <div className='mb-3'>
+                      <span className='font-bold text-600 text-sm'>Kategori Sub-Kriteria</span>
+                      <div className='text-800 font-semibold text-2xl mt-1'>
+                        {classification.category}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className='col-12 md:col-6'>
+                    <div className='mb-3'>
+                      <span className='font-bold text-600 text-sm'>Range</span>
+                      <div className='text-800 mt-1'>
+                        {classification.range}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className='col-12 md:col-6'>
+                    <div className='mb-3'>
+                      <span className='font-bold text-600 text-sm'>Nilai Bobot</span>
+                      <div className='text-800 font-semibold text-2xl mt-1'>
+                        {classification.bobot}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className='col-12'>
+                    <div className='surface-100 border-round p-3'>
+                      <p className='text-600 text-sm m-0'>
+                        <strong>Keterangan:</strong> Berdasarkan kriteria fasilitas, wisata ini masuk kategori 
+                        "<strong>{classification.category}</strong>" dengan {classification.count} fasilitas yang tersedia.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
         </Dialog>
       </main>
     </div>
