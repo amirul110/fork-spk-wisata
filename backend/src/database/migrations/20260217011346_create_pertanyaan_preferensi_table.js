@@ -4,7 +4,7 @@
  */
 exports.up = function(knex) {
   return knex.schema.alterTable('kriteria', (table) => {
-    table.text('deskripsi').nullable().after('jenis');
+    table.text('deskripsi').nullable();
   });
 };
 

@@ -53,7 +53,7 @@ export default function PilihWisata() {
         const formattedKriteria = kriteriaData.map((k) => ({
           id: k.id_kriteria,
           nama: k.nama_kriteria,
-          deskripsi: k.deskripsi || `Seberapa penting ${k.nama_kriteria.toLowerCase()} bagi Anda?`
+          deskripsi: k.deskripsi || ''
         }));
         setKriteriaList(formattedKriteria);
         
