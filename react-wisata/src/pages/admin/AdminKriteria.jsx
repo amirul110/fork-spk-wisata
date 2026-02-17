@@ -105,6 +105,7 @@ export default function AdminKriteria() {
           nama_kriteria: form.nama_kriteria,
           bobot_prioritas: form.bobot_prioritas,
           jenis: form.jenis,
+          deskripsi: form.deskripsi,
         });
         toast.current.show({
           severity: "success",
@@ -118,6 +119,7 @@ export default function AdminKriteria() {
           nama_kriteria: form.nama_kriteria,
           bobot_prioritas: form.bobot_prioritas,
           jenis: form.jenis,
+          deskripsi: form.deskripsi,
         });
         toast.current.show({
           severity: "success",
@@ -289,6 +291,12 @@ export default function AdminKriteria() {
               body={jenisTemplate}
               sortable
               style={{ width: "120px" }}
+            />
+            <Column
+              field="deskripsi"
+              header="Deskripsi"
+              sortable
+              style={{ width: "300px" }}
             />
             <Column
               header="Aksi"
