@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import "../dashboard.css";
 import Sidebar from "../../components/Sidebar";
 import { adminMenu } from "../../app/adminMenu";
@@ -6,16 +6,35 @@ import { Card } from "primereact/card";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { Button } from "primereact/button";
+import { Toast } from "primereact/toast";
+import { updateProfile } from "../../services/auth.service";
+import { getAuth } from "../../store/authStore";
 
 export default function AdminProfile() {
+  const toast = useRef(null);
   const [profile, setProfile] = useState({
-    username: "admin",
-    email: "admin@gmail.com",
-    password: "12345678",
+    username: "",
+    email: "",
+    password: "",
   });
 
   const [form, setForm] = useState(profile);
   const [isEdit, setIsEdit] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Load current user data from auth store
+  useEffect(() => {
+    const auth = getAuth();
+    if (auth?.user) {
+      const initialData = {
+        username: auth.user.username || "",
+        email: auth.user.email || "",
+        password: "",
+      };
+      setProfile(initialData);
+      setForm(initialData);
+    }
+  }, []);
 
   const handleChange = (e) => {
     setForm({
@@ -24,9 +43,40 @@ export default function AdminProfile() {
     });
   };
 
-  const handleSave = () => {
-    setProfile(form);
-    setIsEdit(false);
+  const handleSave = async () => {
+    if (!form.username?.trim() || !form.email?.trim()) {
+      toast.current.show({
+        severity: "warn",
+        summary: "Validasi",
+        detail: "Username dan email wajib diisi",
+        life: 3000,
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateProfile(form.username, form.email, form.password || undefined);
+      setProfile({ ...form, password: "" });
+      setForm({ ...form, password: "" });
+      setIsEdit(false);
+      
+      toast.current.show({
+        severity: "success",
+        summary: "Berhasil",
+        detail: "Profil berhasil diperbarui. Silakan login kembali jika mengganti email/password.",
+        life: 5000,
+      });
+    } catch (error) {
+      toast.current.show({
+        severity: "error",
+        summary: "Gagal",
+        detail: error.response?.data?.message || "Gagal mengupdate profil",
+        life: 3000,
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -37,6 +87,7 @@ export default function AdminProfile() {
   return (
     <div className="page">
       <Sidebar items={adminMenu} />
+      <Toast ref={toast} />
 
       <main className="content">
         <div className="mb-4">
@@ -114,12 +165,18 @@ export default function AdminProfile() {
               </div>
 
               <div className="flex gap-2 mt-2">
-                <Button label="Simpan" icon="pi pi-check" onClick={handleSave} />
+                <Button 
+                  label="Simpan" 
+                  icon="pi pi-check" 
+                  onClick={handleSave}
+                  loading={saving}
+                />
                 <Button
                   label="Batal"
                   icon="pi pi-times"
                   severity="secondary"
                   onClick={handleCancel}
+                  disabled={saving}
                 />
               </div>
             </div>
