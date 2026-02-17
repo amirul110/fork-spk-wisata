@@ -167,24 +167,43 @@ export default function AdminAlternatif () {
     })
   }
 
+  // Helper functions to calculate sub-kriteria for each kriteria
+  const getHargaSubKriteria = (harga) => {
+    if (!harga || harga <= 0) return { category: '-', bobot: 0 }
+    if (harga <= 20000) return { category: 'Sangat Murah (< 20rb)', bobot: 1 }
+    if (harga <= 50000) return { category: 'Murah (20rb - 50rb)', bobot: 2 }
+    if (harga <= 100000) return { category: 'Sedang (50rb - 100rb)', bobot: 3 }
+    if (harga <= 200000) return { category: 'Mahal (100rb - 200rb)', bobot: 4 }
+    return { category: 'Sangat Mahal (> 200rb)', bobot: 5 }
+  }
+
   const calculateFacilitySubKriteria = (facilityText) => {
     if (!facilityText || !facilityText.trim()) {
-      return { count: 0, category: 'Sangat Kurang', range: '0-1 item', bobot: 1 }
+      return { count: 0, category: 'Sangat Kurang (< 2 item)', bobot: 1 }
     }
     
     const count = facilityText.split(',').map(f => f.trim()).filter(f => f).length
     
     if (count >= 6) {
-      return { count, category: 'Sangat Lengkap', range: '> 5 item', bobot: 5 }
+      return { count, category: 'Sangat Lengkap (> 5 item)', bobot: 5 }
     } else if (count >= 4) {
-      return { count, category: 'Lengkap', range: '4-5 item', bobot: 4 }
+      return { count, category: 'Lengkap (4-5 item)', bobot: 4 }
     } else if (count === 3) {
-      return { count, category: 'Cukup', range: '3 item', bobot: 3 }
+      return { count, category: 'Cukup (3 item)', bobot: 3 }
     } else if (count === 2) {
-      return { count, category: 'Kurang', range: '2 item', bobot: 2 }
+      return { count, category: 'Kurang (2 item)', bobot: 2 }
     } else {
-      return { count, category: 'Sangat Kurang', range: '0-1 item', bobot: 1 }
+      return { count, category: 'Sangat Kurang (< 2 item)', bobot: 1 }
     }
+  }
+
+  const getRatingSubKriteria = (rating) => {
+    if (!rating || rating <= 0) return { category: '-', bobot: 0 }
+    if (rating >= 4.5) return { category: 'Sangat Baik (4.5 - 5.0)', bobot: 5 }
+    if (rating >= 4.0) return { category: 'Baik (4.0 - 4.4)', bobot: 4 }
+    if (rating >= 3.5) return { category: 'Cukup (3.5 - 3.9)', bobot: 3 }
+    if (rating >= 3.0) return { category: 'Buruk (3.0 - 3.4)', bobot: 2 }
+    return { category: 'Sangat Buruk (< 3.0)', bobot: 1 }
   }
 
   const showFacilityClassification = (rowData) => {
@@ -362,27 +381,66 @@ export default function AdminAlternatif () {
               mode='decimal'
             />
 
-            <InputNumber
-              value={form.rating_gmaps}
-              onValueChange={e => setForm({ ...form, rating_gmaps: e.value })}
-              placeholder='Rating'
-              mode='decimal'
-              min={0}
-              max={5}
-            />
+            <div>
+              <label className='block mb-2 font-semibold text-sm'>Rating Google Maps</label>
+              <InputNumber
+                value={form.rating_gmaps}
+                onValueChange={e => setForm({ ...form, rating_gmaps: e.value })}
+                placeholder='Rating (0-5)'
+                mode='decimal'
+                min={0}
+                max={5}
+                step={0.1}
+              />
+              {form.rating_gmaps > 0 && (
+                <div className='mt-2 p-2 bg-blue-50 border-round'>
+                  <small className='text-600'>
+                    <strong>Sub-Kriteria:</strong> {getRatingSubKriteria(form.rating_gmaps).category} 
+                    {' '}<span className='text-blue-600'>(Bobot: {getRatingSubKriteria(form.rating_gmaps).bobot})</span>
+                  </small>
+                </div>
+              )}
+            </div>
 
-            <InputNumber
-              value={form.harga_tiket}
-              onValueChange={e => setForm({ ...form, harga_tiket: e.value })}
-              placeholder='Harga Tiket'
-              min={0}
-            />
+            <div>
+              <label className='block mb-2 font-semibold text-sm'>Harga Tiket (Rupiah)</label>
+              <InputNumber
+                value={form.harga_tiket}
+                onValueChange={e => setForm({ ...form, harga_tiket: e.value })}
+                placeholder='Harga Tiket (Rp)'
+                min={0}
+                mode='currency'
+                currency='IDR'
+                locale='id-ID'
+              />
+              {form.harga_tiket > 0 && (
+                <div className='mt-2 p-2 bg-green-50 border-round'>
+                  <small className='text-600'>
+                    <strong>Sub-Kriteria:</strong> {getHargaSubKriteria(form.harga_tiket).category} 
+                    {' '}<span className='text-green-600'>(Bobot: {getHargaSubKriteria(form.harga_tiket).bobot})</span>
+                  </small>
+                </div>
+              )}
+            </div>
 
-            <InputText
-              value={form.fasilitas}
-              onChange={e => setForm({ ...form, fasilitas: e.target.value })}
-              placeholder='Fasilitas'
-            />
+            <div>
+              <label className='block mb-2 font-semibold text-sm'>Fasilitas (pisahkan dengan koma)</label>
+              <InputText
+                value={form.fasilitas}
+                onChange={e => setForm({ ...form, fasilitas: e.target.value })}
+                placeholder='Contoh: Toilet, Parkir, Mushola, Kantin'
+              />
+              {form.fasilitas && form.fasilitas.trim() && (
+                <div className='mt-2 p-2 bg-purple-50 border-round'>
+                  <small className='text-600'>
+                    <strong>Jumlah:</strong> {calculateFacilitySubKriteria(form.fasilitas).count} item
+                    {' | '}
+                    <strong>Sub-Kriteria:</strong> {calculateFacilitySubKriteria(form.fasilitas).category} 
+                    {' '}<span className='text-purple-600'>(Bobot: {calculateFacilitySubKriteria(form.fasilitas).bobot})</span>
+                  </small>
+                </div>
+              )}
+            </div>
 
             <InputText
               value={form.waktu_kunjungan}
@@ -433,17 +491,8 @@ export default function AdminAlternatif () {
                   <div className='col-12 md:col-6'>
                     <div className='mb-3'>
                       <span className='font-bold text-600 text-sm'>Kategori Sub-Kriteria</span>
-                      <div className='text-800 font-semibold text-2xl mt-1'>
+                      <div className='text-800 font-semibold text-xl mt-1'>
                         {classification.category}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className='col-12 md:col-6'>
-                    <div className='mb-3'>
-                      <span className='font-bold text-600 text-sm'>Range</span>
-                      <div className='text-800 mt-1'>
-                        {classification.range}
                       </div>
                     </div>
                   </div>
