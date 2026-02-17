@@ -88,6 +88,26 @@ export default function AdminSubKriteria() {
   };
 
 
+  const openAddDialog = () => {
+    if (!selectedKriteria) {
+      toast.current.show({
+        severity: "warn",
+        summary: "Peringatan",
+        detail: "Pilih kriteria terlebih dahulu",
+        life: 3000,
+      });
+      return;
+    }
+    setForm({
+      ...emptySubKriteria,
+      id_kriteria: selectedKriteria.id_kriteria,
+      code_kriteria: selectedKriteria.code_kriteria || `C${selectedKriteria.id_kriteria}`,
+    });
+    setIsEdit(false);
+    setSubmitted(false);
+    setDialogVisible(true);
+  };
+
   const openEditDialog = (rowData) => {
     setForm({ ...rowData });
     setIsEdit(true);
@@ -231,6 +251,11 @@ export default function AdminSubKriteria() {
           placeholder="Cari sub-kriteria..."
         />
       </span>
+      <Button 
+        label="Tambah Data" 
+        icon="pi pi-plus" 
+        onClick={openAddDialog}
+      />
     </div>
   );
 
