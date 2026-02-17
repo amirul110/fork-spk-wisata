@@ -1,34 +1,25 @@
-// Get allowed origins from environment variable or use defaults
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:5173,http://localhost:5174,https://wisatamagetan.xyz")
-  .split(",")
-  .map((o) => o.trim());
+// src/config/cors.js
 
-// Log allowed origins for debugging
-console.log('[CORS] Allowed Origins:', allowedOrigins);
+// Gunakan Array langsung agar Express CORS lebih mudah membacanya saat request OPTIONS
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://wisatamagetan.xyz",
+  "https://www.wisatamagetan.xyz"
+];
 
 const corsOptions = {
-  origin: (origin, cb) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      console.log('[CORS] Request without origin header - allowing');
-      return cb(null, true);
-    }
-    
-    // Check if origin is in allowed list
-    if (allowedOrigins.includes(origin)) {
-      console.log('[CORS] Origin allowed:', origin);
-      return cb(null, true);
-    }
-    
-    // Log rejected origins for debugging
-    console.error('[CORS] Origin rejected:', origin);
-    console.error('[CORS] Allowed origins are:', allowedOrigins);
-    return cb(new Error(`Not allowed by CORS: ${origin}`));
-  },
-  credentials: true, // Required for cookies and authorization headers
-  allowedHeaders: ["Content-Type", "Authorization"],
+  // CORS akan otomatis mengecek apakah origin pengirim ada di dalam array ini
+  origin: allowedOrigins,
+  
+  // INI KUNCI UTAMANYA: Wajib true agar cookie/token bisa lewat
+  credentials: true, 
+  
+  // Tambahkan beberapa header standar yang sering dipakai Axios
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+  optionsSuccessStatus: 200
 };
 
 module.exports = corsOptions;
