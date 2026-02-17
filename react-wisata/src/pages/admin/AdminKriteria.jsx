@@ -95,10 +95,6 @@ export default function AdminKriteria() {
       return;
     }
 
-    if (!isEdit && !form.id_kriteria) {
-      return;
-    }
-
     try {
       if (isEdit) {
         await updateKriteria(form.id_kriteria, {
@@ -115,7 +111,6 @@ export default function AdminKriteria() {
         });
       } else {
         await createKriteria({
-          id_kriteria: form.id_kriteria,
           nama_kriteria: form.nama_kriteria,
           bobot_prioritas: form.bobot_prioritas,
           jenis: form.jenis,
@@ -218,7 +213,7 @@ export default function AdminKriteria() {
         />
       </span>
       <Button 
-        label="Tambah Data" 
+        label="Tambah Kriteria" 
         icon="pi pi-plus" 
         onClick={openAddDialog}
       />
@@ -316,30 +311,6 @@ export default function AdminKriteria() {
           footer={dialogFooter}
           onHide={hideDialog}
         >
-          {!isEdit && (
-            <div className="field mb-3">
-              <label htmlFor="id_kriteria" className="font-bold mb-2 block">
-                ID Kriteria
-              </label>
-              <InputNumber
-                id="id_kriteria"
-                value={form.id_kriteria}
-                onValueChange={(e) =>
-                  setForm({ ...form, id_kriteria: e.value })
-                }
-                useGrouping={false}
-                min={1}
-                step={1}
-                className={
-                  submitted && !form.id_kriteria ? "p-invalid" : ""
-                }
-              />
-              {submitted && !form.id_kriteria && (
-                <small className="p-error">ID Kriteria wajib diisi.</small>
-              )}
-            </div>
-          )}
-
           <div className="field mb-3">
             <label htmlFor="nama_kriteria" className="font-bold mb-2 block">
               Nama Kriteria
