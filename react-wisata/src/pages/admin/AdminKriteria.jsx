@@ -14,6 +14,7 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
+import { InputTextarea } from "primereact/inputtextarea";
 import { InputNumber } from "primereact/inputnumber";
 import { Dropdown } from "primereact/dropdown";
 import { Tag } from "primereact/tag";
@@ -32,6 +33,7 @@ const emptyKriteria = {
   nama_kriteria: "",
   bobot_prioritas: null,
   jenis: "",
+  deskripsi: "",
 };
 
 export default function AdminKriteria() {
@@ -383,6 +385,21 @@ export default function AdminKriteria() {
             {submitted && !form.jenis && (
               <small className="p-error">Jenis wajib dipilih.</small>
             )}
+          </div>
+
+          <div className="field mb-3">
+            <label htmlFor="deskripsi" className="font-bold mb-2 block">
+              Deskripsi / Pertanyaan Preferensi
+            </label>
+            <InputTextarea
+              id="deskripsi"
+              value={form.deskripsi}
+              onChange={(e) =>
+                setForm({ ...form, deskripsi: e.target.value })
+              }
+              rows={3}
+              placeholder="Contoh: Seberapa penting harga tiket bagi Anda?"
+            />
           </div>
         </Dialog>
       </main>

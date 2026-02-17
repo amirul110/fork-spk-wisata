@@ -5,6 +5,7 @@ import Sidebar from "../../components/Sidebar";
 import { wisatawanMenu } from "../../app/wisatawanMenu";
 import { getSelectedWisata, clearSelectedWisata } from "../../store/wisataStore";
 import { getAllWisata } from "../../services/wisata.service";
+import { getAllKriteria } from "../../services/kriteria.service";
 import api from "../../services/api";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
@@ -16,14 +17,6 @@ import { Chip } from "primereact/chip";
 import MapPickerDialog from "../../components/MapPickerDialog";
 import { formatTanggalIndonesia } from "../../utils/formatTanggal";
 
-const KRITERIA_LIST = [
-  { id: 1, nama: "Harga Tiket", deskripsi: "Seberapa penting harga tiket bagi Anda?" },
-  { id: 2, nama: "Fasilitas", deskripsi: "Seberapa penting fasilitas wisata bagi Anda?" },
-  { id: 3, nama: "Jarak", deskripsi: "Seberapa penting jarak dari lokasi Anda?" },
-  { id: 4, nama: "Rating", deskripsi: "Seberapa penting rating Google Maps?" },
-  { id: 5, nama: "Waktu Kunjungan", deskripsi: "Seberapa penting jam operasional wisata?" },
-];
-
 const BOBOT_OPTIONS = [
   { value: 1, label: "1 - Tidak Penting" },
   { value: 2, label: "2 - Kurang Penting" },
@@ -34,10 +27,11 @@ const BOBOT_OPTIONS = [
 
 export default function PilihWisata() {
   const nav = useNavigate();
+  const [kriteriaList, setKriteriaList] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState("belum");
   const [locationMode, setLocationMode] = useState("");
-  const [preferensi, setPreferensi] = useState({ 1: null, 2: null, 3: null, 4: null, 5: null });
+  const [preferensi, setPreferensi] = useState({});
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [showMapDialog, setShowMapDialog] = useState(false);
@@ -51,6 +45,30 @@ export default function PilihWisata() {
   // Guard: tampilkan pesan jika belum memilih wisata di dashboard
   useEffect(() => {
     const selected = getSelectedWisata();
+    
+    // Fetch kriteria from backend
+    getAllKriteria()
+      .then((res) => {
+        const kriteriaData = res.data?.data?.list_kriteria || [];
+        const formattedKriteria = kriteriaData.map((k) => ({
+          id: k.id_kriteria,
+          nama: k.nama_kriteria,
+          deskripsi: k.deskripsi || `Seberapa penting ${k.nama_kriteria.toLowerCase()} bagi Anda?`
+        }));
+        setKriteriaList(formattedKriteria);
+        
+        // Initialize preferensi state
+        const initialPreferensi = {};
+        kriteriaData.forEach((k) => {
+          initialPreferensi[k.id_kriteria] = null;
+        });
+        setPreferensi(initialPreferensi);
+      })
+      .catch((err) => {
+        console.error("Failed to load kriteria:", err);
+        setErrorMsg("Gagal memuat kriteria. Silakan refresh halaman.");
+      });
+    
     if (!selected || selected.length === 0) {
       // setTimeout(0) diperlukan agar ESLint react-hooks/set-state-in-effect tidak error
       setTimeout(() => setBelumPilihWisata(true), 0);
@@ -137,7 +155,7 @@ export default function PilihWisata() {
     }
 
     // Validasi semua bobot harus diisi
-    const belumDiisi = KRITERIA_LIST.filter((k) => preferensi[k.id] === null);
+    const belumDiisi = kriteriaList.filter((k) => preferensi[k.id] === null);
     if (belumDiisi.length > 0) {
       setErrorMsg(`Mohon isi bobot untuk semua kriteria. Kriteria yang belum diisi: ${belumDiisi.map((k) => k.nama).join(", ")}`);
       return;
@@ -377,7 +395,7 @@ export default function PilihWisata() {
               </tr>
             </thead>
             <tbody>
-              {KRITERIA_LIST.map((k, idx) => (
+              {kriteriaList.map((k, idx) => (
                 <tr key={k.id} className={idx % 2 === 1 ? "surface-50" : ""}>
                   <td className="border-1 border-300 p-3">{idx + 1}</td>
                   <td className="border-1 border-300 p-3 font-medium">{k.nama}</td>
