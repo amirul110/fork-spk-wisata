@@ -226,7 +226,8 @@ export default function AdminAlternatif () {
     }
 
     // Parse time from text (e.g., "08.00 - 17.00" or "8:00 - 17:00")
-    const timePattern = /(\d{1,2})[\.:h](\d{0,2})\s*-\s*(\d{1,2})[\.:h](\d{0,2})/
+    // Pattern allows optional minutes after separator (.:h)
+    const timePattern = /(\d{1,2})(?:[\.:h](\d{2}))?\s*-\s*(\d{1,2})(?:[\.:h](\d{2}))?/
     const match = waktuText.match(timePattern)
     
     if (!match) {
@@ -246,11 +247,11 @@ export default function AdminAlternatif () {
       return { category: 'Format tidak dikenali', bobot: 0, match: null }
     }
 
-    // Convert to decimal hours
+    // Convert to decimal hours (only using startHour for matching)
+    // We match based on when the visiting time starts, not the full range
     const startHour = parseInt(match[1]) + (match[2] ? parseInt(match[2]) / 60 : 0)
-    const endHour = parseInt(match[3]) + (match[4] ? parseInt(match[4]) / 60 : 0)
     
-    // Find matching sub-kriteria based on time range
+    // Find matching sub-kriteria based on start time
     for (const subKriteria of waktuKunjunganSubKriteria) {
       if (subKriteria.batas_bawah !== null && subKriteria.batas_atas !== null) {
         // Check if the start time falls within the sub-kriteria range
@@ -528,14 +529,17 @@ export default function AdminAlternatif () {
               <small className='text-500 block mt-1'>
                 Format: gunakan format 24 jam (misal: 17.00 - 22.00) atau string seperti "24 jam"
               </small>
-              {form.waktu_kunjungan && form.waktu_kunjungan.trim() && (
-                <div className='mt-2 p-2 bg-orange-50 border-round'>
-                  <small className='text-600'>
-                    <strong>Sub-Kriteria:</strong> {getWaktuKunjunganSubKriteria(form.waktu_kunjungan).category} 
-                    {' '}<span className='text-orange-600'>(Bobot: {getWaktuKunjunganSubKriteria(form.waktu_kunjungan).bobot})</span>
-                  </small>
-                </div>
-              )}
+              {form.waktu_kunjungan && form.waktu_kunjungan.trim() && (() => {
+                const waktuClassification = getWaktuKunjunganSubKriteria(form.waktu_kunjungan)
+                return (
+                  <div className='mt-2 p-2 bg-orange-50 border-round'>
+                    <small className='text-600'>
+                      <strong>Sub-Kriteria:</strong> {waktuClassification.category} 
+                      {' '}<span className='text-orange-600'>(Bobot: {waktuClassification.bobot})</span>
+                    </small>
+                  </div>
+                )
+              })()}
             </div>
           </div>
         </Dialog>
