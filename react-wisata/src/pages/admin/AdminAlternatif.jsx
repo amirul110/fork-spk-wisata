@@ -235,7 +235,8 @@ export default function AdminAlternatif () {
         size='small'
         rounded
         onClick={() => showFacilityClassification(rowData)}
-        tooltip="Klasifikasi Fasilitas"
+        tooltip="Detail Sub Kriteria"
+        tooltipOptions={{ position: 'top' }}
       />
     </div>
   )
@@ -334,18 +335,24 @@ export default function AdminAlternatif () {
           }
         >
           <div className='flex flex-column gap-3 pt-2'>
-            <InputText
-              value={form.nama_wisata}
-              onChange={e => setForm({ ...form, nama_wisata: e.target.value })}
-              placeholder='Nama Wisata'
-            />
+            <div>
+              <label className='block mb-2 font-semibold text-sm'>Nama Wisata</label>
+              <InputText
+                value={form.nama_wisata}
+                onChange={e => setForm({ ...form, nama_wisata: e.target.value })}
+                placeholder='Nama Wisata'
+              />
+            </div>
 
-            <InputTextarea
-              value={form.deskripsi}
-              onChange={e => setForm({ ...form, deskripsi: e.target.value })}
-              placeholder='Deskripsi Wisata'
-              rows={3}
-            />
+            <div>
+              <label className='block mb-2 font-semibold text-sm'>Deskripsi Wisata</label>
+              <InputTextarea
+                value={form.deskripsi}
+                onChange={e => setForm({ ...form, deskripsi: e.target.value })}
+                placeholder='Deskripsi Wisata'
+                rows={3}
+              />
+            </div>
 
             <div>
               <label className='block mb-2 font-semibold text-sm'>Gambar Wisata</label>
@@ -367,19 +374,25 @@ export default function AdminAlternatif () {
               )}
             </div>
 
-            <InputNumber
-              value={form.latitude}
-              onValueChange={e => setForm({ ...form, latitude: e.value })}
-              placeholder='Latitude'
-              mode='decimal'
-            />
+            <div>
+              <label className='block mb-2 font-semibold text-sm'>Latitude</label>
+              <InputNumber
+                value={form.latitude}
+                onValueChange={e => setForm({ ...form, latitude: e.value })}
+                placeholder='Latitude'
+                mode='decimal'
+              />
+            </div>
 
-            <InputNumber
-              value={form.longitude}
-              onValueChange={e => setForm({ ...form, longitude: e.value })}
-              placeholder='Longitude'
-              mode='decimal'
-            />
+            <div>
+              <label className='block mb-2 font-semibold text-sm'>Longitude</label>
+              <InputNumber
+                value={form.longitude}
+                onValueChange={e => setForm({ ...form, longitude: e.value })}
+                placeholder='Longitude'
+                mode='decimal'
+              />
+            </div>
 
             <div>
               <label className='block mb-2 font-semibold text-sm'>Rating Google Maps</label>
@@ -442,26 +455,35 @@ export default function AdminAlternatif () {
               )}
             </div>
 
-            <InputText
-              value={form.waktu_kunjungan}
-              onChange={e =>
-                setForm({ ...form, waktu_kunjungan: e.target.value })
-              }
-              placeholder='Waktu Kunjungan'
-            />
+            <div>
+              <label className='block mb-2 font-semibold text-sm'>Waktu Kunjungan</label>
+              <InputText
+                value={form.waktu_kunjungan}
+                onChange={e =>
+                  setForm({ ...form, waktu_kunjungan: e.target.value })
+                }
+                placeholder='Contoh: 08.00 - 17.00 atau 24 jam'
+              />
+              <small className='text-500 block mt-1'>
+                Format: gunakan format 24 jam (misal: 17.00 - 22.00) atau string seperti "24 jam"
+              </small>
+            </div>
           </div>
         </Dialog>
 
-        {/* Dialog Klasifikasi Fasilitas */}
+        {/* Dialog Klasifikasi Semua Sub-Kriteria */}
         <Dialog
           visible={facilityDialogVisible}
-          header="Klasifikasi Sub-Kriteria Fasilitas"
+          header="Detail Sub Kriteria"
           modal
-          style={{ width: '600px', maxWidth: '95vw' }}
+          style={{ width: '700px', maxWidth: '95vw' }}
           onHide={() => setFacilityDialogVisible(false)}
         >
           {selectedWisataForFacility && (() => {
-            const classification = calculateFacilitySubKriteria(selectedWisataForFacility.fasilitas)
+            const facilityClassification = calculateFacilitySubKriteria(selectedWisataForFacility.fasilitas)
+            const ratingClassification = getRatingSubKriteria(selectedWisataForFacility.rating_gmaps)
+            const hargaClassification = getHargaSubKriteria(selectedWisataForFacility.harga_tiket)
+            
             return (
               <div className='flex flex-column gap-3'>
                 <h3 className='text-xl font-bold text-800 mt-0 mb-2'>
@@ -469,49 +491,107 @@ export default function AdminAlternatif () {
                 </h3>
                 <hr className='mt-0 mb-2' />
                 
-                <div className='grid'>
-                  <div className='col-12'>
-                    <div className='mb-3'>
-                      <span className='font-bold text-600 text-sm'>Fasilitas</span>
-                      <div className='text-800 mt-1'>
+                {/* Rating Sub-Kriteria */}
+                <div className='surface-50 border-round p-3 mb-2'>
+                  <h4 className='text-lg font-bold text-blue-700 mt-0 mb-2'>Rating Google Maps</h4>
+                  <div className='grid'>
+                    <div className='col-12 md:col-4'>
+                      <span className='font-bold text-600 text-sm block mb-1'>Nilai Rating</span>
+                      <div className='text-800 font-semibold text-2xl'>
+                        {selectedWisataForFacility.rating_gmaps || 0} / 5.0
+                      </div>
+                    </div>
+                    <div className='col-12 md:col-4'>
+                      <span className='font-bold text-600 text-sm block mb-1'>Kategori Sub-Kriteria</span>
+                      <div className='text-800 font-semibold text-lg'>
+                        {ratingClassification.category}
+                      </div>
+                    </div>
+                    <div className='col-12 md:col-4'>
+                      <span className='font-bold text-600 text-sm block mb-1'>Nilai Bobot</span>
+                      <div className='text-blue-600 font-semibold text-2xl'>
+                        {ratingClassification.bobot}
+                      </div>
+                    </div>
+                    <div className='col-12 mt-2'>
+                      <div className='bg-blue-100 border-round p-2'>
+                        <p className='text-600 text-sm m-0'>
+                          <strong>Keterangan:</strong> Berdasarkan kriteria rating, wisata ini masuk kategori 
+                          "<strong>{ratingClassification.category}</strong>" dengan rating {selectedWisataForFacility.rating_gmaps || 0}.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Harga Tiket Sub-Kriteria */}
+                <div className='surface-50 border-round p-3 mb-2'>
+                  <h4 className='text-lg font-bold text-green-700 mt-0 mb-2'>Harga Tiket</h4>
+                  <div className='grid'>
+                    <div className='col-12 md:col-4'>
+                      <span className='font-bold text-600 text-sm block mb-1'>Harga Tiket</span>
+                      <div className='text-800 font-semibold text-xl'>
+                        Rp {(selectedWisataForFacility.harga_tiket || 0).toLocaleString('id-ID')}
+                      </div>
+                    </div>
+                    <div className='col-12 md:col-4'>
+                      <span className='font-bold text-600 text-sm block mb-1'>Kategori Sub-Kriteria</span>
+                      <div className='text-800 font-semibold text-lg'>
+                        {hargaClassification.category}
+                      </div>
+                    </div>
+                    <div className='col-12 md:col-4'>
+                      <span className='font-bold text-600 text-sm block mb-1'>Nilai Bobot</span>
+                      <div className='text-green-600 font-semibold text-2xl'>
+                        {hargaClassification.bobot}
+                      </div>
+                    </div>
+                    <div className='col-12 mt-2'>
+                      <div className='bg-green-100 border-round p-2'>
+                        <p className='text-600 text-sm m-0'>
+                          <strong>Keterangan:</strong> Berdasarkan kriteria harga tiket, wisata ini masuk kategori 
+                          "<strong>{hargaClassification.category}</strong>" dengan harga Rp {(selectedWisataForFacility.harga_tiket || 0).toLocaleString('id-ID')}.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fasilitas Sub-Kriteria */}
+                <div className='surface-50 border-round p-3'>
+                  <h4 className='text-lg font-bold text-purple-700 mt-0 mb-2'>Fasilitas</h4>
+                  <div className='grid'>
+                    <div className='col-12'>
+                      <span className='font-bold text-600 text-sm block mb-1'>Daftar Fasilitas</span>
+                      <div className='text-800'>
                         {selectedWisataForFacility.fasilitas || '-'}
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className='col-12 md:col-6'>
-                    <div className='mb-3'>
-                      <span className='font-bold text-600 text-sm'>Jumlah Fasilitas</span>
-                      <div className='text-800 font-semibold text-2xl mt-1'>
-                        {classification.count} item
+                    <div className='col-12 md:col-4 mt-2'>
+                      <span className='font-bold text-600 text-sm block mb-1'>Jumlah Fasilitas</span>
+                      <div className='text-800 font-semibold text-2xl'>
+                        {facilityClassification.count} item
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className='col-12 md:col-6'>
-                    <div className='mb-3'>
-                      <span className='font-bold text-600 text-sm'>Kategori Sub-Kriteria</span>
-                      <div className='text-800 font-semibold text-xl mt-1'>
-                        {classification.category}
+                    <div className='col-12 md:col-4 mt-2'>
+                      <span className='font-bold text-600 text-sm block mb-1'>Kategori Sub-Kriteria</span>
+                      <div className='text-800 font-semibold text-lg'>
+                        {facilityClassification.category}
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className='col-12 md:col-6'>
-                    <div className='mb-3'>
-                      <span className='font-bold text-600 text-sm'>Nilai Bobot</span>
-                      <div className='text-800 font-semibold text-2xl mt-1'>
-                        {classification.bobot}
+                    <div className='col-12 md:col-4 mt-2'>
+                      <span className='font-bold text-600 text-sm block mb-1'>Nilai Bobot</span>
+                      <div className='text-purple-600 font-semibold text-2xl'>
+                        {facilityClassification.bobot}
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className='col-12'>
-                    <div className='surface-100 border-round p-3'>
-                      <p className='text-600 text-sm m-0'>
-                        <strong>Keterangan:</strong> Berdasarkan kriteria fasilitas, wisata ini masuk kategori 
-                        "<strong>{classification.category}</strong>" dengan {classification.count} fasilitas yang tersedia.
-                      </p>
+                    <div className='col-12 mt-2'>
+                      <div className='bg-purple-100 border-round p-2'>
+                        <p className='text-600 text-sm m-0'>
+                          <strong>Keterangan:</strong> Berdasarkan kriteria fasilitas, wisata ini masuk kategori 
+                          "<strong>{facilityClassification.category}</strong>" dengan {facilityClassification.count} fasilitas yang tersedia.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
