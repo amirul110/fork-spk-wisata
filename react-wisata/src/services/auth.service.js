@@ -4,6 +4,7 @@ import api from "./api";
 // Separate API instance for public endpoints (no auth token required)
 const publicApi = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
+  withCredentials: true, // Important for CORS with credentials: true
 });
 
 export async function loginRequest(email, password) {
