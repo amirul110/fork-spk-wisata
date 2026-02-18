@@ -109,7 +109,26 @@ export default function AdminSubKriteria() {
   };
 
   const openEditDialog = (rowData) => {
-    setForm({ ...rowData });
+    // Format batas values to preserve decimal display (e.g., 22 -> "22.00", 24 -> "24")
+    const formatBatasValue = (value) => {
+      if (value === null || value === undefined) return '';
+      // Convert to number first, then to string
+      const num = typeof value === 'string' ? parseFloat(value) : value;
+      if (isNaN(num)) return '';
+      // Keep original format if it's already a string with decimals
+      if (typeof value === 'string' && value.includes('.')) {
+        return value;
+      }
+      // For whole numbers, keep as-is (24 stays "24", not "24.00")
+      // For numbers with decimals, format with 2 decimal places
+      return num % 1 === 0 ? String(num) : num.toFixed(2);
+    };
+
+    setForm({
+      ...rowData,
+      batas_bawah: formatBatasValue(rowData.batas_bawah),
+      batas_atas: formatBatasValue(rowData.batas_atas)
+    });
     setIsEdit(true);
     setSubmitted(false);
     setDialogVisible(true);
@@ -138,12 +157,23 @@ export default function AdminSubKriteria() {
     // Validate batas_bawah and batas_atas if provided
     const validateBatasValue = (value, fieldName) => {
       if (value && value.trim()) {
-        const parsed = parseFloat(value);
+        // Try to extract number from string (e.g., "24 jam" -> "24", "22.00" -> "22.00")
+        let cleanValue = value.trim();
+        
+        // If it contains "jam", extract just the number part
+        if (/jam/i.test(cleanValue)) {
+          const match = cleanValue.match(/(\d+(?:\.\d+)?)/);
+          if (match) {
+            cleanValue = match[1];
+          }
+        }
+        
+        const parsed = parseFloat(cleanValue);
         if (isNaN(parsed)) {
           toast.current.show({
             severity: "warn",
             summary: "Validasi",
-            detail: `${fieldName} harus berupa angka yang valid (misal: 8.00, 17.30, 24)`,
+            detail: `${fieldName} harus berupa angka yang valid (misal: 8.00, 17.30, 24, atau "24 jam")`,
             life: 3000,
           });
           return false;
@@ -467,10 +497,10 @@ export default function AdminSubKriteria() {
               onChange={(e) =>
                 setForm({ ...form, batas_bawah: e.target.value })
               }
-              placeholder="Contoh: 8.00, 17.00, atau 24"
+              placeholder="Contoh: 8.00, 17.00, 24, atau 24 jam"
             />
             <small className="text-500 block mt-1">
-              Format: gunakan format 24 jam (misal: 8.00, 17.30, 22.00) atau angka seperti 24
+              Format: gunakan angka (misal: 8.00, 17.30, 24) atau teks seperti "24 jam"
             </small>
           </div>
 
@@ -484,10 +514,10 @@ export default function AdminSubKriteria() {
               onChange={(e) =>
                 setForm({ ...form, batas_atas: e.target.value })
               }
-              placeholder="Contoh: 12.00, 22.00, atau 24"
+              placeholder="Contoh: 12.00, 22.00, 24, atau 24 jam"
             />
             <small className="text-500 block mt-1">
-              Format: gunakan format 24 jam (misal: 12.00, 22.00) atau angka seperti 24
+              Format: gunakan angka (misal: 12.00, 22.00, 24) atau teks seperti "24 jam"
             </small>
           </div>
         </Dialog>
