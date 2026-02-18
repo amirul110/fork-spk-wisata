@@ -436,19 +436,16 @@ export default function AdminSubKriteria() {
             <label htmlFor="batas_bawah" className="font-bold mb-2 block">
               Batas Bawah
             </label>
-            <InputNumber
+            <InputText
               id="batas_bawah"
-              value={form.batas_bawah}
-              onValueChange={(e) =>
-                setForm({ ...form, batas_bawah: e.value })
+              value={form.batas_bawah || ''}
+              onChange={(e) =>
+                setForm({ ...form, batas_bawah: e.target.value })
               }
-              mode="decimal"
-              minFractionDigits={0}
-              maxFractionDigits={2}
-              placeholder="Contoh: 8.00 atau 17.00"
+              placeholder="Contoh: 8.00, 17.00, atau 24"
             />
             <small className="text-500 block mt-1">
-              Format: gunakan format 24 jam dalam desimal (misal: 8.00, 17.30)
+              Format: gunakan format 24 jam (misal: 8.00, 17.30, 22.00) atau angka seperti 24
             </small>
           </div>
 
@@ -456,19 +453,16 @@ export default function AdminSubKriteria() {
             <label htmlFor="batas_atas" className="font-bold mb-2 block">
               Batas Atas
             </label>
-            <InputNumber
+            <InputText
               id="batas_atas"
-              value={form.batas_atas}
-              onValueChange={(e) =>
-                setForm({ ...form, batas_atas: e.value })
+              value={form.batas_atas || ''}
+              onChange={(e) =>
+                setForm({ ...form, batas_atas: e.target.value })
               }
-              mode="decimal"
-              minFractionDigits={0}
-              maxFractionDigits={2}
-              placeholder="Contoh: 12.00 atau 22.00"
+              placeholder="Contoh: 12.00, 22.00, atau 24"
             />
             <small className="text-500 block mt-1">
-              Format: gunakan format 24 jam dalam desimal (misal: 12.00, 22.00)
+              Format: gunakan format 24 jam (misal: 12.00, 22.00) atau angka seperti 24
             </small>
           </div>
         </Dialog>

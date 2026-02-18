@@ -167,13 +167,20 @@ module.exports = {
         return res.status(400).json({ status: API_STATUS.BAD_REQUEST, message: 'Field id_kriteria, nama_sub_kriteria, dan nilai_bobot wajib diisi' });
       }
 
+      // Parse batas_bawah and batas_atas to handle string inputs
+      const parseBatasValue = (value) => {
+        if (value === null || value === undefined || value === '') return null;
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? null : parsed;
+      };
+
       await db(SUB_KRITERIA_TABLE).insert({
         id_kriteria,
         code_kriteria: code_kriteria || '',
         nama_sub_kriteria,
         nilai_bobot,
-        batas_bawah: batas_bawah != null ? batas_bawah : 0,
-        batas_atas: batas_atas != null ? batas_atas : 0
+        batas_bawah: parseBatasValue(batas_bawah),
+        batas_atas: parseBatasValue(batas_atas)
       });
 
       return res.status(201).json({
@@ -216,13 +223,20 @@ module.exports = {
       const { id } = req.params; // id_sub (bukan id_kriteria)
       const { nama_sub_kriteria, nilai_bobot, batas_bawah, batas_atas } = req.body;
 
+      // Parse batas_bawah and batas_atas to handle string inputs
+      const parseBatasValue = (value) => {
+        if (value === null || value === undefined || value === '') return null;
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? null : parsed;
+      };
+
       await db(SUB_KRITERIA_TABLE)
         .where('id_sub', id)
         .update({
           nama_sub_kriteria,
           nilai_bobot,
-          batas_bawah,
-          batas_atas,
+          batas_bawah: parseBatasValue(batas_bawah),
+          batas_atas: parseBatasValue(batas_atas),
           updated_at: new Date()
         });
 
