@@ -233,9 +233,14 @@ export default function AdminAlternatif () {
     if (!match) {
       // Check for special cases like "24 jam", "24 Jam", "Bebas", etc.
       if (/24\s*jam|bebas|setiap\s*hari/i.test(waktuText)) {
-        const subKriteria = waktuKunjunganSubKriteria.find(sk => 
-          sk.batas_bawah === 0 && sk.batas_atas === 24
-        )
+        const subKriteria = waktuKunjunganSubKriteria.find(sk => {
+          // Parse batas values as they might be strings now
+          const batasBawah = parseFloat(sk.batas_bawah);
+          const batasAtas = parseFloat(sk.batas_atas);
+          // Check for "24 jam" pattern or 0-24 range
+          return (batasBawah === 0 && batasAtas === 24) || 
+                 /24\s*jam|bebas/i.test(sk.nama_sub_kriteria);
+        })
         if (subKriteria) {
           return {
             category: subKriteria.nama_sub_kriteria,
@@ -254,8 +259,15 @@ export default function AdminAlternatif () {
     // Find matching sub-kriteria based on start time
     for (const subKriteria of waktuKunjunganSubKriteria) {
       if (subKriteria.batas_bawah !== null && subKriteria.batas_atas !== null) {
+        // Parse batas values since they might be strings now
+        const batasBawah = parseFloat(subKriteria.batas_bawah);
+        const batasAtas = parseFloat(subKriteria.batas_atas);
+        
+        // Skip if parsing failed
+        if (isNaN(batasBawah) || isNaN(batasAtas)) continue;
+        
         // Check if the start time falls within the sub-kriteria range
-        if (startHour >= subKriteria.batas_bawah && startHour <= subKriteria.batas_atas) {
+        if (startHour >= batasBawah && startHour <= batasAtas) {
           return {
             category: subKriteria.nama_sub_kriteria,
             bobot: subKriteria.nilai_bobot,

@@ -5,27 +5,17 @@ const db = require('../database/connection').db;
 const { KRITERIA_TABLE, SUB_KRITERIA_TABLE } = require('../constants/database');
 const { API_STATUS, RESPONSE_DATA_KEYS } = require('../constants/general');
 
-// Helper function to parse batas values (used in createSubKriteria and updateSubKriteria)
+// Helper function to handle batas values (used in createSubKriteria and updateSubKriteria)
+// Returns the value as-is to preserve text format like "09.00", "09.01", "24 jam"
 const parseBatasValue = (value) => {
-  if (value === null || value === undefined || value === '') return null;
+  if (value === null || value === undefined) return null;
   
-  let cleanValue = value;
+  // Return empty string as null
+  if (typeof value === 'string' && value.trim() === '') return null;
   
-  // Handle string values - extract number from strings like "24 jam"
-  if (typeof value === 'string') {
-    cleanValue = value.trim();
-    
-    if (/jam/i.test(cleanValue)) {
-      const match = cleanValue.match(/(\d+(?:\.\d+)?)/);
-      if (match) {
-        cleanValue = match[1];
-      }
-    }
-  }
-  
-  // Parse to float
-  const parsed = parseFloat(cleanValue);
-  return isNaN(parsed) ? null : parsed;
+  // Return the value as-is (string) to preserve format
+  // This allows "09.00", "09.01", "24 jam" to be stored exactly as entered
+  return typeof value === 'string' ? value.trim() : String(value);
 };
 
 module.exports = {

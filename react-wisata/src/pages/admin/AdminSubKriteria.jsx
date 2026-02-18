@@ -109,20 +109,12 @@ export default function AdminSubKriteria() {
   };
 
   const openEditDialog = (rowData) => {
-    // Format batas values to preserve decimal display (e.g., 22.0 -> "22", 22.5 -> "22.50")
-    const formatBatasValue = (value) => {
-      if (value === null || value === undefined) return '';
-      const num = typeof value === 'string' ? parseFloat(value) : value;
-      if (isNaN(num)) return '';
-      // For whole numbers, return as string (24 -> "24")
-      // For decimals, format with 2 decimal places (17.3 -> "17.30")
-      return num % 1 === 0 ? String(num) : num.toFixed(2);
-    };
-
+    // No formatting needed - preserve values exactly as stored in database
+    // This allows "09.00", "09.01", "24 jam" to display correctly
     setForm({
       ...rowData,
-      batas_bawah: formatBatasValue(rowData.batas_bawah),
-      batas_atas: formatBatasValue(rowData.batas_atas)
+      batas_bawah: rowData.batas_bawah || '',
+      batas_atas: rowData.batas_atas || ''
     });
     setIsEdit(true);
     setSubmitted(false);
@@ -150,29 +142,13 @@ export default function AdminSubKriteria() {
     }
 
     // Validate batas_bawah and batas_atas if provided
+    // Accept any text format - no need to validate as number since we store as string
     const validateBatasValue = (value, fieldName) => {
       if (value && value.trim()) {
-        // Try to extract number from string (e.g., "24 jam" -> "24", "22.00" -> "22.00")
-        let cleanValue = value.trim();
-        
-        // If it contains "jam", extract just the number part
-        if (/jam/i.test(cleanValue)) {
-          const match = cleanValue.match(/(\d+(?:\.\d+)?)/);
-          if (match) {
-            cleanValue = match[1];
-          }
-        }
-        
-        const parsed = parseFloat(cleanValue);
-        if (isNaN(parsed)) {
-          toast.current.show({
-            severity: "warn",
-            summary: "Validasi",
-            detail: `${fieldName} harus berupa angka yang valid (misal: 8.00, 17.30, 24, atau "24 jam")`,
-            life: 3000,
-          });
-          return false;
-        }
+        // Just check if it's not empty - accept any format
+        // Examples: "09.00", "09.01", "24 jam", "8", "17.30"
+        // No validation needed - we preserve the exact text as entered
+        return true;
       }
       return true;
     };
