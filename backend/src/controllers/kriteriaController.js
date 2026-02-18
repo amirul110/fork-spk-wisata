@@ -5,6 +5,13 @@ const db = require('../database/connection').db;
 const { KRITERIA_TABLE, SUB_KRITERIA_TABLE } = require('../constants/database');
 const { API_STATUS, RESPONSE_DATA_KEYS } = require('../constants/general');
 
+// Helper function to parse batas values (used in createSubKriteria and updateSubKriteria)
+const parseBatasValue = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = parseFloat(value);
+  return isNaN(parsed) ? null : parsed;
+};
+
 module.exports = {
   // GET /api/v1/kriteria
   // Digunakan Frontend untuk membuat Label Dropdown Form SPK
@@ -167,13 +174,6 @@ module.exports = {
         return res.status(400).json({ status: API_STATUS.BAD_REQUEST, message: 'Field id_kriteria, nama_sub_kriteria, dan nilai_bobot wajib diisi' });
       }
 
-      // Parse batas_bawah and batas_atas to handle string inputs
-      const parseBatasValue = (value) => {
-        if (value === null || value === undefined || value === '') return null;
-        const parsed = parseFloat(value);
-        return isNaN(parsed) ? null : parsed;
-      };
-
       await db(SUB_KRITERIA_TABLE).insert({
         id_kriteria,
         code_kriteria: code_kriteria || '',
@@ -222,13 +222,6 @@ module.exports = {
     try {
       const { id } = req.params; // id_sub (bukan id_kriteria)
       const { nama_sub_kriteria, nilai_bobot, batas_bawah, batas_atas } = req.body;
-
-      // Parse batas_bawah and batas_atas to handle string inputs
-      const parseBatasValue = (value) => {
-        if (value === null || value === undefined || value === '') return null;
-        const parsed = parseFloat(value);
-        return isNaN(parsed) ? null : parsed;
-      };
 
       await db(SUB_KRITERIA_TABLE)
         .where('id_sub', id)

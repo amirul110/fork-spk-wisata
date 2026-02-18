@@ -135,6 +135,31 @@ export default function AdminSubKriteria() {
       return;
     }
 
+    // Validate batas_bawah and batas_atas if provided
+    const validateBatasValue = (value, fieldName) => {
+      if (value && value.trim()) {
+        const parsed = parseFloat(value);
+        if (isNaN(parsed)) {
+          toast.current.show({
+            severity: "warn",
+            summary: "Validasi",
+            detail: `${fieldName} harus berupa angka yang valid (misal: 8.00, 17.30, 24)`,
+            life: 3000,
+          });
+          return false;
+        }
+      }
+      return true;
+    };
+
+    if (!validateBatasValue(form.batas_bawah, "Batas Bawah")) {
+      return;
+    }
+
+    if (!validateBatasValue(form.batas_atas, "Batas Atas")) {
+      return;
+    }
+
     try {
       if (isEdit) {
         await updateSubKriteria(form.id_sub, {
