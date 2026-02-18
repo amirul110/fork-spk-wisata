@@ -263,8 +263,12 @@ export default function AdminAlternatif () {
         const batasBawah = parseFloat(subKriteria.batas_bawah);
         const batasAtas = parseFloat(subKriteria.batas_atas);
         
-        // Skip if parsing failed
-        if (isNaN(batasBawah) || isNaN(batasAtas)) continue;
+        // Skip if parsing failed (non-numeric text like "24 jam")
+        if (isNaN(batasBawah) || isNaN(batasAtas)) {
+          console.warn(`Skipping sub-kriteria "${subKriteria.nama_sub_kriteria}" - non-numeric batas values:`, 
+                       { batas_bawah: subKriteria.batas_bawah, batas_atas: subKriteria.batas_atas });
+          continue;
+        }
         
         // Check if the start time falls within the sub-kriteria range
         if (startHour >= batasBawah && startHour <= batasAtas) {

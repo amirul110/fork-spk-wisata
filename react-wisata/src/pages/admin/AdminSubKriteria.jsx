@@ -141,26 +141,6 @@ export default function AdminSubKriteria() {
       return;
     }
 
-    // Validate batas_bawah and batas_atas if provided
-    // Accept any text format - no need to validate as number since we store as string
-    const validateBatasValue = (value, fieldName) => {
-      if (value && value.trim()) {
-        // Just check if it's not empty - accept any format
-        // Examples: "09.00", "09.01", "24 jam", "8", "17.30"
-        // No validation needed - we preserve the exact text as entered
-        return true;
-      }
-      return true;
-    };
-
-    if (!validateBatasValue(form.batas_bawah, "Batas Bawah")) {
-      return;
-    }
-
-    if (!validateBatasValue(form.batas_atas, "Batas Atas")) {
-      return;
-    }
-
     try {
       if (isEdit) {
         await updateSubKriteria(form.id_sub, {
