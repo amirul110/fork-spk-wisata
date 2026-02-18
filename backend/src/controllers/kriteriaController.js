@@ -9,24 +9,22 @@ const { API_STATUS, RESPONSE_DATA_KEYS } = require('../constants/general');
 const parseBatasValue = (value) => {
   if (value === null || value === undefined || value === '') return null;
   
-  // Handle string values
+  let cleanValue = value;
+  
+  // Handle string values - extract number from strings like "24 jam"
   if (typeof value === 'string') {
-    let cleanValue = value.trim();
+    cleanValue = value.trim();
     
-    // Extract number from strings like "24 jam", "22.00", etc.
     if (/jam/i.test(cleanValue)) {
       const match = cleanValue.match(/(\d+(?:\.\d+)?)/);
       if (match) {
         cleanValue = match[1];
       }
     }
-    
-    const parsed = parseFloat(cleanValue);
-    return isNaN(parsed) ? null : parsed;
   }
   
-  // Handle numeric values
-  const parsed = parseFloat(value);
+  // Parse to float
+  const parsed = parseFloat(cleanValue);
   return isNaN(parsed) ? null : parsed;
 };
 

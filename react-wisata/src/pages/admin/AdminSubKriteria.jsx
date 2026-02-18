@@ -109,18 +109,13 @@ export default function AdminSubKriteria() {
   };
 
   const openEditDialog = (rowData) => {
-    // Format batas values to preserve decimal display (e.g., 22 -> "22.00", 24 -> "24")
+    // Format batas values to preserve decimal display (e.g., 22.0 -> "22", 22.5 -> "22.50")
     const formatBatasValue = (value) => {
       if (value === null || value === undefined) return '';
-      // Convert to number first, then to string
       const num = typeof value === 'string' ? parseFloat(value) : value;
       if (isNaN(num)) return '';
-      // Keep original format if it's already a string with decimals
-      if (typeof value === 'string' && value.includes('.')) {
-        return value;
-      }
-      // For whole numbers, keep as-is (24 stays "24", not "24.00")
-      // For numbers with decimals, format with 2 decimal places
+      // For whole numbers, return as string (24 -> "24")
+      // For decimals, format with 2 decimal places (17.3 -> "17.30")
       return num % 1 === 0 ? String(num) : num.toFixed(2);
     };
 
