@@ -78,10 +78,10 @@
     grid-column: 1;
     grid-row: 2;
     padding: 16px;
-    padding-top: 20rem; /* Large spacing to ensure content never hides behind tall navbar (navbar ~270-360px) */
+    padding-top: 1rem;
     overflow-y: auto;
     overflow-x: auto;
-    /* Content positioned below sidebar via grid with safe top padding */
+    /* Content positioned below sidebar via CSS Grid rows - no large padding needed */
   }
   
   /* Make tables scroll horizontally on mobile */
