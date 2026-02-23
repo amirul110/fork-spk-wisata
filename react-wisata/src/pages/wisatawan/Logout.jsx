@@ -1,7 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import "../dashboard.css";
-import Sidebar from "../../components/Sidebar";
-import { wisatawanMenu } from "../../app/wisatawanMenu";
 import { clearSelectedWisata } from "../../store/wisataStore";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
@@ -16,10 +13,8 @@ export default function Logout() {
   };
 
   return (
-    <div className="page">
-      <Sidebar items={wisatawanMenu} />
-
-      <main className="content logout-center">
+    <>
+      <div className="flex align-items-center justify-content-center min-h-screen">
         <Card className="shadow-2 text-center" style={{ minWidth: 320 }}>
           <i className="pi pi-sign-out text-4xl text-500 mb-3"></i>
           <h2 className="text-xl font-bold text-800 mt-0 mb-2">Halaman Logout</h2>
@@ -31,7 +26,7 @@ export default function Logout() {
             onClick={handleLogout}
           />
         </Card>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }

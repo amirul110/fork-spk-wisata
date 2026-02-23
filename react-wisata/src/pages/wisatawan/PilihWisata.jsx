@@ -1,8 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import "../dashboard.css";
-import Sidebar from "../../components/Sidebar";
-import { wisatawanMenu } from "../../app/wisatawanMenu";
 import { getSelectedWisata, clearSelectedWisata } from "../../store/wisataStore";
 import { getAllWisata } from "../../services/wisata.service";
 import { getAllKriteria } from "../../services/kriteria.service";
@@ -213,9 +210,7 @@ export default function PilihWisata() {
   // Jika belum pilih wisata, tampilkan pesan
   if (belumPilihWisata) {
     return (
-      <div className="page">
-        <Sidebar items={wisatawanMenu} />
-        <main className="content">
+      <>
           <div className="mb-4">
             <div className="mb-2" style={{ fontSize: "36px", fontWeight: "bold", color: "var(--text-color)" }}>
               {formatTanggalIndonesia()}
@@ -241,16 +236,12 @@ export default function PilihWisata() {
               />
             </div>
           </Card>
-        </main>
-      </div>
+        </>
     );
   }
 
   return (
-    <div className="page">
-      <Sidebar items={wisatawanMenu} onItemClick={handleSidebarClick} />
-
-      <main className="content">
+    <>
         {/* Dialog Konfirmasi Kembali ke Dashboard */}
         <Dialog
           header="Konfirmasi"
@@ -441,7 +432,6 @@ export default function PilihWisata() {
           initialPosition={gpsInitialPos}
           headerTitle={mapDialogTitle}
         />
-      </main>
-    </div>
+    </>
   );
 }
