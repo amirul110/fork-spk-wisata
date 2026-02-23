@@ -21,23 +21,41 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter to accept only images
+// File filter to accept all common image formats
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif/;
+  // Comprehensive list of image extensions including phone camera formats
+  const allowedTypes = /jpeg|jpg|png|gif|webp|bmp|svg|tiff|tif|heic|heif|jfif/;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
+  
+  // Common MIME types for images including mobile phone formats
+  const allowedMimeTypes = [
+    'image/jpeg',
+    'image/jpg', 
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/bmp',
+    'image/x-ms-bmp',
+    'image/svg+xml',
+    'image/tiff',
+    'image/heic',
+    'image/heif',
+    'image/jfif'
+  ];
+  
+  const mimetypeValid = allowedMimeTypes.includes(file.mimetype.toLowerCase());
 
-  if (mimetype && extname) {
+  if (mimetypeValid || extname) {
     return cb(null, true);
   } else {
-    cb(new Error('Hanya file gambar yang diperbolehkan (jpeg, jpg, png, gif)'));
+    cb(new Error('Hanya file gambar yang diperbolehkan (jpeg, jpg, png, gif, webp, bmp, heic, dll)'));
   }
 };
 
 // Create multer instance
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max file size
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max file size (increased for high-res phone photos)
   fileFilter: fileFilter
 });
 

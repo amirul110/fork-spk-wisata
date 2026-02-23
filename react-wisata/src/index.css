@@ -5,8 +5,28 @@
 html, body, #root {
   height: 100%;
   margin: 0;
+  overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Ensure images are responsive */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive font sizes */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 13px;
+  }
 }

@@ -14,6 +14,7 @@
   width: 240px;
   min-height: 100vh;
   flex-shrink: 0;
+  transition: transform 0.3s ease;
 }
 
 /* ===============================
@@ -23,6 +24,7 @@
   flex: 1;
   padding: 24px;
   background: #fff;
+  overflow-x: auto;
 }
 
 /* ===============================
@@ -32,4 +34,143 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* ===============================
+   RESPONSIVE DESIGN - TABLET
+=============================== */
+@media (max-width: 1024px) {
+  .content {
+    padding: 20px;
+  }
+  
+  .sidebar {
+    width: 200px;
+  }
+}
+
+/* ===============================
+   RESPONSIVE DESIGN - MOBILE
+=============================== */
+@media (max-width: 768px) {
+  .page {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .content {
+    padding: 16px;
+    width: 100%;
+  }
+  
+  /* Make tables scroll horizontally on mobile */
+  .p-datatable {
+    font-size: 0.9rem;
+  }
+  
+  .p-datatable-wrapper {
+    overflow-x: auto;
+  }
+  
+  /* Make dialogs full screen on mobile */
+  .p-dialog {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 1rem;
+  }
+  
+  .p-dialog .p-dialog-content {
+    padding: 1rem;
+  }
+  
+  /* Make form inputs stack vertically */
+  .p-fluid .p-field {
+    margin-bottom: 1rem;
+  }
+  
+  /* Make buttons touch-friendly */
+  .p-button {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+  
+  /* Make file upload area larger on mobile */
+  .p-fileupload {
+    width: 100%;
+  }
+  
+  .p-fileupload .p-fileupload-buttonbar {
+    flex-wrap: wrap;
+  }
+}
+
+/* ===============================
+   RESPONSIVE DESIGN - SMALL MOBILE
+=============================== */
+@media (max-width: 480px) {
+  .content {
+    padding: 12px;
+  }
+  
+  .p-datatable {
+    font-size: 0.85rem;
+  }
+  
+  .p-dialog {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0;
+    height: 100vh;
+    max-height: 100vh;
+  }
+  
+  .p-dialog .p-dialog-header {
+    padding: 1rem;
+  }
+  
+  .p-dialog .p-dialog-content {
+    padding: 0.75rem;
+    flex: 1;
+    overflow-y: auto;
+  }
+  
+  /* Stack action buttons vertically on small screens */
+  .p-buttonset {
+    flex-direction: column;
+  }
+  
+  .p-buttonset .p-button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* ===============================
+   TOUCH-FRIENDLY ENHANCEMENTS
+=============================== */
+@media (hover: none) and (pointer: coarse) {
+  /* Larger tap targets for touch devices */
+  .p-datatable .p-datatable-tbody > tr > td {
+    padding: 1rem 0.75rem;
+  }
+  
+  .p-button-icon-only {
+    width: 44px;
+    height: 44px;
+  }
+  
+  /* Better spacing for form fields on touch */
+  .p-inputtext,
+  .p-inputnumber-input,
+  .p-inputtextarea {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
 }
