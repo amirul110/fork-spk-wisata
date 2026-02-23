@@ -3,4 +3,5 @@
 node_modules/
 backendv1/
 express-wisata/
-.envdist/
+.env
+dist/
