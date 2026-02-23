@@ -60,14 +60,21 @@
   .sidebar {
     width: 100%;
     min-height: auto;
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
   
   .content {
     padding: 16px;
     width: 100%;
+    /* Add padding-top to push content below fixed sidebar */
+    /* Typical sidebar height is around 60-80px, adding safe margin */
+    padding-top: 80px;
+    margin-top: 0;
   }
   
   /* Make tables scroll horizontally on mobile */
