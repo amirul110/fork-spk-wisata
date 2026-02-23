@@ -5,3 +5,4 @@ backendv1/
 express-wisata/
 .env
 dist/
+*.md
