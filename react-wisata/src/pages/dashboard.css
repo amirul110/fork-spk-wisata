@@ -1,9 +1,11 @@
 /* ===============================
-   LAYOUT UTAMA
+   LAYOUT UTAMA - CSS GRID
 =============================== */
 .page {
   min-height: 100vh;
-  display: flex;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: 100vh;
   background: #f8f9fa;
 }
 
@@ -11,9 +13,9 @@
    SIDEBAR
 =============================== */
 .sidebar {
-  width: 240px;
-  min-height: 100vh;
-  flex-shrink: 0;
+  grid-column: 1;
+  grid-row: 1;
+  overflow-y: auto;
   transition: transform 0.3s ease;
 }
 
@@ -21,9 +23,11 @@
    AREA KONTEN (KANAN SIDEBAR)
 =============================== */
 .content {
-  flex: 1;
+  grid-column: 2;
+  grid-row: 1;
   padding: 24px;
   background: #fff;
+  overflow-y: auto;
   overflow-x: auto;
 }
 
@@ -40,12 +44,12 @@
    RESPONSIVE DESIGN - TABLET
 =============================== */
 @media (max-width: 1024px) {
-  .content {
-    padding: 20px;
+  .page {
+    grid-template-columns: 200px 1fr;
   }
   
-  .sidebar {
-    width: 200px;
+  .content {
+    padding: 20px;
   }
 }
 
@@ -54,27 +58,30 @@
 =============================== */
 @media (max-width: 768px) {
   .page {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+    overflow: hidden;
   }
   
   .sidebar {
-    width: 100%;
-    min-height: auto;
-    position: fixed;
+    grid-column: 1;
+    grid-row: 1;
+    position: sticky;
     top: 0;
-    left: 0;
-    right: 0;
     z-index: 1000;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow-y: visible;
   }
   
   .content {
+    grid-column: 1;
+    grid-row: 2;
     padding: 16px;
-    width: 100%;
-    /* Add padding-top to push content below fixed sidebar */
-    /* Typical sidebar height is around 60-80px, adding safe margin */
-    padding-top: 80px;
-    margin-top: 0;
+    overflow-y: auto;
+    overflow-x: auto;
+    /* Content automatically positioned below sidebar via grid */
+    /* No hardcoded padding needed! */
   }
   
   /* Make tables scroll horizontally on mobile */
