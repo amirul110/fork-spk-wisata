@@ -1,7 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import "../dashboard.css";
-import Sidebar from "../../components/Sidebar";
-import { adminMenu } from "../../app/adminMenu";
 import { getHasilRekomendasiGlobal } from "../../services/rekomendasi.service";
 
 import { DataTable } from "primereact/datatable";
@@ -47,13 +44,10 @@ export default function AdminHasilRekomendasi() {
   };
 
   return (
-    <div className="page">
-      <Sidebar items={adminMenu} />
+    <>
+      <Toast ref={toast} />
 
-      <main className="content">
-        <Toast ref={toast} />
-
-        <h2 className="text-2xl font-bold text-800">
+      <h2 className="text-2xl font-bold text-800">
           Hasil Rekomendasi Wisata
         </h2>
         <hr className="border-top-1 border-300" />
@@ -106,7 +100,6 @@ export default function AdminHasilRekomendasi() {
             </DataTable>
           </>
         )}
-      </main>
-    </div>
+    </>
   );
 }

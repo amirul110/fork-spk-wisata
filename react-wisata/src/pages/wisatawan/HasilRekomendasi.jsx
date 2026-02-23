@@ -1,8 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import "../dashboard.css";
-import Sidebar from "../../components/Sidebar";
-import { wisatawanMenu } from "../../app/wisatawanMenu";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { DataTable } from "primereact/datatable";
@@ -45,10 +42,7 @@ export default function HasilRekomendasi() {
   );
 
   return (
-    <div className="page">
-      <Sidebar items={wisatawanMenu} />
-
-      <main className="content">
+    <>
         <div className="mb-4">
           <div className="mb-2" style={{ fontSize: "36px", fontWeight: "bold", color: "var(--text-color)" }}>
             {formatTanggalIndonesia()}
@@ -184,7 +178,6 @@ export default function HasilRekomendasi() {
             </div>
           </>
         )}
-      </main>
-    </div>
+    </>
   );
 }

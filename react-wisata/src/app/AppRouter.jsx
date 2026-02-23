@@ -14,6 +14,9 @@ import HasilRekomendasi from "../pages/wisatawan/HasilRekomendasi";
 import Profile from "../pages/wisatawan/Profile";
 import Logout from "../pages/wisatawan/Logout";
 import ProtectedRoute from "../components/ProtectedRoute";
+import DashboardLayout from "../components/DashboardLayout";
+import { adminMenu } from "./adminMenu";
+import { wisatawanMenu } from "./wisatawanMenu";
 
 export default function AppRouter() {
   return (
@@ -24,103 +27,40 @@ export default function AppRouter() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        <Route 
-          path="/admin/dashboard" 
+        {/* Admin routes with shared layout */}
+        <Route
+          path="/admin"
           element={
             <ProtectedRoute requireRole="admin">
-              <AdminDashboard />
+              <DashboardLayout menu={adminMenu} />
             </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/alternatif" 
-          element={
-            <ProtectedRoute requireRole="admin">
-              <AdminAlternatif />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/kriteria" 
-          element={
-            <ProtectedRoute requireRole="admin">
-              <AdminKriteria />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/sub-kriteria" 
-          element={
-            <ProtectedRoute requireRole="admin">
-              <AdminSubKriteria />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/hasil" 
-          element={
-            <ProtectedRoute requireRole="admin">
-              <AdminHasilRekomendasi />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/profile" 
-          element={
-            <ProtectedRoute requireRole="admin">
-              <AdminProfile />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/logout" 
-          element={
-            <ProtectedRoute requireRole="admin">
-              <AdminLogout />
-            </ProtectedRoute>
-          } 
-        />
+          }
+        >
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="alternatif" element={<AdminAlternatif />} />
+          <Route path="kriteria" element={<AdminKriteria />} />
+          <Route path="sub-kriteria" element={<AdminSubKriteria />} />
+          <Route path="hasil" element={<AdminHasilRekomendasi />} />
+          <Route path="profile" element={<AdminProfile />} />
+          <Route path="logout" element={<AdminLogout />} />
+        </Route>
 
-        <Route 
-          path="/wisatawan/dashboard" 
+        {/* Wisatawan routes with shared layout */}
+        <Route
+          path="/wisatawan"
           element={
             <ProtectedRoute requireRole="wisatawan">
-              <WisatawanDashboard />
+              <DashboardLayout menu={wisatawanMenu} />
             </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/wisatawan/preferensi" 
-          element={
-            <ProtectedRoute requireRole="wisatawan">
-              <PilihWisata />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/wisatawan/hasil" 
-          element={
-            <ProtectedRoute requireRole="wisatawan">
-              <HasilRekomendasi />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/wisatawan/profile" 
-          element={
-            <ProtectedRoute requireRole="wisatawan">
-              <Profile />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/wisatawan/logout" 
-          element={
-            <ProtectedRoute requireRole="wisatawan">
-              <Logout />
-            </ProtectedRoute>
-          } 
-        />
+          }
+        >
+          <Route path="dashboard" element={<WisatawanDashboard />} />
+          <Route path="preferensi" element={<PilihWisata />} />
+          <Route path="hasil" element={<HasilRekomendasi />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="logout" element={<Logout />} />
+        </Route>
+
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

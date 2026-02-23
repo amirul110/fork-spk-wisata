@@ -4,9 +4,6 @@ import { Column } from "primereact/column";
 import { Tag } from "primereact/tag";
 import { Message } from "primereact/message";
 import { ProgressSpinner } from "primereact/progressspinner";
-import "../dashboard.css";
-import Sidebar from "../../components/Sidebar";
-import { adminMenu } from "../../app/adminMenu";
 import {
   getDashboardWisata,
   getDashboardKriteria,
@@ -53,69 +50,65 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="page">
-      <Sidebar items={adminMenu} />
+    <>
+      <h2 className="text-2xl font-bold text-800">
+        Selamat datang di halaman dashboard
+      </h2>
+      <hr className="border-top-1 border-300" />
 
-      <main className="content">
-        <h2 className="text-2xl font-bold text-800">
-          Selamat datang di halaman dashboard
-        </h2>
-        <hr className="border-top-1 border-300" />
-
-        {loading ? (
-          <div className="flex justify-content-center align-items-center py-6">
-            <ProgressSpinner />
+      {loading ? (
+        <div className="flex justify-content-center align-items-center py-6">
+          <ProgressSpinner />
+        </div>
+      ) : error ? (
+        <Message severity="error" text={error} className="w-full" />
+      ) : (
+        <div className="flex flex-column gap-4">
+          {/* Tabel Alternatif Wisata */}
+          <div>
+            <h3 className="text-xl font-semibold text-700 mb-3">
+              Data Alternatif Wisata
+            </h3>
+            <DataTable
+              value={wisataList}
+              stripedRows
+              paginator
+              rows={5}
+              rowsPerPageOptions={[5, 10, 25]}
+              first={wisataFirst}
+              onPage={(e) => setWisataFirst(e.first)}
+              emptyMessage="Tidak ada data wisata."
+              size="small"
+            >
+              <Column header="No" body={wisataRowIndex} style={{ width: "60px" }} />
+              <Column field="nama_wisata" header="Nama Wisata" sortable />
+            </DataTable>
           </div>
-        ) : error ? (
-          <Message severity="error" text={error} className="w-full" />
-        ) : (
-          <div className="flex flex-column gap-4">
-            {/* Tabel Alternatif Wisata */}
-            <div>
-              <h3 className="text-xl font-semibold text-700 mb-3">
-                Data Alternatif Wisata
-              </h3>
-              <DataTable
-                value={wisataList}
-                stripedRows
-                paginator
-                rows={5}
-                rowsPerPageOptions={[5, 10, 25]}
-                first={wisataFirst}
-                onPage={(e) => setWisataFirst(e.first)}
-                emptyMessage="Tidak ada data wisata."
-                size="small"
-              >
-                <Column header="No" body={wisataRowIndex} style={{ width: "60px" }} />
-                <Column field="nama_wisata" header="Nama Wisata" sortable />
-              </DataTable>
-            </div>
 
-            {/* Tabel Kriteria */}
-            <div>
-              <h3 className="text-xl font-semibold text-700 mb-3">
-                Data Kriteria
-              </h3>
-              <DataTable
-                value={kriteriaList}
-                stripedRows
-                paginator
-                rows={5}
-                rowsPerPageOptions={[5, 10, 25]}
-                first={kriteriaFirst}
-                onPage={(e) => setKriteriaFirst(e.first)}
-                emptyMessage="Tidak ada data kriteria."
-                size="small"
-              >
-                <Column header="No" body={kriteriaRowIndex} style={{ width: "60px" }} />
-                <Column field="nama_kriteria" header="Nama Kriteria" sortable />
-                <Column field="bobot_prioritas" header="Bobot Prioritas" sortable style={{ width: "150px" }} />
-                <Column header="Jenis" body={jenisTemplate} style={{ width: "120px" }} />
-              </DataTable>
-            </div>
+          {/* Tabel Kriteria */}
+          <div>
+            <h3 className="text-xl font-semibold text-700 mb-3">
+              Data Kriteria
+            </h3>
+            <DataTable
+              value={kriteriaList}
+              stripedRows
+              paginator
+              rows={5}
+              rowsPerPageOptions={[5, 10, 25]}
+              first={kriteriaFirst}
+              onPage={(e) => setKriteriaFirst(e.first)}
+              emptyMessage="Tidak ada data kriteria."
+              size="small"
+            >
+              <Column header="No" body={kriteriaRowIndex} style={{ width: "60px" }} />
+              <Column field="nama_kriteria" header="Nama Kriteria" sortable />
+              <Column field="bobot_prioritas" header="Bobot Prioritas" sortable style={{ width: "150px" }} />
+              <Column header="Jenis" body={jenisTemplate} style={{ width: "120px" }} />
+            </DataTable>
           </div>
-        )}
-      </main>
-    </div>
+        </div>
+      )}
+    </>
   );
 }

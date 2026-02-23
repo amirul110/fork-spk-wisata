@@ -1,7 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import "../dashboard.css";
-import Sidebar from "../../components/Sidebar";
-import { adminMenu } from "../../app/adminMenu";
 import {
   getAllKriteria,
   getSubKriteriaByKriteria,
@@ -278,14 +275,11 @@ export default function AdminSubKriteria() {
   );
 
   return (
-    <div className="page">
-      <Sidebar items={adminMenu} />
+    <>
+      <Toast ref={toast} />
+      <ConfirmDialog />
 
-      <main className="content">
-        <Toast ref={toast} />
-        <ConfirmDialog />
-
-        <h2 className="text-2xl font-bold text-800">
+      <h2 className="text-2xl font-bold text-800">
           Halaman Sub Kriteria
         </h2>
         <hr className="border-top-1 border-300" />
@@ -472,7 +466,6 @@ export default function AdminSubKriteria() {
             </small>
           </div>
         </Dialog>
-      </main>
-    </div>
+    </>
   );
 }

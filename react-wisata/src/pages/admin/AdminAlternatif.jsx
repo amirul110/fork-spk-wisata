@@ -13,10 +13,6 @@ import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { Message } from 'primereact/message'
 
-import '../dashboard.css'
-import Sidebar from '../../components/Sidebar'
-import { adminMenu } from '../../app/adminMenu'
-
 import {
   getAllAlternatif,
   createAlternatif,
@@ -337,13 +333,11 @@ export default function AdminAlternatif () {
   const rowNumber = (_rowData, options) => first + options.rowIndex + 1
 
   return (
-    <div className='page'>
-      <Sidebar items={adminMenu} />
+    <>
       <Toast ref={toast} />
       <ConfirmDialog />
 
-      <main className='content'>
-        <h2 className='text-2xl font-bold text-800'>Halaman Alternatif</h2>
+      <h2 className='text-2xl font-bold text-800'>Halaman Alternatif</h2>
         <hr className='border-top-1 border-300' />
 
         <div className='flex justify-content-between align-items-center mb-3'>
@@ -722,7 +716,6 @@ export default function AdminAlternatif () {
             )
           })()}
         </Dialog>
-      </main>
-    </div>
+    </>
   )
 }

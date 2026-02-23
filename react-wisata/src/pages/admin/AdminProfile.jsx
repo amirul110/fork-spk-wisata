@@ -1,7 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import "../dashboard.css";
-import Sidebar from "../../components/Sidebar";
-import { adminMenu } from "../../app/adminMenu";
 import { Card } from "primereact/card";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
@@ -106,12 +103,10 @@ export default function AdminProfile() {
   };
 
   return (
-    <div className="page">
-      <Sidebar items={adminMenu} />
+    <>
       <Toast ref={toast} />
 
-      <main className="content">
-        <div className="mb-4">
+      <div className="mb-4">
           <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
             <i className="pi pi-user mr-2"></i>Data Profile
           </h2>
@@ -203,7 +198,6 @@ export default function AdminProfile() {
             </div>
           </Card>
         )}
-      </main>
-    </div>
+    </>
   );
 }
