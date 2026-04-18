@@ -38,7 +38,7 @@ const ROLES = {
   WISATAWAN: "wisatawan",
 };
 
-// Konstanta Logika SPK (SAW / WP / TOPSIS)
+// Konstanta Tipe Kriteria SPK (dipakai pada AHP + SMART)
 const SPK_TYPES = {
   COST: "cost",       // Biaya (Semakin kecil semakin bagus)
   BENEFIT: "benefit", // Keuntungan (Semakin besar semakin bagus)

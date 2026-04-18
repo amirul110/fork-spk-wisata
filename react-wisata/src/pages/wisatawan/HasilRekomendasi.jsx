@@ -72,7 +72,7 @@ export default function HasilRekomendasi() {
           <>
             <Message
               severity="success"
-              text="Berikut adalah hasil perhitungan rekomendasi wisata menggunakan metode Weighted Product (WP) berdasarkan wisata yang Anda pilih:"
+              text="Berikut adalah hasil rekomendasi wisata menggunakan kombinasi metode AHP (bobot kriteria) dan SMART (nilai akhir alternatif):"
               className="w-full mb-4"
             />
 
@@ -82,7 +82,7 @@ export default function HasilRekomendasi() {
                 <Column field="nama_wisata" header="Nama Wisata" />
                 <Column header="Harga Tiket" body={hargaTemplate} style={{ width: "150px" }} />
                 <Column field="jarak_dari_anda" header="Jarak dari Anda" style={{ width: "150px" }} />
-                <Column field="skor_rekomendasi" header="Skor Akhir WP" style={{ width: "140px" }} />
+                <Column field="skor_rekomendasi" header="Skor Akhir SMART" style={{ width: "140px" }} />
                 <Column header="Detail" body={detailTemplate} style={{ width: "80px" }} />
               </DataTable>
             </Card>
@@ -152,7 +152,7 @@ export default function HasilRekomendasi() {
                     
                     <div className="col-12">
                       <div className="mb-0">
-                        <span className="font-bold text-600 text-sm">Skor Rekomendasi (WP)</span>
+                        <span className="font-bold text-600 text-sm">Skor Rekomendasi (SMART)</span>
                         <div className="text-800 font-semibold mt-1">
                           <Tag value={selectedWisata.skor_rekomendasi} severity="success" />
                         </div>

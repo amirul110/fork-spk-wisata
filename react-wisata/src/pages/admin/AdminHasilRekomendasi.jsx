@@ -70,7 +70,7 @@ export default function AdminHasilRekomendasi() {
           <>
             <Message
               severity="success"
-              text={`Berikut adalah 5 besar wisata berdasarkan rata-rata skor WP dari ${totalWisatawan} wisatawan:`}
+              text={`Berikut adalah 5 besar wisata berdasarkan rata-rata skor SMART dari ${totalWisatawan} wisatawan:`}
               className="w-full mb-3"
             />
 
@@ -93,7 +93,7 @@ export default function AdminHasilRekomendasi() {
               />
               <Column
                 field="skor_rata_rata"
-                header="Skor Akhir WP"
+                header="Skor Akhir SMART"
                 sortable
                 style={{ width: "150px" }}
               />

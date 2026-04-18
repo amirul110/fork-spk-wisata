@@ -2,7 +2,7 @@
 const db = require('../database/connection').db;
 const { TABLES } = require('../constants/database');
 const { API_STATUS, RESPONSE_DATA_KEYS } = require('../constants/general');
-const wpHelper = require('../utils/wpHelper'); 
+const spkHelper = require('../utils/spkHelper');
 
 module.exports = {
 
@@ -12,7 +12,7 @@ module.exports = {
 
     try {
       const { id: userId } = req.user;
-      const { preferensi, userLocation } = req.body;
+      const { perbandinganAHP, userLocation } = req.body;
 
       // --- VALIDASI INPUT ---
       if (!userLocation || !userLocation.latitude || !userLocation.longitude) {
@@ -23,9 +23,9 @@ module.exports = {
         });
       }
 
-      if (!preferensi) {
+      if (!perbandinganAHP || typeof perbandinganAHP !== 'object') {
         await trx.rollback();
-        return res.status(400).json({ message: 'Preferensi kriteria wajib diisi' });
+        return res.status(400).json({ message: 'Data perbandingan AHP wajib diisi' });
       }
 
       // --- SIMPAN PREFERENSI USER ---
@@ -33,14 +33,14 @@ module.exports = {
         id_wisatawan: userId,
         user_latitude: userLocation.latitude,
         user_longitude: userLocation.longitude,
-        data_preferensi: JSON.stringify(preferensi),
+        data_preferensi: JSON.stringify(perbandinganAHP),
         created_at: new Date()
       });
 
       // Simpan Log (Backup)
       await trx(TABLES.RIWAYAT_PENCARIAN).insert({
         id_wisatawan: userId,
-        detail_pencarian: JSON.stringify({ preferensi, userLocation }),
+        detail_pencarian: JSON.stringify({ perbandinganAHP, userLocation }),
         created_at: new Date()
       });
 
@@ -100,78 +100,177 @@ module.exports = {
         return 1; // Nilai default jika data tidak masuk range manapun
       };
 
-      // --- PERSIAPAN BOBOT ---
-      let totalBobotInput = 0;
-      Object.values(preferensi).forEach(val => totalBobotInput += Number(val));
+      // --- HITUNG BOBOT KRITERIA DENGAN AHP ---
+      const kriteriaIds = dbKriteria
+        .map((k) => Number(k.id_kriteria))
+        .sort((a, b) => a - b);
+      const n = kriteriaIds.length;
+      const expectedPairCount = (n * (n - 1)) / 2;
 
-      // --- HITUNG WP (VECTOR S) ---
-      let vectorS_List = [];
-      let totalVectorS = 0;
+      if (Object.keys(perbandinganAHP).length < expectedPairCount) {
+        await trx.rollback();
+        return res.status(400).json({
+          status: API_STATUS.BAD_REQUEST,
+          message: 'Data perbandingan AHP belum lengkap untuk semua pasangan kriteria'
+        });
+      }
 
+      const matrix = Array.from({ length: n }, () => Array(n).fill(1));
+
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const idA = kriteriaIds[i];
+          const idB = kriteriaIds[j];
+          const pairKey = `${idA}-${idB}`;
+          const pairData = perbandinganAHP[pairKey];
+
+          if (!pairData) {
+            await trx.rollback();
+            return res.status(400).json({
+              status: API_STATUS.BAD_REQUEST,
+              message: `Data perbandingan untuk pasangan ${pairKey} belum diisi`
+            });
+          }
+
+          const intensity = Number(pairData.intensity);
+          const moreImportant = pairData.moreImportant;
+          const isEqual = moreImportant === 'equal' || moreImportant === 'sama';
+
+          if (!isEqual && ![idA, idB].includes(Number(moreImportant))) {
+            await trx.rollback();
+            return res.status(400).json({
+              status: API_STATUS.BAD_REQUEST,
+              message: `Nilai lebih penting untuk pasangan ${pairKey} tidak valid`
+            });
+          }
+
+          if (!Number.isFinite(intensity) || intensity < 1 || intensity > 9) {
+            await trx.rollback();
+            return res.status(400).json({
+              status: API_STATUS.BAD_REQUEST,
+              message: `Skala perbandingan AHP untuk pasangan ${pairKey} harus 1-9`
+            });
+          }
+
+          let valueAtoB = 1;
+          if (!isEqual) {
+            valueAtoB = Number(moreImportant) === idA ? intensity : 1 / intensity;
+          }
+
+          matrix[i][j] = valueAtoB;
+          matrix[j][i] = 1 / valueAtoB;
+        }
+      }
+
+      const columnTotals = Array.from({ length: n }, (_, colIdx) =>
+        matrix.reduce((acc, row) => acc + row[colIdx], 0)
+      );
+      const normalizedMatrix = matrix.map((row) =>
+        row.map((value, colIdx) => (columnTotals[colIdx] === 0 ? 0 : value / columnTotals[colIdx]))
+      );
+      const ahpWeights = normalizedMatrix.map((row) =>
+        row.reduce((sum, val) => sum + val, 0) / n
+      );
+
+      const weightedSums = matrix.map((row) =>
+        row.reduce((sum, value, colIdx) => sum + (value * ahpWeights[colIdx]), 0)
+      );
+
+      const lambdaMax = weightedSums.reduce((sum, weightedSum, rowIdx) => {
+        const weight = ahpWeights[rowIdx];
+        return sum + (weight === 0 ? 0 : (weightedSum / weight));
+      }, 0) / n;
+
+      const ci = n > 1 ? (lambdaMax - n) / (n - 1) : 0;
+      const RI_TABLE = {
+        1: 0.0, 2: 0.0, 3: 0.58, 4: 0.9, 5: 1.12,
+        6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49,
+        11: 1.51, 12: 1.48, 13: 1.56, 14: 1.57, 15: 1.59
+      };
+      const ri = RI_TABLE[n] ?? 1.59;
+      const cr = ri === 0 ? 0 : ci / ri;
+
+      if (cr > 0.1) {
+        await trx.rollback();
+        return res.status(400).json({
+          status: API_STATUS.BAD_REQUEST,
+          message: `Penilaian AHP tidak konsisten (CR=${cr.toFixed(4)}). Mohon ulangi input perbandingan.`,
+          data: {
+            consistency_ratio: Number(cr.toFixed(4)),
+            consistency_index: Number(ci.toFixed(4)),
+            lambda_max: Number(lambdaMax.toFixed(4))
+          }
+        });
+      }
+
+      const weightByKriteriaId = {};
+      kriteriaIds.forEach((id, idx) => {
+        weightByKriteriaId[id] = ahpWeights[idx];
+      });
+
+      // --- HITUNG NILAI ALTERNATIF DENGAN SMART ---
       const candidates = wisataRaw.map(w => {
-        // 1. Hitung Jarak Real (User ke Wisata)
-        const jarakKm = wpHelper.hitungJarakKm(
-          Number(userLocation.latitude), Number(userLocation.longitude), 
+        const jarakKm = spkHelper.hitungJarakKm(
+          Number(userLocation.latitude), Number(userLocation.longitude),
           w.latitude, w.longitude
         );
 
-        let nilaiS = 1;
-
-        // 2. Loop Setiap Kriteria User
-        Object.keys(preferensi).forEach(kID => {
-            const bobotUser = Number(preferensi[kID]);
-            
-            if (bobotUser > 0) { // Hanya hitung jika user memilih
-                const colName = colMapper[kID];
-                
-                // Tentukan nilai asli (Raw)
-                let rawValue = (colName === 'jarak_real') ? jarakKm : w[colName];
-
-                // A. Cari Nilai Utility (1-5) menggunakan Data Database
-                const nilaiUtility = getScoreFromDb(kID, rawValue);
-
-                // B. Normalisasi Bobot User
-                let bobotW = bobotUser / totalBobotInput;
-
-                // C. Cek Tipe COST/BENEFIT dari Database
-                const kriteriaInfo = dbKriteria.find(k => k.id_kriteria == kID);
-                
-                if (kriteriaInfo && kriteriaInfo.jenis === 'cost') {
-                     // Jika Cost (misal Harga): Pangkat harus NEGATIF
-                     // Karena: Nilai 1 (Murah) dipangkatkan -1 hasilnya Besar (Bagus).
-                     // Nilai 5 (Mahal) dipangkatkan -1 hasilnya Kecil (Jelek).
-                     bobotW = -1 * bobotW; 
-                }
-
-                // Rumus WP: S = S * (Nilai ^ Bobot)
-                nilaiS = nilaiS * Math.pow(nilaiUtility, bobotW);
-            }
+        const rawByKriteria = {};
+        kriteriaIds.forEach((kID) => {
+          const colName = colMapper[kID];
+          const rawValue = colName === 'jarak_real' ? jarakKm : w[colName];
+          rawByKriteria[kID] = getScoreFromDb(kID, rawValue);
         });
 
-        // Simpan hasil sementara
-        const resultItem = { ...w, jarak_km: jarakKm, vector_s: nilaiS };
-        vectorS_List.push(resultItem);
-        totalVectorS += nilaiS;
-        return resultItem;
+        return { ...w, jarak_km: jarakKm, rawByKriteria };
       });
 
-      // --- HITUNG VECTOR V (Ranking Akhir) ---
-      const finalResult = vectorS_List.map(item => ({
-         ...item,
-         // Rumus V: Skor Alternatif / Total Semua Skor
-         skor_rekomendasi: totalVectorS > 0 ? (item.vector_s / totalVectorS).toFixed(4) : 0,
-         jarak_dari_anda: item.jarak_km.toFixed(2) + " KM"
-      }));
+      const utilityBoundary = {};
+      kriteriaIds.forEach((kID) => {
+        const values = candidates.map(c => Number(c.rawByKriteria[kID]));
+        utilityBoundary[kID] = {
+          min: Math.min(...values),
+          max: Math.max(...values)
+        };
+      });
+
+      const finalResult = candidates.map(item => {
+        let skorAkhir = 0;
+
+        kriteriaIds.forEach((kID) => {
+          const value = Number(item.rawByKriteria[kID]);
+          const { min, max } = utilityBoundary[kID];
+          const denom = max - min;
+          const kriteriaInfo = dbKriteria.find(k => Number(k.id_kriteria) === Number(kID));
+
+          let utility = 1;
+          if (denom !== 0) {
+            if (kriteriaInfo && kriteriaInfo.jenis === 'cost') {
+              utility = (max - value) / denom;
+            } else {
+              utility = (value - min) / denom;
+            }
+          }
+
+          skorAkhir += (weightByKriteriaId[kID] || 0) * utility;
+        });
+
+        return {
+          ...item,
+          skor_rekomendasi: skorAkhir.toFixed(4),
+          jarak_dari_anda: item.jarak_km.toFixed(2) + ' KM'
+        };
+      });
 
       // Sort Ranking (Besar ke Kecil)
-      finalResult.sort((a, b) => b.skor_rekomendasi - a.skor_rekomendasi);
+      finalResult.sort((a, b) => Number(b.skor_rekomendasi) - Number(a.skor_rekomendasi));
 
       // --- SIMPAN TOP 5 KE DATABASE ---
       const top5 = finalResult.slice(0, 5); 
       const dataToInsert = top5.map((item, index) => ({
         id_preferensi: preferensiId,
         id_alternatif: item.id_alternatif,
-        skor_akhir_wp: item.skor_rekomendasi,
+        skor_akhir_wp: Number(item.skor_rekomendasi),
         ranking: index + 1,
         jarak_km_hasil: parseFloat(item.jarak_km)
       }));
@@ -198,17 +297,22 @@ module.exports = {
 
       return res.json({
         status: API_STATUS.SUCCESS,
-        message: 'Perhitungan Weighted Product Selesai',
+        message: 'Perhitungan AHP + SMART selesai',
         data: {
           id_riwayat: preferensiId,
+          bobot_ahp: kriteriaIds.map((id, index) => ({
+            id_kriteria: id,
+            bobot: Number(ahpWeights[index].toFixed(6))
+          })),
+          consistency_ratio: Number(cr.toFixed(4)),
           [RESPONSE_DATA_KEYS.REKOMENDASI]: responseData
         }
       });
 
     } catch (error) {
       await trx.rollback();
-      console.error("Error Hitung WP:", error);
-      return res.status(500).json({ message: 'Gagal menghitung rekomendasi WP' });
+      console.error("Error Hitung AHP+SMART:", error);
+      return res.status(500).json({ message: 'Gagal menghitung rekomendasi AHP + SMART' });
     }
   },
 
@@ -247,7 +351,7 @@ module.exports = {
             rekomendasi_utama: item.rekomendasi_utama,
             skor: parseFloat(item.skor_akhir_wp).toFixed(4),
             jarak: parseFloat(item.jarak_km_hasil).toFixed(1) + " KM",
-            info: "Ini adalah rekomendasi terbaik berdasarkan preferensi Anda saat itu."
+            info: "Ini adalah rekomendasi terbaik berdasarkan perhitungan AHP + SMART saat itu."
         };
       });
 
