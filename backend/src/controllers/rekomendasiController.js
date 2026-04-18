@@ -4,6 +4,14 @@ const { TABLES } = require('../constants/database');
 const { API_STATUS, RESPONSE_DATA_KEYS } = require('../constants/general');
 const spkHelper = require('../utils/spkHelper');
 
+const MAX_AHP_CRITERIA = 15;
+const AHP_CR_THRESHOLD = 0.1;
+const AHP_RI_TABLE = {
+  1: 0.0, 2: 0.0, 3: 0.58, 4: 0.9, 5: 1.12,
+  6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49,
+  11: 1.51, 12: 1.48, 13: 1.56, 14: 1.57, 15: 1.59
+};
+
 module.exports = {
 
   hitungRekomendasi: async (req, res) => {
@@ -107,6 +115,14 @@ module.exports = {
       const n = kriteriaIds.length;
       const expectedPairCount = (n * (n - 1)) / 2;
 
+      if (n > MAX_AHP_CRITERIA) {
+        await trx.rollback();
+        return res.status(400).json({
+          status: API_STATUS.BAD_REQUEST,
+          message: `Jumlah kriteria melebihi batas AHP yang didukung (maksimal ${MAX_AHP_CRITERIA}).`
+        });
+      }
+
       if (Object.keys(perbandinganAHP).length < expectedPairCount) {
         await trx.rollback();
         return res.status(400).json({
@@ -134,7 +150,7 @@ module.exports = {
 
           const intensity = Number(pairData.intensity);
           const moreImportant = pairData.moreImportant;
-          const isEqual = moreImportant === 'equal' || moreImportant === 'sama';
+          const isEqual = moreImportant === 'equal';
 
           if (!isEqual && ![idA, idB].includes(Number(moreImportant))) {
             await trx.rollback();
@@ -182,19 +198,14 @@ module.exports = {
       }, 0) / n;
 
       const ci = n > 1 ? (lambdaMax - n) / (n - 1) : 0;
-      const RI_TABLE = {
-        1: 0.0, 2: 0.0, 3: 0.58, 4: 0.9, 5: 1.12,
-        6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49,
-        11: 1.51, 12: 1.48, 13: 1.56, 14: 1.57, 15: 1.59
-      };
-      const ri = RI_TABLE[n] ?? 1.59;
+      const ri = AHP_RI_TABLE[n] ?? AHP_RI_TABLE[MAX_AHP_CRITERIA];
       const cr = ri === 0 ? 0 : ci / ri;
 
-      if (cr > 0.1) {
+      if (cr > AHP_CR_THRESHOLD) {
         await trx.rollback();
         return res.status(400).json({
           status: API_STATUS.BAD_REQUEST,
-          message: `Penilaian AHP tidak konsisten (CR=${cr.toFixed(4)}). Mohon ulangi input perbandingan.`,
+          message: `Perbandingan yang Anda masukkan tidak konsisten (Rasio Konsistensi/CR=${cr.toFixed(4)}). Silakan periksa kembali nilai perbandingan antar kriteria.`,
           data: {
             consistency_ratio: Number(cr.toFixed(4)),
             consistency_index: Number(ci.toFixed(4)),

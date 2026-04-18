@@ -215,6 +215,18 @@ export default function PilihWisata() {
         ? "Gagal mendapatkan lokasi GPS. Silakan coba lagi dengan metode manual."
         : "Browser Anda tidak mendukung Geolocation. Gunakan metode manual.";
 
+  const pairwiseRows = [];
+  let pairwiseCounter = 1;
+  for (let i = 0; i < kriteriaList.length; i++) {
+    for (let j = i + 1; j < kriteriaList.length; j++) {
+      pairwiseRows.push({
+        rowNo: pairwiseCounter++,
+        kriteriaA: kriteriaList[i],
+        kriteriaB: kriteriaList[j],
+      });
+    }
+  }
+
   // Jika belum pilih wisata, tampilkan pesan
   if (belumPilihWisata) {
     return (
@@ -394,8 +406,7 @@ export default function PilihWisata() {
               </tr>
             </thead>
             <tbody>
-              {kriteriaList.flatMap((kriteriaA, idxA) =>
-                kriteriaList.slice(idxA + 1).map((kriteriaB, idxB) => {
+              {pairwiseRows.map(({ rowNo, kriteriaA, kriteriaB }, idx) => {
                   const pairKey = `${kriteriaA.id}-${kriteriaB.id}`;
                   const pair = perbandinganAHP[pairKey] || { moreImportant: null, intensity: null };
                   const moreImportantOptions = [
@@ -403,10 +414,9 @@ export default function PilihWisata() {
                     { value: "equal", label: "Keduanya sama penting" },
                     { value: kriteriaB.id, label: `${kriteriaB.nama} lebih penting` },
                   ];
-                  const rowNo = ((idxA * (2 * kriteriaList.length - idxA - 1)) / 2) + idxB + 1;
 
                   return (
-                    <tr key={pairKey} className={idxB % 2 === 1 ? "surface-50" : ""}>
+                    <tr key={pairKey} className={idx % 2 === 1 ? "surface-50" : ""}>
                       <td className="border-1 border-300 p-3">{rowNo}</td>
                       <td className="border-1 border-300 p-3">
                         <div className="font-medium">{kriteriaA.nama}</div>
@@ -441,8 +451,7 @@ export default function PilihWisata() {
                       </td>
                     </tr>
                   );
-                })
-              )}
+                })}
             </tbody>
           </table>
         </Card>
