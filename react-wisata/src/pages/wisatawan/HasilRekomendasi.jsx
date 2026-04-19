@@ -58,7 +58,7 @@ export default function HasilRekomendasi() {
             <div className="text-center p-4">
               <i className="pi pi-info-circle text-4xl text-500 mb-3"></i>
               <p className="font-semibold text-700">
-                Belum ada data hasil rekomendasi. Silakan pilih wisata di Dashboard dan isi preferensi terlebih dahulu.
+                Belum ada data hasil rekomendasi. Silakan pilih wisata di Dashboard dan aktifkan lokasi terlebih dahulu.
               </p>
               <Button
                 label="Ke Dashboard"
@@ -143,9 +143,9 @@ export default function HasilRekomendasi() {
                     
                     <div className="col-12">
                       <div className="mb-3">
-                        <span className="font-bold text-600 text-sm">Fasilitas</span>
+                        <span className="font-bold text-600 text-sm">Atraksi Wisata</span>
                         <div className="text-800 mt-1">
-                          {selectedWisata.fasilitas}
+                          {selectedWisata.atraksi_wisata || selectedWisata.fasilitas}
                         </div>
                       </div>
                     </div>
@@ -171,7 +171,7 @@ export default function HasilRekomendasi() {
                 onClick={() => nav("/wisatawan/dashboard")}
               />
               <Button
-                label="Hitung Ulang"
+                label="Aktifkan Lokasi Ulang"
                 icon="pi pi-refresh"
                 onClick={() => nav("/wisatawan/preferensi")}
               />

@@ -15,7 +15,7 @@ exports.seed = async function(knex) {
     { id_sub: 4, id_kriteria: 1, code_kriteria: 'C1', nama_sub_kriteria: 'Mahal (100rb - 200rb)', nilai_bobot: 4, batas_bawah: 100001, batas_atas: 200000 },
     { id_sub: 5, id_kriteria: 1, code_kriteria: 'C1', nama_sub_kriteria: 'Sangat Mahal (> 200rb)', nilai_bobot: 5, batas_bawah: 200001, batas_atas: 10000000 },
 
-    // --- Kriteria 2: Fasilitas (Benefit) ---
+    // --- Kriteria 2: Atraksi Wisata (Benefit) ---
     // (Tetap: 5 = Bagus)
     { id_sub: 6, id_kriteria: 2, code_kriteria: 'C2', nama_sub_kriteria: 'Sangat Lengkap (> 5 item)', nilai_bobot: 5, batas_bawah: 6, batas_atas: 100 },
     { id_sub: 7, id_kriteria: 2, code_kriteria: 'C2', nama_sub_kriteria: 'Lengkap (4-5 item)', nilai_bobot: 4, batas_bawah: 4, batas_atas: 5 },

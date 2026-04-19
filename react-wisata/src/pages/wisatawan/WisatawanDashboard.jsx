@@ -138,7 +138,7 @@ export default function WisatawanDashboard() {
 
         <div className="flex justify-content-center">
           <Button
-            label="Simpan & Lanjutkan"
+            label="Lanjutkan ke Aktivasi Lokasi"
             icon="pi pi-arrow-right"
             iconPos="right"
             onClick={handleSave}

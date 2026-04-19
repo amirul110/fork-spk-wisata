@@ -2,11 +2,9 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSelectedWisata, clearSelectedWisata } from "../../store/wisataStore";
 import { getAllWisata } from "../../services/wisata.service";
-import { getAllKriteria } from "../../services/kriteria.service";
 import api from "../../services/api";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
-import { Dropdown } from "primereact/dropdown";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
 import { Dialog } from "primereact/dialog";
@@ -14,25 +12,11 @@ import { Chip } from "primereact/chip";
 import MapPickerDialog from "../../components/MapPickerDialog";
 import { formatTanggalIndonesia } from "../../utils/formatTanggal";
 
-const BOBOT_OPTIONS = [
-  { value: 1, label: "1 - Sama penting" },
-  { value: 2, label: "2 - Di antara 1 dan 3" },
-  { value: 3, label: "3 - Sedikit lebih penting" },
-  { value: 4, label: "4 - Di antara 3 dan 5" },
-  { value: 5, label: "5 - Lebih penting" },
-  { value: 6, label: "6 - Di antara 5 dan 7" },
-  { value: 7, label: "7 - Jelas lebih penting" },
-  { value: 8, label: "8 - Di antara 7 dan 9" },
-  { value: 9, label: "9 - Mutlak lebih penting" },
-];
-
 export default function PilihWisata() {
   const nav = useNavigate();
-  const [kriteriaList, setKriteriaList] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState("belum");
   const [locationMode, setLocationMode] = useState("");
-  const [perbandinganAHP, setPerbandinganAHP] = useState({});
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [showMapDialog, setShowMapDialog] = useState(false);
@@ -46,33 +30,7 @@ export default function PilihWisata() {
   // Guard: tampilkan pesan jika belum memilih wisata di dashboard
   useEffect(() => {
     const selected = getSelectedWisata();
-    
-    // Fetch kriteria from backend
-    getAllKriteria()
-      .then((res) => {
-        const kriteriaData = res.data?.data?.list_kriteria || [];
-        const formattedKriteria = kriteriaData.map((k) => ({
-          id: k.id_kriteria,
-          nama: k.nama_kriteria,
-          deskripsi: k.deskripsi || ''
-        }));
-        setKriteriaList(formattedKriteria);
-        
-        const initialPairwise = {};
-        for (let i = 0; i < kriteriaData.length; i++) {
-          for (let j = i + 1; j < kriteriaData.length; j++) {
-            const idA = kriteriaData[i].id_kriteria;
-            const idB = kriteriaData[j].id_kriteria;
-            initialPairwise[`${idA}-${idB}`] = { moreImportant: null, intensity: null };
-          }
-        }
-        setPerbandinganAHP(initialPairwise);
-      })
-      .catch((err) => {
-        console.error("Failed to load kriteria:", err);
-        setErrorMsg("Gagal memuat kriteria. Silakan refresh halaman.");
-      });
-    
+
     if (!selected || selected.length === 0) {
       // setTimeout(0) diperlukan agar ESLint react-hooks/set-state-in-effect tidak error
       setTimeout(() => setBelumPilihWisata(true), 0);
@@ -148,29 +106,9 @@ export default function PilihWisata() {
     setShowMapDialog(true);
   };
 
-  const handleAHPComparisonChange = (pairKey, field, value) => {
-    setPerbandinganAHP((prev) => {
-      const current = prev[pairKey] || { moreImportant: null, intensity: null };
-      const next = { ...current, [field]: value };
-      if (field === "moreImportant" && value === "equal") {
-        next.intensity = 1;
-      }
-      return { ...prev, [pairKey]: next };
-    });
-  };
-
   const handleSimpan = async () => {
     if (!userLocation) {
       setErrorMsg("Lokasi belum ditentukan. Mohon pilih lokasi terlebih dahulu.");
-      return;
-    }
-
-    const belumDiisi = Object.keys(perbandinganAHP).filter((key) => {
-      const pair = perbandinganAHP[key];
-      return !pair || pair.moreImportant === null || pair.intensity === null;
-    });
-    if (belumDiisi.length > 0) {
-      setErrorMsg("Mohon lengkapi semua perbandingan berpasangan AHP.");
       return;
     }
 
@@ -180,7 +118,6 @@ export default function PilihWisata() {
     try {
       const selectedIds = getSelectedWisata();
       const res = await api.post("/rekomendasi/hitung", {
-        perbandinganAHP,
         userLocation,
       });
 
@@ -215,18 +152,6 @@ export default function PilihWisata() {
         ? "Gagal mendapatkan lokasi GPS. Silakan coba lagi dengan metode manual."
         : "Browser Anda tidak mendukung Geolocation. Gunakan metode manual.";
 
-  const pairwiseRows = [];
-  let pairwiseCounter = 1;
-  for (let i = 0; i < kriteriaList.length; i++) {
-    for (let j = i + 1; j < kriteriaList.length; j++) {
-      pairwiseRows.push({
-        rowNo: pairwiseCounter++,
-        kriteriaA: kriteriaList[i],
-        kriteriaB: kriteriaList[j],
-      });
-    }
-  }
-
   // Jika belum pilih wisata, tampilkan pesan
   if (belumPilihWisata) {
     return (
@@ -236,7 +161,7 @@ export default function PilihWisata() {
               {formatTanggalIndonesia()}
             </div>
             <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
-              <i className="pi pi-sliders-h mr-2"></i>Masukan Perbandingan Kriteria AHP
+              <i className="pi pi-sliders-h mr-2"></i>Pilih Lokasi Anda
             </h2>
             <hr className="border-top-1 border-300" />
           </div>
@@ -247,7 +172,7 @@ export default function PilihWisata() {
                 Silakan pilih wisata di Dashboard
               </h3>
               <p className="text-500 mb-4">
-                Anda harus memilih wisata yang diminati terlebih dahulu di halaman Dashboard sebelum mengisi preferensi.
+                Anda harus memilih wisata yang diminati terlebih dahulu di halaman Dashboard sebelum melanjutkan aktivasi lokasi.
               </p>
               <Button
                 label="Kembali ke Dashboard"
@@ -347,7 +272,7 @@ export default function PilihWisata() {
             {formatTanggalIndonesia()}
           </div>
           <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
-            <i className="pi pi-sliders-h mr-2"></i>Masukan Perbandingan Kriteria AHP
+            <i className="pi pi-sliders-h mr-2"></i>Pilih Lokasi Anda
           </h2>
           <hr className="border-top-1 border-300" />
         </div>
@@ -390,70 +315,17 @@ export default function PilihWisata() {
           </div>
         </Card>
 
-        {/* Tabel Perbandingan Kriteria AHP */}
         <Card className="mb-4 shadow-1">
-          <h3 className="text-lg font-semibold text-700 mt-0 mb-3">
-            Tentukan perbandingan berpasangan antar kriteria dengan skala AHP (1-9):
-          </h3>
-
-          <table className="w-full" style={{ borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th className="border-1 border-300 p-3 text-left surface-100" style={{ width: "60px" }}>No</th>
-                <th className="border-1 border-300 p-3 text-left surface-100">Kriteria A</th>
-                <th className="border-1 border-300 p-3 text-left surface-100" style={{ width: "420px" }}>Perbandingan</th>
-                <th className="border-1 border-300 p-3 text-left surface-100">Kriteria B</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pairwiseRows.map(({ rowNo, kriteriaA, kriteriaB }, idx) => {
-                  const pairKey = `${kriteriaA.id}-${kriteriaB.id}`;
-                  const pair = perbandinganAHP[pairKey] || { moreImportant: null, intensity: null };
-                  const moreImportantOptions = [
-                    { value: kriteriaA.id, label: `${kriteriaA.nama} lebih penting` },
-                    { value: "equal", label: "Keduanya sama penting" },
-                    { value: kriteriaB.id, label: `${kriteriaB.nama} lebih penting` },
-                  ];
-
-                  return (
-                    <tr key={pairKey} className={idx % 2 === 1 ? "surface-50" : ""}>
-                      <td className="border-1 border-300 p-3">{rowNo}</td>
-                      <td className="border-1 border-300 p-3">
-                        <div className="font-medium">{kriteriaA.nama}</div>
-                        <small className="text-600">{kriteriaA.deskripsi}</small>
-                      </td>
-                      <td className="border-1 border-300 p-3">
-                        <div className="flex flex-column gap-2">
-                          <Dropdown
-                            value={pair.moreImportant}
-                            options={moreImportantOptions}
-                            optionLabel="label"
-                            optionValue="value"
-                            onChange={(e) => handleAHPComparisonChange(pairKey, "moreImportant", e.value)}
-                            placeholder="-- Pilih mana yang lebih penting --"
-                            className="w-full"
-                          />
-                          <Dropdown
-                            value={pair.intensity}
-                            options={BOBOT_OPTIONS}
-                            optionLabel="label"
-                            optionValue="value"
-                            onChange={(e) => handleAHPComparisonChange(pairKey, "intensity", Number(e.value))}
-                            placeholder="-- Pilih skala intensitas --"
-                            className="w-full"
-                            disabled={pair.moreImportant === null}
-                          />
-                        </div>
-                      </td>
-                      <td className="border-1 border-300 p-3">
-                        <div className="font-medium">{kriteriaB.nama}</div>
-                        <small className="text-600">{kriteriaB.deskripsi}</small>
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
+          <div className="flex align-items-start gap-3">
+            <i className="pi pi-info-circle text-2xl text-primary mt-1"></i>
+            <div>
+              <div className="font-bold mb-2">Informasi Perhitungan</div>
+              <p className="m-0 text-700">
+                Bobot kriteria menggunakan metode AHP yang sudah ditetapkan oleh admin.
+                Anda hanya perlu memilih lokasi, lalu sistem akan menghitung rekomendasi otomatis.
+              </p>
+            </div>
+          </div>
         </Card>
 
         {/* Pesan Error */}

@@ -8,9 +8,13 @@ module.exports = {
   // [GET] AMBIL SEMUA DATA (READ) - Untuk Tampilan Tabel Admin
   getAllAlternatif: async (req, res) => {
     try {
-      const data = await db(TABLES.WISATA)
+      const dataRaw = await db(TABLES.WISATA)
         .select('*')
         .orderBy('created_at', 'asc'); // Urutkan dari yang terbaru
+      const data = dataRaw.map((item) => ({
+        ...item,
+        atraksi_wisata: item.fasilitas,
+      }));
 
       return res.json({
         status: API_STATUS.SUCCESS,
@@ -36,7 +40,10 @@ module.exports = {
 
       return res.json({
         status: API_STATUS.SUCCESS,
-        data: data
+        data: {
+          ...data,
+          atraksi_wisata: data.fasilitas,
+        }
       });
     } catch (error) {
       console.error("Error Get Alternatif By ID:", error);
@@ -49,7 +56,7 @@ module.exports = {
     try {
       const { 
         nama_wisata, latitude, longitude, 
-        harga_tiket, fasilitas, rating_gmaps, waktu_kunjungan,
+        harga_tiket, fasilitas, atraksi_wisata, rating_gmaps, waktu_kunjungan,
         deskripsi
       } = req.body;
 
@@ -66,7 +73,7 @@ module.exports = {
         latitude,
         longitude,
         harga_tiket: harga_tiket || 0,
-        fasilitas: fasilitas || '',
+        fasilitas: atraksi_wisata || fasilitas || '',
         rating_gmaps: rating_gmaps || 0,
         waktu_kunjungan: waktu_kunjungan || '',
         deskripsi: deskripsi || '',
@@ -81,7 +88,10 @@ module.exports = {
       return res.status(201).json({
         status: API_STATUS.SUCCESS,
         message: 'Berhasil menambahkan wisata baru',
-        data: newData
+        data: {
+          ...newData,
+          atraksi_wisata: newData.fasilitas,
+        }
       });
 
     } catch (error) {
@@ -96,7 +106,7 @@ module.exports = {
       const { id } = req.params;
       const { 
         nama_wisata, latitude, longitude, 
-        harga_tiket, fasilitas, rating_gmaps, waktu_kunjungan,
+        harga_tiket, fasilitas, atraksi_wisata, rating_gmaps, waktu_kunjungan,
         deskripsi
       } = req.body;
 
@@ -111,7 +121,7 @@ module.exports = {
         latitude,
         longitude,
         harga_tiket,
-        fasilitas,
+        fasilitas: atraksi_wisata || fasilitas,
         rating_gmaps,
         waktu_kunjungan,
         deskripsi: deskripsi || '',
@@ -132,7 +142,10 @@ module.exports = {
       return res.json({
         status: API_STATUS.SUCCESS,
         message: 'Berhasil mengupdate data wisata',
-        data: updatedData
+        data: {
+          ...updatedData,
+          atraksi_wisata: updatedData.fasilitas,
+        }
       });
 
     } catch (error) {

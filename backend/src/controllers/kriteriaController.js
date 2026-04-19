@@ -103,14 +103,14 @@ module.exports = {
       const { nama_kriteria, jenis, bobot_prioritas, deskripsi } = req.body;
 
       // Validasi sederhana
-      if (!nama_kriteria || !jenis || !bobot_prioritas) {
-        return res.status(400).json({ status: API_STATUS.BAD_REQUEST, message: 'Semua field wajib diisi' });
+      if (!nama_kriteria || !jenis) {
+        return res.status(400).json({ status: API_STATUS.BAD_REQUEST, message: 'Field nama_kriteria dan jenis wajib diisi' });
       }
 
       await db(KRITERIA_TABLE).insert({
         nama_kriteria,
         jenis, // 'cost' atau 'benefit'
-        bobot_prioritas,
+        bobot_prioritas: Number(bobot_prioritas ?? 0),
         deskripsi: deskripsi || null // Optional field
       });
 
@@ -129,16 +129,18 @@ module.exports = {
     try {
       const { id } = req.params; // id_kriteria dari URL
       const { nama_kriteria, jenis, bobot_prioritas, deskripsi } = req.body;
+      const payload = {
+        updated_at: new Date()
+      };
+
+      if (nama_kriteria !== undefined) payload.nama_kriteria = nama_kriteria;
+      if (jenis !== undefined) payload.jenis = jenis;
+      if (bobot_prioritas !== undefined) payload.bobot_prioritas = Number(bobot_prioritas);
+      if (deskripsi !== undefined) payload.deskripsi = deskripsi || null;
 
       await db(KRITERIA_TABLE)
         .where('id_kriteria', id)
-        .update({
-          nama_kriteria,
-          jenis,
-          bobot_prioritas,
-          deskripsi: deskripsi || null,
-          updated_at: new Date()
-        });
+        .update(payload);
 
       return res.json({
         status: API_STATUS.SUCCESS,

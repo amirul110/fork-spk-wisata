@@ -8,7 +8,7 @@ const TOKEN_BLACKLIST_TABLE = "token_blacklist";
 // Tabel objek wisata (Alternatif)
 const WISATA_TABLE = "alternatif_wisata"; 
 
-// Tabel Kriteria (Harga, Jarak, Fasilitas, dll)
+// Tabel Kriteria (Harga, Jarak, Atraksi Wisata, dll)
 const KRITERIA_TABLE = "kriteria";
 
 // Tabel Sub-Kriteria (Pilihan untuk user: Murah, Mahal, Dekat, Jauh)

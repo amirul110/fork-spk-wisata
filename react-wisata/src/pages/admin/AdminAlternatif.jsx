@@ -89,7 +89,10 @@ export default function AdminAlternatif () {
   }
 
   const openEdit = rowData => {
-    setForm({ ...rowData })
+    setForm({
+      ...rowData,
+      fasilitas: rowData.atraksi_wisata || rowData.fasilitas || ''
+    })
     setSelectedFile(null)
     setIsEdit(true)
     setEditId(rowData.id_alternatif)
@@ -129,7 +132,7 @@ export default function AdminAlternatif () {
       formData.append('longitude', form.longitude)
       formData.append('rating_gmaps', form.rating_gmaps || 0)
       formData.append('harga_tiket', form.harga_tiket || 0)
-      formData.append('fasilitas', form.fasilitas || '')
+      formData.append('atraksi_wisata', form.fasilitas || '')
       formData.append('waktu_kunjungan', form.waktu_kunjungan || '')
       formData.append('deskripsi', form.deskripsi || '')
       
@@ -376,7 +379,7 @@ export default function AdminAlternatif () {
             <Column field='longitude' header='Longitude' sortable />
             <Column field='rating_gmaps' header='Rating' sortable />
             <Column field='harga_tiket' header='Harga Tiket' sortable />
-            <Column field='fasilitas' header='Fasilitas' sortable />
+            <Column field='atraksi_wisata' header='Atraksi Wisata' sortable />
             <Column field='waktu_kunjungan' header='Waktu Kunjungan' sortable />
             <Column header='Aksi' body={actionTemplate} />
           </DataTable>
@@ -509,11 +512,11 @@ export default function AdminAlternatif () {
             </div>
 
             <div>
-              <label className='block mb-2 font-semibold text-sm'>Fasilitas (pisahkan dengan koma)</label>
+              <label className='block mb-2 font-semibold text-sm'>Atraksi Wisata (pisahkan dengan koma)</label>
               <InputText
                 value={form.fasilitas}
                 onChange={e => setForm({ ...form, fasilitas: e.target.value })}
-                placeholder='Contoh: Toilet, Parkir, Mushola, Kantin'
+                placeholder='Contoh: Spot Foto, Wahana Air, Pertunjukan Budaya, Trekking'
               />
               {form.fasilitas && form.fasilitas.trim() && (
                 <div className='mt-2 p-2 bg-purple-50 border-round'>
@@ -563,7 +566,7 @@ export default function AdminAlternatif () {
           onHide={() => setFacilityDialogVisible(false)}
         >
           {selectedWisataForFacility && (() => {
-            const facilityClassification = calculateFacilitySubKriteria(selectedWisataForFacility.fasilitas)
+            const facilityClassification = calculateFacilitySubKriteria(selectedWisataForFacility.atraksi_wisata || selectedWisataForFacility.fasilitas)
             const ratingClassification = getRatingSubKriteria(selectedWisataForFacility.rating_gmaps)
             const hargaClassification = getHargaSubKriteria(selectedWisataForFacility.harga_tiket)
             const waktuKunjunganClassification = getWaktuKunjunganSubKriteria(selectedWisataForFacility.waktu_kunjungan)
@@ -641,18 +644,18 @@ export default function AdminAlternatif () {
                   </div>
                 </div>
 
-                {/* Fasilitas Sub-Kriteria */}
+                {/* Atraksi Wisata Sub-Kriteria */}
                 <div className='surface-50 border-round p-3 mb-2'>
-                  <h4 className='text-lg font-bold text-purple-700 mt-0 mb-2'>Fasilitas</h4>
+                  <h4 className='text-lg font-bold text-purple-700 mt-0 mb-2'>Atraksi Wisata</h4>
                   <div className='grid'>
                     <div className='col-12'>
-                      <span className='font-bold text-600 text-sm block mb-1'>Daftar Fasilitas</span>
+                      <span className='font-bold text-600 text-sm block mb-1'>Daftar Atraksi Wisata</span>
                       <div className='text-800'>
-                        {selectedWisataForFacility.fasilitas || '-'}
+                        {selectedWisataForFacility.atraksi_wisata || selectedWisataForFacility.fasilitas || '-'}
                       </div>
                     </div>
                     <div className='col-12 md:col-4 mt-2'>
-                      <span className='font-bold text-600 text-sm block mb-1'>Jumlah Fasilitas</span>
+                      <span className='font-bold text-600 text-sm block mb-1'>Jumlah Atraksi</span>
                       <div className='text-800 font-semibold text-2xl'>
                         {facilityClassification.count} item
                       </div>
@@ -672,8 +675,8 @@ export default function AdminAlternatif () {
                     <div className='col-12 mt-2'>
                       <div className='bg-purple-100 border-round p-2'>
                         <p className='text-600 text-sm m-0'>
-                          <strong>Keterangan:</strong> Berdasarkan kriteria fasilitas, wisata ini masuk kategori 
-                          "<strong>{facilityClassification.category}</strong>" dengan {facilityClassification.count} fasilitas yang tersedia.
+                          <strong>Keterangan:</strong> Berdasarkan kriteria atraksi wisata, wisata ini masuk kategori 
+                          "<strong>{facilityClassification.category}</strong>" dengan {facilityClassification.count} atraksi yang tersedia.
                         </p>
                       </div>
                     </div>
