@@ -59,6 +59,7 @@ module.exports = {
         harga_tiket, fasilitas, atraksi_wisata, rating_gmaps, waktu_kunjungan,
         deskripsi
       } = req.body;
+      // Prioritas field: atraksi_wisata (baru) > fasilitas (legacy/backward compatibility)
 
       if (!nama_wisata || !latitude || !longitude) {
         return res.status(400).json({ message: 'Nama dan Lokasi (Lat/Long) wajib diisi!' });
@@ -109,6 +110,7 @@ module.exports = {
         harga_tiket, fasilitas, atraksi_wisata, rating_gmaps, waktu_kunjungan,
         deskripsi
       } = req.body;
+      // Prioritas field: atraksi_wisata (baru) > fasilitas (legacy/backward compatibility)
 
       const exists = await db(TABLES.WISATA).where('id_alternatif', id).first();
       if (!exists) {

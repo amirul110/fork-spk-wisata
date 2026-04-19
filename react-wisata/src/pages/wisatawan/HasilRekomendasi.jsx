@@ -41,6 +41,8 @@ export default function HasilRekomendasi() {
     />
   );
 
+  const getAtraksiWisata = (rowData) => rowData?.atraksi_wisata || rowData?.fasilitas || "-";
+
   return (
     <>
         <div className="mb-4">
@@ -145,7 +147,7 @@ export default function HasilRekomendasi() {
                       <div className="mb-3">
                         <span className="font-bold text-600 text-sm">Atraksi Wisata</span>
                         <div className="text-800 mt-1">
-                          {selectedWisata.atraksi_wisata || selectedWisata.fasilitas}
+                          {getAtraksiWisata(selectedWisata)}
                         </div>
                       </div>
                     </div>

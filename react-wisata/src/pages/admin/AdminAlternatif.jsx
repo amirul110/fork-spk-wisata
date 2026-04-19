@@ -190,12 +190,12 @@ export default function AdminAlternatif () {
     return { category: 'Sangat Mahal (> 200rb)', bobot: 5 }
   }
 
-  const calculateFacilitySubKriteria = (facilityText) => {
-    if (!facilityText || !facilityText.trim()) {
+  const calculateAtraksiWisataSubKriteria = (atraksiText) => {
+    if (!atraksiText || !atraksiText.trim()) {
       return { count: 0, category: 'Sangat Kurang (< 2 item)', bobot: 1 }
     }
     
-    const count = facilityText.split(',').map(f => f.trim()).filter(f => f).length
+    const count = atraksiText.split(',').map(f => f.trim()).filter(f => f).length
     
     if (count >= 6) {
       return { count, category: 'Sangat Lengkap (> 5 item)', bobot: 5 }
@@ -521,10 +521,10 @@ export default function AdminAlternatif () {
               {form.fasilitas && form.fasilitas.trim() && (
                 <div className='mt-2 p-2 bg-purple-50 border-round'>
                   <small className='text-600'>
-                    <strong>Jumlah:</strong> {calculateFacilitySubKriteria(form.fasilitas).count} item
+                    <strong>Jumlah:</strong> {calculateAtraksiWisataSubKriteria(form.fasilitas).count} item
                     {' | '}
-                    <strong>Sub-Kriteria:</strong> {calculateFacilitySubKriteria(form.fasilitas).category} 
-                    {' '}<span className='text-purple-600'>(Bobot: {calculateFacilitySubKriteria(form.fasilitas).bobot})</span>
+                    <strong>Sub-Kriteria:</strong> {calculateAtraksiWisataSubKriteria(form.fasilitas).category} 
+                    {' '}<span className='text-purple-600'>(Bobot: {calculateAtraksiWisataSubKriteria(form.fasilitas).bobot})</span>
                   </small>
                 </div>
               )}
@@ -566,7 +566,7 @@ export default function AdminAlternatif () {
           onHide={() => setFacilityDialogVisible(false)}
         >
           {selectedWisataForFacility && (() => {
-            const facilityClassification = calculateFacilitySubKriteria(selectedWisataForFacility.atraksi_wisata || selectedWisataForFacility.fasilitas)
+            const facilityClassification = calculateAtraksiWisataSubKriteria(selectedWisataForFacility.atraksi_wisata || selectedWisataForFacility.fasilitas)
             const ratingClassification = getRatingSubKriteria(selectedWisataForFacility.rating_gmaps)
             const hargaClassification = getHargaSubKriteria(selectedWisataForFacility.harga_tiket)
             const waktuKunjunganClassification = getWaktuKunjunganSubKriteria(selectedWisataForFacility.waktu_kunjungan)

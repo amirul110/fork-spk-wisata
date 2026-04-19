@@ -561,6 +561,7 @@ export default function AdminKriteria() {
                   .sort((a, b) => Number(a.id_kriteria) - Number(b.id_kriteria))
                   .flatMap((kA, i, arr) =>
                     arr.slice(i + 1).map((kB, j) => {
+                      // Rumus deret untuk nomor urut pasangan (1..nC2) tanpa counter terpisah.
                       const rowNo = ((i * (2 * arr.length - i - 1)) / 2) + j + 1;
                       const key = `${kA.id_kriteria}-${kB.id_kriteria}`;
                       const pair = ahpPairwise[key] || { moreImportant: null, intensity: null };
