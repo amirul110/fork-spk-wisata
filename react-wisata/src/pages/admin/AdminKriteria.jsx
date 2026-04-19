@@ -12,7 +12,6 @@ import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
-import { InputNumber } from "primereact/inputnumber";
 import { Dropdown } from "primereact/dropdown";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
@@ -46,7 +45,6 @@ const AHP_RI = {
 const emptyKriteria = {
   id_kriteria: "",
   nama_kriteria: "",
-  bobot_prioritas: 0,
   jenis: "",
   deskripsi: "",
 };
@@ -118,7 +116,6 @@ export default function AdminKriteria() {
       if (isEdit) {
         await updateKriteria(form.id_kriteria, {
           nama_kriteria: form.nama_kriteria,
-          bobot_prioritas: form.bobot_prioritas ?? 0,
           jenis: form.jenis,
           deskripsi: form.deskripsi,
         });
@@ -131,7 +128,6 @@ export default function AdminKriteria() {
       } else {
         await createKriteria({
           nama_kriteria: form.nama_kriteria,
-          bobot_prioritas: form.bobot_prioritas ?? 0,
           jenis: form.jenis,
           deskripsi: form.deskripsi,
         });
@@ -456,27 +452,11 @@ export default function AdminKriteria() {
           </div>
 
           <div className="field mb-3">
-            <label htmlFor="bobot_prioritas" className="font-bold mb-2 block">
-              Bobot (opsional)
-            </label>
-            <InputNumber
-              id="bobot_prioritas"
-              value={form.bobot_prioritas}
-              onValueChange={(e) =>
-                setForm({ ...form, bobot_prioritas: e.value })
-              }
-              mode="decimal"
-              minFractionDigits={1}
-              maxFractionDigits={2}
-              min={0.01}
-              max={1}
-              className={
-                submitted && form.bobot_prioritas < 0 ? "p-invalid" : ""
-              }
+            <Message
+              severity="info"
+              text="Bobot kriteria diisi otomatis dari proses AHP admin (tombol Hitung Bobot AHP)."
+              className="w-full"
             />
-            <small className="text-600">
-              Bobot utama disarankan dihitung dari tombol <b>Hitung Bobot AHP</b>.
-            </small>
           </div>
 
           <div className="field mb-3">

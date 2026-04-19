@@ -100,7 +100,7 @@ module.exports = {
   // [POST] Tambah Kriteria Baru
   createKriteria: async (req, res) => {
     try {
-      const { nama_kriteria, jenis, bobot_prioritas, deskripsi } = req.body;
+      const { nama_kriteria, jenis, deskripsi } = req.body;
 
       // Validasi sederhana
       if (!nama_kriteria || !jenis) {
@@ -110,7 +110,7 @@ module.exports = {
       await db(KRITERIA_TABLE).insert({
         nama_kriteria,
         jenis, // 'cost' atau 'benefit'
-        bobot_prioritas: Number(bobot_prioritas ?? 0),
+        bobot_prioritas: 0,
         deskripsi: deskripsi || null // Optional field
       });
 
