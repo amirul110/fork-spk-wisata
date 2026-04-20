@@ -9,8 +9,7 @@ exports.up = function(knex) {
     table.double('longitude').notNullable();
     table.double('rating_gmaps').notNullable();
     table.double('harga_tiket').notNullable();
-    table.text('fasilitas').notNullable();
-    table.string('waktu_kunjungan', 100).notNullable();
+    table.text('atraksi_wisata').notNullable();
     
     table.timestamps(true, true);
   });

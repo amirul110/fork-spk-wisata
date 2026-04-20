@@ -40,11 +40,6 @@ exports.seed = async function(knex) {
     { id_sub: 20, id_kriteria: 4, code_kriteria: 'C4', nama_sub_kriteria: 'Sangat Buruk (< 3.0)', nilai_bobot: 1, batas_bawah: 0, batas_atas: 2.9 },
 
     // --- Kriteria 5: Waktu (Benefit) ---
-    // (Tetap)
-    { id_sub: 21, id_kriteria: 5, code_kriteria: 'C5', nama_sub_kriteria: 'Pagi (08:00 - 12:00)', nilai_bobot: 5, batas_bawah: 8, batas_atas: 12 },
-    { id_sub: 22, id_kriteria: 5, code_kriteria: 'C5', nama_sub_kriteria: 'Siang (12:00 - 15:00)', nilai_bobot: 4, batas_bawah: 12.1, batas_atas: 15 },
-    { id_sub: 23, id_kriteria: 5, code_kriteria: 'C5', nama_sub_kriteria: 'Sore (15:00 - 18:00)', nilai_bobot: 3, batas_bawah: 15.1, batas_atas: 18 },
-    { id_sub: 24, id_kriteria: 5, code_kriteria: 'C5', nama_sub_kriteria: 'Malam (18:00 - 22:00)', nilai_bobot: 2, batas_bawah: 18.1, batas_atas: 22 },
-    { id_sub: 25, id_kriteria: 5, code_kriteria: 'C5', nama_sub_kriteria: 'Bebas / 24 Jam', nilai_bobot: 1, batas_bawah: 0, batas_atas: 24 }
+
   ]);
 };

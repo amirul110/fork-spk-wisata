@@ -24,7 +24,7 @@ exports.up = function (knex) {
       .onDelete('CASCADE')
 
     table.double('jarak_km_hasil').notNullable()
-    table.double('skor_akhir_wp').notNullable()
+    table.double('skor_akhir_ahp_smart').notNullable()
     table.integer('ranking').notNullable()
 
     table.timestamps(true, true)

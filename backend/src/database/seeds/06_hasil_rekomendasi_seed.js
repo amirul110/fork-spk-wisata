@@ -10,7 +10,7 @@ exports.seed = async function(knex) {
       id_preferensi: 1,
       id_alternatif: 2, // Tanah Lot
       jarak_km_hasil: 12.5,
-      skor_akhir_wp: 0.875,
+      skor_akhir_ahp_smart: 0.875,
       ranking: 1
     },
     {
@@ -18,7 +18,7 @@ exports.seed = async function(knex) {
       id_preferensi: 1,
       id_alternatif: 1, // Pantai Kuta
       jarak_km_hasil: 5.2,
-      skor_akhir_wp: 0.750,
+      skor_akhir_ahp_smart: 0.750,
       ranking: 2
     },
     {
@@ -26,7 +26,7 @@ exports.seed = async function(knex) {
       id_preferensi: 1,
       id_alternatif: 3, // Monkey Forest
       jarak_km_hasil: 25.0,
-      skor_akhir_wp: 0.620,
+      skor_akhir_ahp_smart: 0.620,
       ranking: 3
     }
   ]);

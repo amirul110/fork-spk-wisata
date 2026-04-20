@@ -25,8 +25,7 @@ table.integer('id_wisatawan')
     table.text('data_preferensi');
     // 3. FOREIGN KEYS LAINNYA --> TETAP INTEGER
 table.integer('id_sub_harga').unsigned().references('id_sub').inTable('sub_kriteria');
-    table.integer('id_sub_fasilitas').unsigned().references('id_sub').inTable('sub_kriteria');
-    table.integer('id_sub_waktu_kunjungan').unsigned().references('id_sub').inTable('sub_kriteria');
+    table.integer('id_sub_atraksi_wisata').unsigned().references('id_sub').inTable('sub_kriteria');
     table.integer('id_sub_rating').unsigned().references('id_sub').inTable('sub_kriteria');
     table.timestamps(true, true);
   });

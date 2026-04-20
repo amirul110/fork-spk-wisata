@@ -13,9 +13,7 @@ exports.seed = async function(knex) {
       
       // User memilih kriteria:
       id_sub_harga: 2,             // Murah (ID 2)
-      id_sub_fasilitas: 7,         // Lengkap (ID 7)
       id_sub_rating: 17,           // Baik (ID 17)
-      id_sub_waktu_kunjungan: 23   // Sore (ID 23)
     }
   ]);
 };
