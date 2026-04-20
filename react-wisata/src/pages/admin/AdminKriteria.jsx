@@ -11,7 +11,6 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
-import { InputTextarea } from "primereact/inputtextarea";
 import { Dropdown } from "primereact/dropdown";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
@@ -42,11 +41,12 @@ const AHP_RI = {
   11: 1.51, 12: 1.48, 13: 1.56, 14: 1.57, 15: 1.59,
 };
 
+const AHP_DETAIL_STORAGE_KEY = "admin_kriteria_last_ahp_detail";
+
 const emptyKriteria = {
   id_kriteria: "",
   nama_kriteria: "",
   jenis: "",
-  deskripsi: "",
 };
 
 export default function AdminKriteria() {
@@ -63,6 +63,8 @@ export default function AdminKriteria() {
   const [ahpError, setAhpError] = useState("");
   const [ahpCR, setAhpCR] = useState(null);
   const [savingAHP, setSavingAHP] = useState(false);
+  const [ahpDetailDialogVisible, setAhpDetailDialogVisible] = useState(false);
+  const [lastAHPDetail, setLastAHPDetail] = useState(null);
   const toast = useRef(null);
 
   const fetchData = async () => {
@@ -81,6 +83,12 @@ export default function AdminKriteria() {
 
   useEffect(() => {
     fetchData();
+    try {
+      const saved = localStorage.getItem(AHP_DETAIL_STORAGE_KEY);
+      if (saved) setLastAHPDetail(JSON.parse(saved));
+    } catch (error) {
+      console.error("Gagal membaca detail AHP tersimpan:", error);
+    }
   }, []);
 
   const openAddDialog = () => {
@@ -117,7 +125,6 @@ export default function AdminKriteria() {
         await updateKriteria(form.id_kriteria, {
           nama_kriteria: form.nama_kriteria,
           jenis: form.jenis,
-          deskripsi: form.deskripsi,
         });
         toast.current.show({
           severity: "success",
@@ -129,7 +136,6 @@ export default function AdminKriteria() {
         await createKriteria({
           nama_kriteria: form.nama_kriteria,
           jenis: form.jenis,
-          deskripsi: form.deskripsi,
         });
         toast.current.show({
           severity: "success",
@@ -220,6 +226,17 @@ export default function AdminKriteria() {
     const lambdaMax = weightedSums.reduce((s, val, i) => s + (weights[i] ? val / weights[i] : 0), 0) / n;
     const ci = n > 1 ? (lambdaMax - n) / (n - 1) : 0;
     const cr = (AHP_RI[n] || 0) === 0 ? 0 : ci / AHP_RI[n];
+    const detail = {
+      generated_at: new Date().toISOString(),
+      kriteria: sorted.map((k) => ({ id_kriteria: k.id_kriteria, nama_kriteria: k.nama_kriteria })),
+      matrix,
+      col_sums: colSums,
+      normalized_matrix: normalized,
+      bobot_prioritas: weights,
+      lambda_max: lambdaMax,
+      ci,
+      cr,
+    };
     setAhpCR(Number(cr.toFixed(4)));
 
     if (cr > 0.1) {
@@ -241,6 +258,8 @@ export default function AdminKriteria() {
         detail: "Bobot kriteria hasil AHP berhasil disimpan.",
         life: 3000,
       });
+      setLastAHPDetail(detail);
+      localStorage.setItem(AHP_DETAIL_STORAGE_KEY, JSON.stringify(detail));
       setAhpDialogVisible(false);
       fetchData();
     } catch (err) {
@@ -250,6 +269,12 @@ export default function AdminKriteria() {
       setSavingAHP(false);
     }
   };
+
+  const openAHPDetailDialog = () => {
+    setAhpDetailDialogVisible(true);
+  };
+
+  const formatNumber = (value, digits = 4) => Number(value || 0).toFixed(digits);
 
   const confirmDelete = (rowData) => {
     confirmDialog({
@@ -336,6 +361,12 @@ export default function AdminKriteria() {
           disabled={kriteriaList.length < 2}
         />
         <Button
+          label="Detail Perhitungan AHP"
+          icon="pi pi-table"
+          severity="secondary"
+          onClick={openAHPDetailDialog}
+        />
+        <Button
           label="Tambah Kriteria"
           icon="pi pi-plus"
           onClick={openAddDialog}
@@ -400,6 +431,7 @@ export default function AdminKriteria() {
               header="Bobot"
               sortable
               style={{ width: "120px" }}
+              body={(rowData) => formatNumber(rowData.bobot_prioritas, 6)}
             />
             <Column
               field="jenis"
@@ -407,12 +439,6 @@ export default function AdminKriteria() {
               body={jenisTemplate}
               sortable
               style={{ width: "120px" }}
-            />
-            <Column
-              field="deskripsi"
-              header="Deskripsi"
-              sortable
-              style={{ width: "300px" }}
             />
             <Column
               header="Aksi"
@@ -476,20 +502,6 @@ export default function AdminKriteria() {
             )}
           </div>
 
-          <div className="field mb-3">
-            <label htmlFor="deskripsi" className="font-bold mb-2 block">
-              Deskripsi / Pertanyaan Preferensi
-            </label>
-            <InputTextarea
-              id="deskripsi"
-              value={form.deskripsi}
-              onChange={(e) =>
-                setForm({ ...form, deskripsi: e.target.value })
-              }
-              rows={3}
-              placeholder="Contoh: Seberapa penting harga tiket bagi Anda?"
-            />
-          </div>
         </Dialog>
 
         <Dialog
@@ -583,6 +595,114 @@ export default function AdminKriteria() {
               </tbody>
             </table>
           </div>
+        </Dialog>
+
+        <Dialog
+          visible={ahpDetailDialogVisible}
+          style={{ width: "1100px", maxWidth: "95vw" }}
+          header="Detail Perhitungan AHP"
+          modal
+          className="p-fluid"
+          onHide={() => setAhpDetailDialogVisible(false)}
+          footer={
+            <div className="flex justify-content-end">
+              <Button
+                label="Tutup"
+                icon="pi pi-times"
+                className="p-button-text"
+                onClick={() => setAhpDetailDialogVisible(false)}
+              />
+            </div>
+          }
+        >
+          {!lastAHPDetail ? (
+            <Message
+              severity="warn"
+              text="belum ada perhitungan ahp yang dilakukan"
+              className="w-full"
+            />
+          ) : (
+            <div className="flex flex-column gap-3">
+              <Message
+                severity="info"
+                text={`Terakhir dihitung: ${new Date(lastAHPDetail.generated_at).toLocaleString("id-ID")} | CR: ${formatNumber(lastAHPDetail.cr)}`}
+                className="w-full"
+              />
+
+              <div>
+                <h4 className="mt-0 mb-2">Matriks Perbandingan Berpasangan</h4>
+                <div style={{ overflowX: "auto" }}>
+                  <table className="w-full" style={{ borderCollapse: "collapse", minWidth: "700px" }}>
+                    <thead>
+                      <tr>
+                        <th className="border-1 border-300 p-2 text-left surface-100">Kriteria</th>
+                        {lastAHPDetail.kriteria.map((k) => (
+                          <th key={`pair-head-${k.id_kriteria}`} className="border-1 border-300 p-2 text-left surface-100">
+                            {k.nama_kriteria}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lastAHPDetail.matrix.map((row, rowIndex) => (
+                        <tr key={`pair-row-${lastAHPDetail.kriteria[rowIndex].id_kriteria}`}>
+                          <td className="border-1 border-300 p-2 font-medium">{lastAHPDetail.kriteria[rowIndex].nama_kriteria}</td>
+                          {row.map((cell, colIndex) => (
+                            <td key={`pair-cell-${rowIndex}-${colIndex}`} className="border-1 border-300 p-2">
+                              {formatNumber(cell)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="mt-0 mb-2">Matriks Normalisasi & Bobot</h4>
+                <div style={{ overflowX: "auto" }}>
+                  <table className="w-full" style={{ borderCollapse: "collapse", minWidth: "700px" }}>
+                    <thead>
+                      <tr>
+                        <th className="border-1 border-300 p-2 text-left surface-100">Kriteria</th>
+                        {lastAHPDetail.kriteria.map((k) => (
+                          <th key={`norm-head-${k.id_kriteria}`} className="border-1 border-300 p-2 text-left surface-100">
+                            {k.nama_kriteria}
+                          </th>
+                        ))}
+                        <th className="border-1 border-300 p-2 text-left surface-100">Bobot</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lastAHPDetail.normalized_matrix.map((row, rowIndex) => (
+                        <tr key={`norm-row-${lastAHPDetail.kriteria[rowIndex].id_kriteria}`}>
+                          <td className="border-1 border-300 p-2 font-medium">{lastAHPDetail.kriteria[rowIndex].nama_kriteria}</td>
+                          {row.map((cell, colIndex) => (
+                            <td key={`norm-cell-${rowIndex}-${colIndex}`} className="border-1 border-300 p-2">
+                              {formatNumber(cell)}
+                            </td>
+                          ))}
+                          <td className="border-1 border-300 p-2 font-semibold">
+                            {formatNumber(lastAHPDetail.bobot_prioritas[rowIndex], 6)}
+                          </td>
+                        </tr>
+                      ))}
+                      <tr>
+                        <td className="border-1 border-300 p-2 font-semibold">Jumlah Kolom (Matriks Awal)</td>
+                        {lastAHPDetail.col_sums.map((sum, index) => (
+                          <td key={`sum-${index}`} className="border-1 border-300 p-2">
+                            {formatNumber(sum)}
+                          </td>
+                        ))}
+                        <td className="border-1 border-300 p-2">-</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
         </Dialog>
     </>
   );
