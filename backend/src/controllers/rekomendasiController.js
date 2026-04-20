@@ -4,6 +4,16 @@ const { TABLES } = require('../constants/database');
 const { API_STATUS, RESPONSE_DATA_KEYS } = require('../constants/general');
 const spkHelper = require('../utils/spkHelper');
 
+const SCORE_COLUMN_CANDIDATES = ['skor_akhir_wp', 'skor_rekomendasi'];
+
+const getHasilRekomendasiScoreColumn = async () => {
+  for (const column of SCORE_COLUMN_CANDIDATES) {
+    const exists = await db.schema.hasColumn(TABLES.HASIL_REKOMENDASI, column);
+    if (exists) return column;
+  }
+  return 'skor_akhir_wp';
+};
+
 module.exports = {
 
   hitungRekomendasi: async (req, res) => {
@@ -184,10 +194,11 @@ module.exports = {
 
       // --- SIMPAN TOP 5 KE DATABASE ---
       const top5 = finalResult.slice(0, 5); 
+      const scoreColumn = await getHasilRekomendasiScoreColumn();
       const dataToInsert = top5.map((item, index) => ({
         id_preferensi: preferensiId,
         id_alternatif: item.id_alternatif,
-        skor_akhir_wp: Number(item.skor_rekomendasi),
+        [scoreColumn]: Number(item.skor_rekomendasi),
         ranking: index + 1,
         jarak_km_hasil: parseFloat(item.jarak_km)
       }));
@@ -239,6 +250,7 @@ module.exports = {
   getRiwayatSaya: async (req, res) => {
     try {
       const { id } = req.user;
+      const scoreColumn = await getHasilRekomendasiScoreColumn();
       
       const data = await db(TABLES.HASIL_REKOMENDASI)
         .join('preferensi_wisatawan', 'hasil_rekomendasi.id_preferensi', '=', 'preferensi_wisatawan.id_preferensi')
@@ -249,7 +261,7 @@ module.exports = {
             'preferensi_wisatawan.created_at as tanggal',
             'alternatif_wisata.nama_wisata as rekomendasi_utama',
             'alternatif_wisata.rating_gmaps',
-            'hasil_rekomendasi.skor_akhir_wp',
+            `hasil_rekomendasi.${scoreColumn} as skor_akhir`,
             'hasil_rekomendasi.jarak_km_hasil'
         )
         .orderBy('preferensi_wisatawan.created_at', 'desc');
@@ -265,7 +277,7 @@ module.exports = {
         return {
             tanggal: tanggalIndo, 
             rekomendasi_utama: item.rekomendasi_utama,
-            skor: parseFloat(item.skor_akhir_wp).toFixed(4),
+            skor: parseFloat(item.skor_akhir || 0).toFixed(4),
             jarak: parseFloat(item.jarak_km_hasil).toFixed(1) + " KM",
             info: "Ini adalah rekomendasi terbaik berdasarkan perhitungan AHP + SMART saat itu."
         };
@@ -286,6 +298,7 @@ module.exports = {
   // [GET] SEMUA RIWAYAT (Admin Only)
   getAllRiwayat: async (req, res) => {
     try {
+      const scoreColumn = await getHasilRekomendasiScoreColumn();
       // Hitung jumlah wisatawan unik yang pernah melakukan perhitungan
       const wisatawanCountResult = await db('preferensi_wisatawan')
         .countDistinct('id_wisatawan as total')
@@ -295,7 +308,7 @@ module.exports = {
         .join(TABLES.WISATA, `${TABLES.HASIL_REKOMENDASI}.id_alternatif`, '=', `${TABLES.WISATA}.id_alternatif`)
         .select(
             `${TABLES.WISATA}.nama_wisata`,
-            db.raw('AVG(hasil_rekomendasi.skor_akhir_wp) as rata_rata_skor'),
+            db.raw(`AVG(${TABLES.HASIL_REKOMENDASI}.${scoreColumn}) as rata_rata_skor`),
             db.raw('AVG(hasil_rekomendasi.ranking) as rata_rata_ranking_asli')
         )
         .groupBy(`${TABLES.WISATA}.id_alternatif`, `${TABLES.WISATA}.nama_wisata`)
