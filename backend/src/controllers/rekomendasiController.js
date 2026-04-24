@@ -58,7 +58,7 @@ module.exports = {
       // Memberitahu sistem: ID Kriteria 1 itu kolom apa di tabel wisata?
       const colMapper = {
         1: 'harga_tiket',
-        2: 'fasilitas', // Nama kolom di tabel alternatif_wisata
+        2: 'fasilitas', // Kolom eksisting di DB saat ini (`atraksi_wisata` dipetakan di level response)
         3: 'jarak_real', // Spesial, dihitung manual via Haversine
         4: 'rating_gmaps',
         5: 'waktu_kunjungan'
@@ -218,7 +218,7 @@ module.exports = {
           nama_wisata: item.nama_wisata,
           rating_gmaps: item.rating_gmaps,
           harga_tiket: item.harga_tiket,
-          atraksi_wisata: item.fasilitas,
+          atraksi_wisata: item.atraksi_wisata || item.fasilitas,
           waktu_kunjungan: item.waktu_kunjungan,
           jarak_dari_anda: item.jarak_dari_anda,
           skor_rekomendasi: item.skor_rekomendasi
