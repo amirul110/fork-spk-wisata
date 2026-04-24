@@ -4,14 +4,18 @@ const { TABLES } = require('../constants/database');
 const { API_STATUS, RESPONSE_DATA_KEYS } = require('../constants/general');
 const spkHelper = require('../utils/spkHelper');
 
-const SCORE_COLUMN_CANDIDATES = ['skor_akhir_wp', 'skor_rekomendasi'];
+const SCORE_COLUMN_CANDIDATES = ['skor_akhir_wp', 'skor_rekomendasi', 'skor_akhir'];
 
-const getHasilRekomendasiScoreColumn = async () => {
+const getHasilRekomendasiScoreColumn = async (knexClient = db) => {
+  const columnInfo = await knexClient(TABLES.HASIL_REKOMENDASI).columnInfo();
+  const availableColumns = Object.keys(columnInfo || {});
+
   for (const column of SCORE_COLUMN_CANDIDATES) {
-    const exists = await db.schema.hasColumn(TABLES.HASIL_REKOMENDASI, column);
-    if (exists) return column;
+    if (availableColumns.includes(column)) return column;
   }
-  return 'skor_akhir_wp';
+
+  // Fallback terakhir jika skema tidak terduga.
+  return availableColumns.includes('skor_akhir_wp') ? 'skor_akhir_wp' : SCORE_COLUMN_CANDIDATES[0];
 };
 
 module.exports = {
@@ -194,7 +198,7 @@ module.exports = {
 
       // --- SIMPAN TOP 5 KE DATABASE ---
       const top5 = finalResult.slice(0, 5); 
-      const scoreColumn = await getHasilRekomendasiScoreColumn();
+      const scoreColumn = await getHasilRekomendasiScoreColumn(trx);
       const dataToInsert = top5.map((item, index) => ({
         id_preferensi: preferensiId,
         id_alternatif: item.id_alternatif,
