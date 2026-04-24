@@ -4,14 +4,18 @@ const { TABLES } = require('../constants/database');
 const { API_STATUS, RESPONSE_DATA_KEYS } = require('../constants/general');
 const spkHelper = require('../utils/spkHelper');
 
-const SCORE_COLUMN_CANDIDATES = ['skor_akhir_wp', 'skor_rekomendasi'];
+const SCORE_COLUMN_CANDIDATES = ['skor_akhir_wp', 'skor_rekomendasi', 'skor_akhir'];
 
-const getHasilRekomendasiScoreColumn = async () => {
+const getHasilRekomendasiScoreColumn = async (knexClient = db) => {
+  const columnInfo = await knexClient(TABLES.HASIL_REKOMENDASI).columnInfo();
+  const availableColumns = Object.keys(columnInfo || {});
+
   for (const column of SCORE_COLUMN_CANDIDATES) {
-    const exists = await db.schema.hasColumn(TABLES.HASIL_REKOMENDASI, column);
-    if (exists) return column;
+    if (availableColumns.includes(column)) return column;
   }
-  return 'skor_akhir_wp';
+
+  // Fallback terakhir jika skema tidak terduga.
+  return SCORE_COLUMN_CANDIDATES[0];
 };
 
 module.exports = {
@@ -54,7 +58,7 @@ module.exports = {
       // Memberitahu sistem: ID Kriteria 1 itu kolom apa di tabel wisata?
       const colMapper = {
         1: 'harga_tiket',
-        2: 'fasilitas', // Tetap pakai nama kolom DB lama untuk kompatibilitas data lama
+        2: 'fasilitas', // Kolom eksisting di DB saat ini (`atraksi_wisata` dipetakan di level response)
         3: 'jarak_real', // Spesial, dihitung manual via Haversine
         4: 'rating_gmaps',
         5: 'waktu_kunjungan'
@@ -194,7 +198,7 @@ module.exports = {
 
       // --- SIMPAN TOP 5 KE DATABASE ---
       const top5 = finalResult.slice(0, 5); 
-      const scoreColumn = await getHasilRekomendasiScoreColumn();
+      const scoreColumn = await getHasilRekomendasiScoreColumn(trx);
       const dataToInsert = top5.map((item, index) => ({
         id_preferensi: preferensiId,
         id_alternatif: item.id_alternatif,
@@ -214,7 +218,7 @@ module.exports = {
           nama_wisata: item.nama_wisata,
           rating_gmaps: item.rating_gmaps,
           harga_tiket: item.harga_tiket,
-          atraksi_wisata: item.fasilitas,
+          atraksi_wisata: item.atraksi_wisata || item.fasilitas,
           waktu_kunjungan: item.waktu_kunjungan,
           jarak_dari_anda: item.jarak_dari_anda,
           skor_rekomendasi: item.skor_rekomendasi
