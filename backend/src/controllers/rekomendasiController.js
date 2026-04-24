@@ -15,7 +15,7 @@ const getHasilRekomendasiScoreColumn = async (knexClient = db) => {
   }
 
   // Fallback terakhir jika skema tidak terduga.
-  return availableColumns.includes('skor_akhir_wp') ? 'skor_akhir_wp' : SCORE_COLUMN_CANDIDATES[0];
+  return SCORE_COLUMN_CANDIDATES[0];
 };
 
 module.exports = {
@@ -58,7 +58,7 @@ module.exports = {
       // Memberitahu sistem: ID Kriteria 1 itu kolom apa di tabel wisata?
       const colMapper = {
         1: 'harga_tiket',
-        2: 'fasilitas', // Tetap pakai nama kolom DB lama untuk kompatibilitas data lama
+        2: 'fasilitas', // Nama kolom di tabel alternatif_wisata
         3: 'jarak_real', // Spesial, dihitung manual via Haversine
         4: 'rating_gmaps',
         5: 'waktu_kunjungan'

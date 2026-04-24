@@ -32,6 +32,22 @@ exports.up = async function (knex) {
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.down = async function () {
-  // Tidak drop kolom untuk menghindari kehilangan data pada rollback.
+exports.down = async function (knex) {
+  const hasSkorAkhirWp = await knex.schema.hasColumn('hasil_rekomendasi', 'skor_akhir_wp');
+  if (!hasSkorAkhirWp) return;
+
+  const hasSkorRekomendasi = await knex.schema.hasColumn('hasil_rekomendasi', 'skor_rekomendasi');
+  if (!hasSkorRekomendasi) {
+    await knex.schema.alterTable('hasil_rekomendasi', (table) => {
+      table.double('skor_rekomendasi').nullable();
+    });
+  }
+
+  await knex('hasil_rekomendasi')
+    .whereNull('skor_rekomendasi')
+    .update({ skor_rekomendasi: knex.ref('skor_akhir_wp') });
+
+  await knex.schema.alterTable('hasil_rekomendasi', (table) => {
+    table.dropColumn('skor_akhir_wp');
+  });
 };
