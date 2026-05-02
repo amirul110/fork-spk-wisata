@@ -274,7 +274,7 @@ export default function AdminKriteria() {
     setAhpDetailDialogVisible(true);
   };
 
-  const formatNumber = (value, digits = 4) => Number(value || 0).toFixed(digits);
+  const formatNumber = (value, digits = 3) => Number(value || 0).toFixed(digits);
 
   const confirmDelete = (rowData) => {
     confirmDialog({
