@@ -249,7 +249,7 @@ export default function AdminKriteria() {
     try {
       await Promise.all(
         sorted.map((item, index) =>
-          updateKriteria(item.id_kriteria, { bobot_prioritas: Number(weights[index].toFixed(6)) })
+          updateKriteria(item.id_kriteria, { bobot_prioritas: weights[index] })
         )
       );
       toast.current.show({
@@ -431,7 +431,7 @@ export default function AdminKriteria() {
               header="Bobot"
               sortable
               style={{ width: "120px" }}
-              body={(rowData) => formatNumber(rowData.bobot_prioritas, 6)}
+              body={(rowData) => formatNumber(rowData.bobot_prioritas, 3)}
             />
             <Column
               field="jenis"
@@ -654,6 +654,14 @@ export default function AdminKriteria() {
                           ))}
                         </tr>
                       ))}
+                      <tr>
+                        <td className="border-1 border-300 p-2 font-semibold">Jumlah Kolom (Matriks Awal)</td>
+                        {lastAHPDetail.col_sums.map((sum, index) => (
+                          <td key={`pair-sum-${index}`} className="border-1 border-300 p-2">
+                            {formatNumber(sum)}
+                          </td>
+                        ))}
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -684,19 +692,10 @@ export default function AdminKriteria() {
                             </td>
                           ))}
                           <td className="border-1 border-300 p-2 font-semibold">
-                            {formatNumber(lastAHPDetail.bobot_prioritas[rowIndex], 6)}
+                             {formatNumber(lastAHPDetail.bobot_prioritas[rowIndex], 3)}
                           </td>
                         </tr>
                       ))}
-                      <tr>
-                        <td className="border-1 border-300 p-2 font-semibold">Jumlah Kolom (Matriks Awal)</td>
-                        {lastAHPDetail.col_sums.map((sum, index) => (
-                          <td key={`sum-${index}`} className="border-1 border-300 p-2">
-                            {formatNumber(sum)}
-                          </td>
-                        ))}
-                        <td className="border-1 border-300 p-2">-</td>
-                      </tr>
                     </tbody>
                   </table>
                 </div>
