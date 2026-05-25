@@ -14,3 +14,29 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+
+## Setup Environment Variable
+
+Sebelum `npm run dev`, copy `.env.example` jadi `.env`:
+
+```bash
+cp .env.example .env
+```
+
+Isi minimal:
+
+```
+VITE_API_BASE_URL=http://localhost:5000/api/v1
+```
+
+> Backend di-mount di prefix `/api/v1`, jadi base URL **wajib** diakhiri `/api/v1` (tanpa trailing slash).
+
+### Troubleshooting: `POST http://localhost:5173/auth/login 404`
+
+Kalau request login nyasar ke port `5173` (port Vite), berarti `VITE_API_BASE_URL`
+tidak terbaca → axios fallback ke origin browser. Cek:
+
+1. File `.env` ada di folder `react-wisata/` (bukan di root repo).
+2. Variabel pakai prefix `VITE_` (Vite hanya expose env yang diawali `VITE_`).
+3. Restart dev server setelah mengubah `.env` (Vite tidak hot-reload env).
