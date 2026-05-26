@@ -1,20 +1,8 @@
 import axios from "axios";
 import { getAuth } from "../store/authStore";
 
-// =====================================================
-// Base URL API
-// =====================================================
-// Nilai diambil dari .env (variable VITE_API_BASE_URL).
-//
-// Local development:
-//   VITE_API_BASE_URL=http://localhost:5000/api/v1
-//
-// Production (saat hosting):
-//   VITE_API_BASE_URL=https://wisatamagetan.xyz/api/v1
-//
-// Tinggal ubah nilainya di .env / .env.production lalu
-// rebuild (`npm run build`). JANGAN hardcode di sini.
-// =====================================================
+// baseURL dibaca dari file .env (VITE_API_BASE_URL).
+// Saat hosting, cukup ubah nilai itu di .env, jangan hardcode di sini.
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
