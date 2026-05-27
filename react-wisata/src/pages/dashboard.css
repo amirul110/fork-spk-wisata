@@ -24,12 +24,12 @@
 }
 
 .sidebar-title {
-  flex-shrink: 0; /* Judul pantang mengecil */
+  flex-shrink: 0;
 }
 
 .sidebar-menu {
   flex: 1;
-  overflow-y: auto; /* Scroll vertikal khusus menu di mode Desktop */
+  overflow-y: auto;
 }
 
 /* ===============================
@@ -59,78 +59,75 @@
 
 /* ===============================
    RESPONSIVE DESIGN - MOBILE (HP)
-====
-/* ===============================
-   RESPONSIVE DESIGN - MOBILE (HP)
 =============================== */
 @media (max-width: 768px) {
-  /* 1. Kunci layar utama menjadi tumpukan Atas-Bawah */
+  /* 1. Layar utama: tumpukan Atas-Bawah */
   .page {
     display: flex !important;
-    flex-direction: column !important; 
+    flex-direction: column !important;
     height: 100vh !important;
     width: 100vw !important;
-    padding: 0 !important; 
-    overflow: hidden !important; 
+    padding: 0 !important;
+    overflow: hidden !important;
   }
 
-  /* 2. Navbar dipaksa menyusun balok di paling atas */
+  /* 2. Navbar di paling atas, tidak sticky/fixed, ukuran natural */
   .sidebar {
-    position: static !important; /* Hapus absolute/fixed yang bikin tabrakan */
+    position: static !important;
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
     height: auto !important;
-    flex: 0 0 auto !important; /* Pantang menciut/membesar */
+    flex: 0 0 auto !important;
     z-index: 100 !important;
     background-color: #ffffff !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
     border-right: none !important;
   }
 
-  /* Baris Atas Navbar: Judul SPK */
+  /* Judul SPK */
   .sidebar-title {
     display: block !important;
     width: 100% !important;
     text-align: center !important;
-    padding: 15px !important;
+    padding: 12px 15px !important;
     background-color: #f8f9fa !important;
     border-bottom: 1px solid #dee2e6 !important;
   }
 
-  /* Baris Bawah Navbar: Menu bisa geser samping */
+  /* Menu horizontal bisa geser */
   .sidebar-menu {
     display: flex !important;
     flex-direction: row !important;
     width: 100% !important;
-    overflow-x: auto !important; 
+    overflow-x: auto !important;
     overflow-y: hidden !important;
     background-color: #ffffff !important;
   }
 
-  /* Tombol Menu */
+  /* Tombol menu */
   .sidebar-menu a {
     display: inline-flex !important;
-    flex: 0 0 auto !important; /* Tombol pantang terlipat */
+    flex: 0 0 auto !important;
     padding: 12px 20px !important;
     white-space: nowrap !important;
     border-bottom: none !important;
   }
 
-  /* 3. Area Konten dipaksa mengisi SISA layar di bawah Navbar */
+  /* 3. Konten mengisi SISA layar di bawah navbar */
   .content {
-    position: static !important; 
+    position: static !important;
     display: block !important;
-    flex: 1 1 auto !important; /* Ambil seluruh sisa layar dengan aman */
+    flex: 1 1 auto !important;
     width: 100% !important;
-    padding: 20px !important;
-    overflow-y: auto !important; /* Scroll tabel vertikal murni HANYA di kotak ini */
+    padding: 16px !important;
+    overflow-y: auto !important;
     overflow-x: auto !important;
-    min-height: 0 !important; /* WAJIB ADA: Mencegah tabel PrimeReact menjebol tata letak */
+    min-height: 0 !important;
     background-color: #ffffff !important;
   }
 
-  /* --- Pengaturan PrimeReact Mobile --- */
+  /* --- PrimeReact Mobile tweaks --- */
   .p-datatable { font-size: 0.9rem; }
   .p-datatable-wrapper { overflow-x: auto; }
   .p-dialog { width: 95vw !important; max-width: 95vw !important; margin: 1rem; }
