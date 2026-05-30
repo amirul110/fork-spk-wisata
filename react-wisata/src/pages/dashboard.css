@@ -57,8 +57,8 @@
   .content { padding: 20px; }
 }
 
-/* ===============================
-   RESPONSIVE DESIGN - MOBILE (HP)
+/* =============================== */
+  /* RESPONSIVE DESIGN - MOBILE (HP) */
 @media (max-width: 768px) {
   /* 0. Window jadi area scroll utama (kunci anti "tenggelam") */
   html,
@@ -71,32 +71,45 @@
   }
 
   /* 1. Layar utama: tumpukan Atas-Bawah, tumbuh sesuai isi */
-   Strategi: navbar "sticky" di atas + scroll dokumen natural.
+ /*  Strategi: navbar "sticky" di atas + scroll dokumen natural.
    Tidak pakai height:100vh / overflow:hidden supaya konten
-   TIDAK pernah terpotong / tenggelam di balik navbar.
+   TIDAK pernah terpotong / tenggelam di balik navbar. */ 
+/* ===============================
+   RESPONSIVE DESIGN - MOBILE (HP)
+=============================== */ /* <-- PASTIKAN KOMENTAR INI DITUTUP */
+
 @media (max-width: 768px) {
-  /* 1. Layar utama: tumpukan Atas-Bawah, boleh tumbuh sesuai isi */
+  /* 0. Window jadi area scroll utama */
+  html,
+  body,
+  #root {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+
+  /* 1. Layar utama: tumpukan Atas-Bawah */
   .page {
     display: flex !important;
     flex-direction: column !important;
     min-height: 100vh !important;
-    height: auto !important;       /* JANGAN kunci 100vh */
+    height: auto !important;       
     width: 100% !important;
     padding: 0 !important;
-    overflow: visible !important;  /* JANGAN sembunyikan luapan */
+    overflow: visible !important;  
   }
 
-  /* 2. Navbar nempel di atas saat scroll, tapi tetap di alur normal
-        sehingga konten otomatis mulai DI BAWAHNYA (tidak ketiban) */
+  /* 2. Navbar nempel di atas saat scroll */
   .sidebar {
-    position: sticky !important;
+    position: fixed !important; /* REKOMENDASI: Ubah ke fixed agar mengunci sempurna di mobile */
     top: 0 !important;
+    left: 0 !important;
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
     height: auto !important;
-    flex: 0 0 auto !important;
-    z-index: 1000 !important;      /* selalu di atas konten */
+    z-index: 1000 !important;      
     background-color: #ffffff !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
     border-right: none !important;
@@ -117,7 +130,6 @@
     display: flex !important;
     flex-direction: row !important;
     width: 100% !important;
-    flex: 0 0 auto !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
     background-color: #ffffff !important;
@@ -126,35 +138,30 @@
   /* Tombol menu */
   .sidebar-menu a {
     display: inline-flex !important;
-    flex: 0 0 auto !important;
     padding: 12px 20px !important;
     white-space: nowrap !important;
-    border-bottom: none !important;
   }
 
-  /* 3. Konten mengalir natural di bawah navbar (ikut scroll window) */
-  /* 3. Konten mengalir natural di bawah navbar (ikut scroll dokumen) */
+  /* 3. Konten mengalir di bawah navbar */
   .content {
     position: static !important;
     display: block !important;
-    flex: 1 1 auto !important;
     width: 100% !important;
     height: auto !important;
-    padding: 16px !important;
-    overflow: visible !important;
-    overflow: visible !important;  /* scroll mengikuti dokumen */
-    min-height: 0 !important;
+    /* PENTING: Berikan padding-top agar konten pertama Anda tidak tertutup navbar */
+    padding: 110px 16px 16px 16px !important; 
+    overflow: visible !important;  
     background-color: #ffffff !important;
   }
 
   /* --- Penyesuaian PrimeReact di mobile --- */
   .p-datatable { font-size: 0.9rem; }
-  .p-datatable-wrapper { overflow-x: auto; } /* tabel lebar tetap bisa geser samping */
-  .p-datatable-wrapper { overflow-x: auto; }  /* tabel lebar tetap bisa geser samping */
+  .p-datatable-wrapper { overflow-x: auto; }  
   .p-dialog { width: 95vw !important; max-width: 95vw !important; margin: 1rem; }
   .p-dialog .p-dialog-content { padding: 1rem; }
   .p-fluid .p-field { margin-bottom: 1rem; }
   .p-button { min-height: 44px; padding: 0.75rem 1rem; }
   .p-fileupload { width: 100%; }
   .p-fileupload .p-fileupload-buttonbar { flex-wrap: wrap; }
+}
 }
