@@ -59,65 +59,62 @@
 
 /* ===============================
    RESPONSIVE DESIGN - MOBILE (HP)
-@media (max-width: 768px) {
-  /* 0. Window jadi area scroll utama (kunci anti "tenggelam") */
-  html,
-  body,
-  #root {
-    height: auto !important;
-    min-height: 100% !important;
-    overflow-x: hidden !important;
-    overflow-y: visible !important;
-  }
+   ------------------------------------------------------------
+   Tujuan:
+   1) Navbar MENETAP di atas (tidak hilang saat scroll).
+   2) Konten TIDAK tenggelam / tertimpa navbar.
 
-  /* 1. Layar utama: tumpukan Atas-Bawah, tumbuh sesuai isi */
-   Strategi: navbar "sticky" di atas + scroll dokumen natural.
-   Tidak pakai height:100vh / overflow:hidden supaya konten
-   TIDAK pernah terpotong / tenggelam di balik navbar.
+   Strategi: navbar pakai position:fixed (paling pasti tetap
+   kelihatan, kebal dari masalah overflow ancestor yang bikin
+   "sticky" gagal). Tinggi navbar dipatok pasti (44px + 48px =
+   92px) lalu konten diberi padding-top sebesar itu + sedikit
+   jarak, sehingga konten selalu mulai DI BAWAH navbar.
+=============================== */
 @media (max-width: 768px) {
-  /* 1. Layar utama: tumpukan Atas-Bawah, boleh tumbuh sesuai isi */
+  /* Layout jadi block biasa; navbar di-handle terpisah (fixed) */
   .page {
-    display: flex !important;
-    flex-direction: column !important;
+    display: block !important;
     min-height: 100vh !important;
-    height: auto !important;       /* JANGAN kunci 100vh */
     width: 100% !important;
     padding: 0 !important;
-    overflow: visible !important;  /* JANGAN sembunyikan luapan */
+    background: #ffffff !important;
   }
 
-  /* 2. Navbar nempel di atas saat scroll, tapi tetap di alur normal
-        sehingga konten otomatis mulai DI BAWAHNYA (tidak ketiban) */
+  /* 1. NAVBAR FIXED -> selalu menempel di atas viewport saat scroll */
   .sidebar {
-    position: sticky !important;
+    position: fixed !important;
     top: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
+    left: 0 !important;
+    right: 0 !important;
     width: 100% !important;
     height: auto !important;
-    flex: 0 0 auto !important;
-    z-index: 1000 !important;      /* selalu di atas konten */
+    display: flex !important;
+    flex-direction: column !important;
+    z-index: 1000 !important;
     background-color: #ffffff !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
     border-right: none !important;
   }
 
-  /* Baris atas navbar: Judul SPK */
+  /* Baris atas: Judul SPK (tinggi dipatok 44px) */
   .sidebar-title {
-    display: block !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     width: 100% !important;
-    text-align: center !important;
-    padding: 12px 15px !important;
+    height: 44px !important;
+    padding: 0 15px !important;
     background-color: #f8f9fa !important;
     border-bottom: 1px solid #dee2e6 !important;
   }
 
-  /* Baris bawah navbar: menu bisa geser ke samping */
+  /* Baris bawah: Menu horizontal (tinggi dipatok 48px) bisa geser */
   .sidebar-menu {
     display: flex !important;
     flex-direction: row !important;
+    align-items: stretch !important;
     width: 100% !important;
-    flex: 0 0 auto !important;
+    height: 48px !important;
     overflow-x: auto !important;
     overflow-y: hidden !important;
     background-color: #ffffff !important;
@@ -126,31 +123,27 @@
   /* Tombol menu */
   .sidebar-menu a {
     display: inline-flex !important;
+    align-items: center !important;
     flex: 0 0 auto !important;
-    padding: 12px 20px !important;
+    padding: 0 20px !important;
     white-space: nowrap !important;
     border-bottom: none !important;
   }
 
-  /* 3. Konten mengalir natural di bawah navbar (ikut scroll window) */
-  /* 3. Konten mengalir natural di bawah navbar (ikut scroll dokumen) */
+  /* 2. KONTEN: diberi jarak atas = tinggi navbar (92px) + 16px nafas,
+        supaya bagian atas konten TIDAK pernah ketiban navbar. */
   .content {
-    position: static !important;
     display: block !important;
-    flex: 1 1 auto !important;
     width: 100% !important;
-    height: auto !important;
+    min-height: 100vh !important;
     padding: 16px !important;
-    overflow: visible !important;
-    overflow: visible !important;  /* scroll mengikuti dokumen */
-    min-height: 0 !important;
+    padding-top: 108px !important;
     background-color: #ffffff !important;
   }
 
   /* --- Penyesuaian PrimeReact di mobile --- */
   .p-datatable { font-size: 0.9rem; }
   .p-datatable-wrapper { overflow-x: auto; } /* tabel lebar tetap bisa geser samping */
-  .p-datatable-wrapper { overflow-x: auto; }  /* tabel lebar tetap bisa geser samping */
   .p-dialog { width: 95vw !important; max-width: 95vw !important; margin: 1rem; }
   .p-dialog .p-dialog-content { padding: 1rem; }
   .p-fluid .p-field { margin-bottom: 1rem; }
