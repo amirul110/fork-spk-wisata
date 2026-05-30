@@ -59,10 +59,21 @@
 
 /* ===============================
    RESPONSIVE DESIGN - MOBILE (HP)
+@media (max-width: 768px) {
+  /* 0. Window jadi area scroll utama (kunci anti "tenggelam") */
+  html,
+  body,
+  #root {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+  }
+
+  /* 1. Layar utama: tumpukan Atas-Bawah, tumbuh sesuai isi */
    Strategi: navbar "sticky" di atas + scroll dokumen natural.
    Tidak pakai height:100vh / overflow:hidden supaya konten
    TIDAK pernah terpotong / tenggelam di balik navbar.
-=============================== */
 @media (max-width: 768px) {
   /* 1. Layar utama: tumpukan Atas-Bawah, boleh tumbuh sesuai isi */
   .page {
@@ -91,7 +102,7 @@
     border-right: none !important;
   }
 
-  /* Baris Atas Navbar: Judul SPK */
+  /* Baris atas navbar: Judul SPK */
   .sidebar-title {
     display: block !important;
     width: 100% !important;
@@ -101,7 +112,7 @@
     border-bottom: 1px solid #dee2e6 !important;
   }
 
-  /* Baris Bawah Navbar: Menu bisa geser samping */
+  /* Baris bawah navbar: menu bisa geser ke samping */
   .sidebar-menu {
     display: flex !important;
     flex-direction: row !important;
@@ -112,7 +123,7 @@
     background-color: #ffffff !important;
   }
 
-  /* Tombol Menu */
+  /* Tombol menu */
   .sidebar-menu a {
     display: inline-flex !important;
     flex: 0 0 auto !important;
@@ -121,6 +132,7 @@
     border-bottom: none !important;
   }
 
+  /* 3. Konten mengalir natural di bawah navbar (ikut scroll window) */
   /* 3. Konten mengalir natural di bawah navbar (ikut scroll dokumen) */
   .content {
     position: static !important;
@@ -129,13 +141,15 @@
     width: 100% !important;
     height: auto !important;
     padding: 16px !important;
+    overflow: visible !important;
     overflow: visible !important;  /* scroll mengikuti dokumen */
     min-height: 0 !important;
     background-color: #ffffff !important;
   }
 
-  /* --- Pengaturan PrimeReact Mobile --- */
+  /* --- Penyesuaian PrimeReact di mobile --- */
   .p-datatable { font-size: 0.9rem; }
+  .p-datatable-wrapper { overflow-x: auto; } /* tabel lebar tetap bisa geser samping */
   .p-datatable-wrapper { overflow-x: auto; }  /* tabel lebar tetap bisa geser samping */
   .p-dialog { width: 95vw !important; max-width: 95vw !important; margin: 1rem; }
   .p-dialog .p-dialog-content { padding: 1rem; }

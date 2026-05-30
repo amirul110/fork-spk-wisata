@@ -1,0 +1,546 @@
+{
+  "info": {
+    "_postman_id": "b1e7d9a2-3c4f-4a6b-9d21-spkwisata0001",
+    "name": "SPK Wisata API",
+    "description": "Koleksi endpoint SPK Wisata, dipisah berdasarkan fungsi & role.\n\nVariabel:\n- base_url: default http://localhost:5000/api/v1 (ganti ke IP laptop saat tes dari HP)\n- server_url: default http://localhost:5000 (untuk health check)\n- admin_token: terisi otomatis setelah Login Admin\n- wisatawan_token: terisi otomatis setelah Login Wisatawan",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth (Publik)",
+      "item": [
+        {
+          "name": "Register Wisatawan",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"wisatawan1\",\n  \"email\": \"wisatawan1@mail.com\",\n  \"password\": \"password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Public. Mendaftarkan akun wisatawan baru."
+          }
+        },
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.auth && res.auth.token) {",
+                  "  pm.collectionVariables.set('admin_token', res.auth.token);",
+                  "  console.log('admin_token tersimpan');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mail.com\",\n  \"password\": \"skripsi2026\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login sebagai admin. Token otomatis disimpan ke variabel admin_token."
+          }
+        },
+        {
+          "name": "Login Wisatawan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.auth && res.auth.token) {",
+                  "  pm.collectionVariables.set('wisatawan_token', res.auth.token);",
+                  "  console.log('wisatawan_token tersimpan');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"wisatawan1@mail.com\",\n  \"password\": \"password123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login sebagai wisatawan. Token otomatis disimpan ke variabel wisatawan_token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth (Login dulu)",
+      "item": [
+        {
+          "name": "Update Profile (Wisatawan)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{wisatawan_token}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"wisatawan_baru\",\n  \"email\": \"wisatawan1@mail.com\",\n  \"password\": \"passwordbaru123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            },
+            "description": "Update profil user yang sedang login (admin/wisatawan). Field opsional."
+          }
+        },
+        {
+          "name": "Logout (Wisatawan)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{wisatawan_token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Logout. Token dimasukkan ke blacklist."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wisatawan",
+      "item": [
+        {
+          "name": "List Wisata",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{wisatawan_token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{base_url}}/wisata",
+              "host": ["{{base_url}}"],
+              "path": ["wisata"]
+            },
+            "description": "Daftar seluruh wisata untuk dipilih wisatawan."
+          }
+        },
+        {
+          "name": "Detail Wisata",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{wisatawan_token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{base_url}}/wisata/1",
+              "host": ["{{base_url}}"],
+              "path": ["wisata", "1"]
+            },
+            "description": "Detail satu wisata berdasarkan id_alternatif."
+          }
+        },
+        {
+          "name": "Hitung Rekomendasi (AHP + SMART)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{wisatawan_token}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userLocation\": {\n    \"latitude\": -7.6576,\n    \"longitude\": 111.3457\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/rekomendasi/hitung",
+              "host": ["{{base_url}}"],
+              "path": ["rekomendasi", "hitung"]
+            },
+            "description": "Menghitung rekomendasi berdasarkan lokasi user. Wajib kirim userLocation (latitude & longitude)."
+          }
+        },
+        {
+          "name": "Riwayat Saya",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{wisatawan_token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{base_url}}/rekomendasi/riwayat/me",
+              "host": ["{{base_url}}"],
+              "path": ["rekomendasi", "riwayat", "me"]
+            },
+            "description": "Riwayat rekomendasi milik wisatawan yang sedang login."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Kriteria",
+      "item": [
+        {
+          "name": "Create Kriteria",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama_kriteria\": \"Harga Tiket\",\n  \"jenis\": \"cost\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/kriteria",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "kriteria"]
+            },
+            "description": "jenis = 'cost' atau 'benefit'."
+          }
+        },
+        {
+          "name": "Update Kriteria",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama_kriteria\": \"Harga Tiket Masuk\",\n  \"jenis\": \"cost\",\n  \"bobot_prioritas\": 0.25\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/kriteria/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "kriteria", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Kriteria",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/kriteria/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "kriteria", "1"]
+            },
+            "description": "Menghapus kriteria beserta sub-kriterianya."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Sub Kriteria",
+      "item": [
+        {
+          "name": "Create Sub Kriteria",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_kriteria\": 1,\n  \"code_kriteria\": \"C1\",\n  \"nama_sub_kriteria\": \"Murah (< 10rb)\",\n  \"nilai_bobot\": 5,\n  \"batas_bawah\": \"0\",\n  \"batas_atas\": \"10000\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/subkriteria",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "subkriteria"]
+            },
+            "description": "Wajib: id_kriteria, nama_sub_kriteria, nilai_bobot."
+          }
+        },
+        {
+          "name": "Update Sub Kriteria",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama_sub_kriteria\": \"Sangat Murah\",\n  \"nilai_bobot\": 5,\n  \"batas_bawah\": \"0\",\n  \"batas_atas\": \"5000\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/subkriteria/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "subkriteria", "1"]
+            },
+            "description": "Param :id adalah id_sub."
+          }
+        },
+        {
+          "name": "Delete Sub Kriteria",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/subkriteria/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "subkriteria", "1"]
+            },
+            "description": "Param :id adalah id_sub."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Alternatif Wisata",
+      "item": [
+        {
+          "name": "List Alternatif",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/wisata",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "wisata"]
+            }
+          }
+        },
+        {
+          "name": "Detail Alternatif",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/wisata/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "wisata", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Alternatif (form-data + gambar)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "nama_wisata", "value": "Telaga Sarangan", "type": "text" },
+                { "key": "latitude", "value": "-7.6770", "type": "text" },
+                { "key": "longitude", "value": "111.2030", "type": "text" },
+                { "key": "harga_tiket", "value": "15000", "type": "text" },
+                { "key": "atraksi_wisata", "value": "Perahu, Kuda, Kuliner", "type": "text" },
+                { "key": "rating_gmaps", "value": "4.6", "type": "text" },
+                { "key": "waktu_kunjungan", "value": "24 Jam", "type": "text" },
+                { "key": "deskripsi", "value": "Telaga di kaki Gunung Lawu.", "type": "text" },
+                { "key": "gambar", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/wisata",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "wisata"]
+            },
+            "description": "Wajib: nama_wisata, latitude, longitude. Field gambar opsional (set tipe = File)."
+          }
+        },
+        {
+          "name": "Update Alternatif (form-data + gambar)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "nama_wisata", "value": "Telaga Sarangan (Edit)", "type": "text" },
+                { "key": "latitude", "value": "-7.6770", "type": "text" },
+                { "key": "longitude", "value": "111.2030", "type": "text" },
+                { "key": "harga_tiket", "value": "20000", "type": "text" },
+                { "key": "atraksi_wisata", "value": "Perahu, Kuda, Kuliner, Camping", "type": "text" },
+                { "key": "rating_gmaps", "value": "4.7", "type": "text" },
+                { "key": "waktu_kunjungan", "value": "24 Jam", "type": "text" },
+                { "key": "deskripsi", "value": "Update deskripsi.", "type": "text" },
+                { "key": "gambar", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/wisata/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "wisata", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Alternatif",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/wisata/1",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "wisata", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Laporan",
+      "item": [
+        {
+          "name": "Riwayat Global (Analitik)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{base_url}}/rekomendasi/riwayat",
+              "host": ["{{base_url}}"],
+              "path": ["rekomendasi", "riwayat"]
+            },
+            "description": "Laporan rata-rata skor & ranking global. Admin only."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Umum",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{server_url}}/",
+              "host": ["{{server_url}}"],
+              "path": [""]
+            },
+            "description": "Cek server hidup (tanpa prefix /api/v1)."
+          }
+        },
+        {
+          "name": "Dashboard - List Kriteria",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{wisatawan_token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{base_url}}/kriteria",
+              "host": ["{{base_url}}"],
+              "path": ["kriteria"]
+            },
+            "description": "Butuh login (admin/wisatawan)."
+          }
+        },
+        {
+          "name": "Dashboard - Sub Kriteria by Kriteria",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{wisatawan_token}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{base_url}}/subkriteria/1",
+              "host": ["{{base_url}}"],
+              "path": ["subkriteria", "1"]
+            },
+            "description": "Param :id adalah id_kriteria. Butuh login."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5000/api/v1", "type": "string" },
+    { "key": "server_url", "value": "http://localhost:5000", "type": "string" },
+    { "key": "admin_token", "value": "", "type": "string" },
+    { "key": "wisatawan_token", "value": "", "type": "string" }
+  ]
+}
