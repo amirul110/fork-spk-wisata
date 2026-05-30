@@ -60,43 +60,55 @@
 /* ===============================
    RESPONSIVE DESIGN - MOBILE (HP)
    ------------------------------------------------------------
-   Tujuan:
-   1) Navbar MENETAP di atas (tidak hilang saat scroll).
-   2) Konten TIDAK tenggelam / tertimpa navbar.
+   Pola "APP SHELL": seluruh halaman (.page) dikunci setinggi
+   layar dan TIDAK ikut scroll sama sekali. Hanya .content yang
+   punya scroll sendiri.
 
-   Strategi: navbar pakai position:fixed (paling pasti tetap
-   kelihatan, kebal dari masalah overflow ancestor yang bikin
-   "sticky" gagal). Tinggi navbar dipatok pasti (44px + 48px =
-   92px) lalu konten diberi padding-top sebesar itu + sedikit
-   jarak, sehingga konten selalu mulai DI BAWAH navbar.
+   Akibatnya:
+   - Navbar = item flex paling atas yang TIDAK PERNAH bergerak
+     (karena memang tidak ada yang men-scroll-nya) -> konsisten
+     di satu tempat saat scroll ke bawah.
+   - Konten scroll di area terpisah DI BAWAH navbar -> mustahil
+     tenggelam / tertimpa navbar. Diberi jarak (padding) juga.
+   - Pakai 100dvh (dynamic viewport) supaya tidak terpotong
+     address bar browser HP.
 =============================== */
 @media (max-width: 768px) {
-  /* Layout jadi block biasa; navbar di-handle terpisah (fixed) */
+  /* Dokumen tidak scroll; yang scroll hanya .content di dalam shell */
+  html,
+  body,
+  #root {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Shell setinggi layar, tidak scroll, tumpukan atas-bawah */
   .page {
-    display: block !important;
-    min-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    height: 100dvh !important; /* anti address-bar HP */
     width: 100% !important;
     padding: 0 !important;
+    overflow: hidden !important;
     background: #ffffff !important;
   }
 
-  /* 1. NAVBAR FIXED -> selalu menempel di atas viewport saat scroll */
+  /* 1. NAVBAR: item flex paling atas, tinggi natural, TIDAK ikut scroll */
   .sidebar {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    height: auto !important;
+    position: relative !important;
+    flex: 0 0 auto !important; /* tidak menyusut, tinggi tetap */
     display: flex !important;
     flex-direction: column !important;
-    z-index: 1000 !important;
+    width: 100% !important;
+    height: auto !important;
+    z-index: 10 !important;
     background-color: #ffffff !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
     border-right: none !important;
   }
 
-  /* Baris atas: Judul SPK (tinggi dipatok 44px) */
+  /* Baris atas: Judul SPK */
   .sidebar-title {
     display: flex !important;
     align-items: center !important;
@@ -108,7 +120,7 @@
     border-bottom: 1px solid #dee2e6 !important;
   }
 
-  /* Baris bawah: Menu horizontal (tinggi dipatok 48px) bisa geser */
+  /* Baris bawah: Menu horizontal bisa geser */
   .sidebar-menu {
     display: flex !important;
     flex-direction: row !important;
@@ -130,14 +142,18 @@
     border-bottom: none !important;
   }
 
-  /* 2. KONTEN: diberi jarak atas = tinggi navbar (92px) + 16px nafas,
-        supaya bagian atas konten TIDAK pernah ketiban navbar. */
+  /* 2. KONTEN: mengisi sisa ruang di bawah navbar & SATU-SATUNYA yang scroll.
+        Diberi jarak atas (padding-top) supaya ada nafas dari navbar. */
   .content {
+    flex: 1 1 auto !important;
     display: block !important;
     width: 100% !important;
-    min-height: 100vh !important;
+    min-height: 0 !important; /* WAJIB: agar flex child bisa scroll */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
     padding: 16px !important;
-    padding-top: 108px !important;
+    padding-top: 20px !important;
     background-color: #ffffff !important;
   }
 
