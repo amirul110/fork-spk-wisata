@@ -59,15 +59,6 @@
 
 /* ===============================
    RESPONSIVE DESIGN - MOBILE (HP)
-   ------------------------------------------------------------
-   Tujuan: konten TIDAK pernah tenggelam / terpotong navbar.
-   Caranya:
-   - Dokumen di-scroll oleh WINDOW (html/body/#root height:auto),
-     bukan kotak ber-overflow yang bikin sticky bingung.
-   - Navbar pakai position:sticky top:0 -> tetap kelihatan saat
-     scroll, TAPI tetap menempati ruang di alur normal sehingga
-     konten otomatis mulai DI BAWAH navbar (tidak ketiban).
-=============================== */
 @media (max-width: 768px) {
   /* 0. Window jadi area scroll utama (kunci anti "tenggelam") */
   html,
@@ -80,17 +71,23 @@
   }
 
   /* 1. Layar utama: tumpukan Atas-Bawah, tumbuh sesuai isi */
+   Strategi: navbar "sticky" di atas + scroll dokumen natural.
+   Tidak pakai height:100vh / overflow:hidden supaya konten
+   TIDAK pernah terpotong / tenggelam di balik navbar.
+@media (max-width: 768px) {
+  /* 1. Layar utama: tumpukan Atas-Bawah, boleh tumbuh sesuai isi */
   .page {
     display: flex !important;
     flex-direction: column !important;
     min-height: 100vh !important;
-    height: auto !important;
+    height: auto !important;       /* JANGAN kunci 100vh */
     width: 100% !important;
     padding: 0 !important;
-    overflow: visible !important;
+    overflow: visible !important;  /* JANGAN sembunyikan luapan */
   }
 
-  /* 2. Navbar: nempel di atas saat scroll, tapi tetap di alur normal */
+  /* 2. Navbar nempel di atas saat scroll, tapi tetap di alur normal
+        sehingga konten otomatis mulai DI BAWAHNYA (tidak ketiban) */
   .sidebar {
     position: sticky !important;
     top: 0 !important;
@@ -99,7 +96,7 @@
     width: 100% !important;
     height: auto !important;
     flex: 0 0 auto !important;
-    z-index: 1000 !important;
+    z-index: 1000 !important;      /* selalu di atas konten */
     background-color: #ffffff !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
     border-right: none !important;
@@ -136,6 +133,7 @@
   }
 
   /* 3. Konten mengalir natural di bawah navbar (ikut scroll window) */
+  /* 3. Konten mengalir natural di bawah navbar (ikut scroll dokumen) */
   .content {
     position: static !important;
     display: block !important;
@@ -144,6 +142,7 @@
     height: auto !important;
     padding: 16px !important;
     overflow: visible !important;
+    overflow: visible !important;  /* scroll mengikuti dokumen */
     min-height: 0 !important;
     background-color: #ffffff !important;
   }
@@ -151,6 +150,7 @@
   /* --- Penyesuaian PrimeReact di mobile --- */
   .p-datatable { font-size: 0.9rem; }
   .p-datatable-wrapper { overflow-x: auto; } /* tabel lebar tetap bisa geser samping */
+  .p-datatable-wrapper { overflow-x: auto; }  /* tabel lebar tetap bisa geser samping */
   .p-dialog { width: 95vw !important; max-width: 95vw !important; margin: 1rem; }
   .p-dialog .p-dialog-content { padding: 1rem; }
   .p-fluid .p-field { margin-bottom: 1rem; }
