@@ -91,10 +91,13 @@
     width: 100% !important;
     padding: 0 !important;
     overflow: hidden !important;
-    background: #ffffff !important;
+    background: #eef1f5 !important;
+    isolation: isolate !important; /* stacking context bersih navbar vs konten */
   }
 
-  /* 1. NAVBAR: item flex paling atas, tinggi natural, TIDAK ikut scroll */
+  /* 1. NAVBAR: item flex paling atas, tinggi natural, TIDAK ikut scroll.
+        Dikunci di lapisan PALING ATAS & opaque -> konten yang scroll di
+        bawahnya mustahil tampak menerobos / menempel navbar. */
   .sidebar {
     position: relative !important;
     flex: 0 0 auto !important; /* tidak menyusut, tinggi tetap */
@@ -102,9 +105,9 @@
     flex-direction: column !important;
     width: 100% !important;
     height: auto !important;
-    z-index: 10 !important;
-    background-color: #ffffff !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    z-index: 1000 !important; /* selalu di atas konten */
+    background-color: #ffffff !important; /* opaque penuh */
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18) !important; /* pemisah jelas */
     border-right: none !important;
   }
 
@@ -143,8 +146,13 @@
   }
 
   /* 2. KONTEN: mengisi sisa ruang di bawah navbar & SATU-SATUNYA yang scroll.
-        Diberi jarak atas (padding-top) supaya ada nafas dari navbar. */
+        - Dikunci di lapisan BAWAH navbar (z-index:1) -> tidak menerobos navbar.
+        - Background abu-abu muda supaya batas dengan navbar (putih) TEGAS,
+          jadi konten terlihat tuck/masuk rapi DI BAWAH navbar, bukan menyatu.
+        - Diberi jarak atas supaya ada nafas dari navbar. */
   .content {
+    position: relative !important;
+    z-index: 1 !important; /* selalu di bawah navbar */
     flex: 1 1 auto !important;
     display: block !important;
     width: 100% !important;
@@ -152,9 +160,8 @@
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
-    padding: 16px !important;
-    padding-top: 20px !important;
-    background-color: #ffffff !important;
+    padding: 20px 16px 24px !important;
+    background-color: #eef1f5 !important; /* abu-abu muda, beda dari navbar putih */
   }
 
   /* --- Penyesuaian PrimeReact di mobile --- */
