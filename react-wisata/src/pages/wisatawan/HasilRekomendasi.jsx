@@ -41,7 +41,7 @@ export default function HasilRekomendasi() {
     />
   );
 
-  const getAtraksiWisata = (rowData) => rowData?.atraksi_wisata || rowData?.fasilitas || "-";
+  const getAtraksiWisata = (rowData) => rowData?.atraksi_wisata || "-";
 
   return (
     <>
@@ -129,16 +129,6 @@ export default function HasilRekomendasi() {
                         <div className="text-800 font-semibold mt-1">
                           <i className="pi pi-map-marker text-red-500 mr-1"></i>
                           {selectedWisata.jarak_dari_anda}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="col-12 md:col-6">
-                      <div className="mb-3">
-                        <span className="font-bold text-600 text-sm">Waktu Kunjungan</span>
-                        <div className="text-800 font-semibold mt-1">
-                          <i className="pi pi-clock text-blue-500 mr-1"></i>
-                          {selectedWisata.waktu_kunjungan}
                         </div>
                       </div>
                     </div>

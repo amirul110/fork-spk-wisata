@@ -58,10 +58,9 @@ module.exports = {
       // Memberitahu sistem: ID Kriteria 1 itu kolom apa di tabel wisata?
       const colMapper = {
         1: 'harga_tiket',
-        2: 'fasilitas', // Kolom eksisting di DB saat ini (`atraksi_wisata` dipetakan di level response)
+        2: 'atraksi_wisata',
         3: 'jarak_real', // Spesial, dihitung manual via Haversine
-        4: 'rating_gmaps',
-        5: 'waktu_kunjungan'
+        4: 'rating_gmaps'
       };
 
       // --- FUNGSI PENCARI NILAI DARI SUB KRITERIA (LOGIC DB) ---
@@ -83,18 +82,7 @@ module.exports = {
                     return score;
                 }
             } 
-            // B. Logika Waktu (Cek string '24 Jam')
-            else if (kriteriaId == 5) {
-                // Sederhana: Jika wisata buka 24 jam, beri nilai maksimal (sesuai seeder)
-                if (rawValue && rawValue.includes('24 Jam') && rule.nama_sub_kriteria.includes('24 Jam')) {
-                    return score;
-                }
-                // Default value untuk jam terbatas (bisa disesuaikan)
-                if (!rawValue.includes('24 Jam') && rule.nama_sub_kriteria.includes('Pagi')) {
-                     return 3; 
-                }
-            }
-            // C. Logika Angka Normal (Harga, Jarak, Rating)
+            // B. Logika Angka Normal (Harga, Jarak, Rating)
             else {
                 if (rawValue >= min && rawValue <= max) {
                     return score;
@@ -218,8 +206,7 @@ module.exports = {
           nama_wisata: item.nama_wisata,
           rating_gmaps: item.rating_gmaps,
           harga_tiket: item.harga_tiket,
-          atraksi_wisata: item.atraksi_wisata || item.fasilitas,
-          waktu_kunjungan: item.waktu_kunjungan,
+          atraksi_wisata: item.atraksi_wisata,
           jarak_dari_anda: item.jarak_dari_anda,
           skor_rekomendasi: item.skor_rekomendasi
       }));

@@ -8,13 +8,9 @@ module.exports = {
   // [GET] AMBIL SEMUA DATA (READ) - Untuk Tampilan Tabel Admin
   getAllAlternatif: async (req, res) => {
     try {
-      const dataRaw = await db(TABLES.WISATA)
+      const data = await db(TABLES.WISATA)
         .select('*')
         .orderBy('created_at', 'asc'); // Urutkan dari yang terbaru
-      const data = dataRaw.map((item) => ({
-        ...item,
-        atraksi_wisata: item.fasilitas,
-      }));
 
       return res.json({
         status: API_STATUS.SUCCESS,
@@ -40,10 +36,7 @@ module.exports = {
 
       return res.json({
         status: API_STATUS.SUCCESS,
-        data: {
-          ...data,
-          atraksi_wisata: data.fasilitas,
-        }
+        data
       });
     } catch (error) {
       console.error("Error Get Alternatif By ID:", error);
@@ -56,10 +49,9 @@ module.exports = {
     try {
       const { 
         nama_wisata, latitude, longitude, 
-        harga_tiket, fasilitas, atraksi_wisata, rating_gmaps, waktu_kunjungan,
+        harga_tiket, atraksi_wisata, rating_gmaps,
         deskripsi
       } = req.body;
-      // Prioritas field: atraksi_wisata (baru) > fasilitas (legacy/backward compatibility)
 
       if (!nama_wisata || !latitude || !longitude) {
         return res.status(400).json({ message: 'Nama dan Lokasi (Lat/Long) wajib diisi!' });
@@ -74,9 +66,8 @@ module.exports = {
         latitude,
         longitude,
         harga_tiket: harga_tiket || 0,
-        fasilitas: atraksi_wisata || fasilitas || '',
+        atraksi_wisata: atraksi_wisata || '',
         rating_gmaps: rating_gmaps || 0,
-        waktu_kunjungan: waktu_kunjungan || '',
         deskripsi: deskripsi || '',
         gambar: gambar,
         created_at: new Date(),
@@ -89,10 +80,7 @@ module.exports = {
       return res.status(201).json({
         status: API_STATUS.SUCCESS,
         message: 'Berhasil menambahkan wisata baru',
-        data: {
-          ...newData,
-          atraksi_wisata: newData.fasilitas,
-        }
+        data: newData
       });
 
     } catch (error) {
@@ -107,10 +95,9 @@ module.exports = {
       const { id } = req.params;
       const { 
         nama_wisata, latitude, longitude, 
-        harga_tiket, fasilitas, atraksi_wisata, rating_gmaps, waktu_kunjungan,
+        harga_tiket, atraksi_wisata, rating_gmaps,
         deskripsi
       } = req.body;
-      // Prioritas field: atraksi_wisata (baru) > fasilitas (legacy/backward compatibility)
 
       const exists = await db(TABLES.WISATA).where('id_alternatif', id).first();
       if (!exists) {
@@ -123,9 +110,8 @@ module.exports = {
         latitude,
         longitude,
         harga_tiket,
-        fasilitas: atraksi_wisata || fasilitas,
+        atraksi_wisata,
         rating_gmaps,
-        waktu_kunjungan,
         deskripsi: deskripsi || '',
         updated_at: new Date()
       };
@@ -144,10 +130,7 @@ module.exports = {
       return res.json({
         status: API_STATUS.SUCCESS,
         message: 'Berhasil mengupdate data wisata',
-        data: {
-          ...updatedData,
-          atraksi_wisata: updatedData.fasilitas,
-        }
+        data: updatedData
       });
 
     } catch (error) {

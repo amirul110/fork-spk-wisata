@@ -6,3 +6,4 @@ express-wisata/
 .env
 dist/
 *.md
+error/
