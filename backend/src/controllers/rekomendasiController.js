@@ -55,12 +55,12 @@ module.exports = {
       }
 
       // --- MAPPING KOLOM ---
-      // Memberitahu sistem: ID Kriteria 1 itu kolom apa di tabel wisata?
+      // Urutan kriteria seed: Rating, Atraksi Wisata, Harga Tiket, Jarak.
       const colMapper = {
-        1: 'harga_tiket',
+        1: 'rating_gmaps',
         2: 'atraksi_wisata',
-        3: 'jarak_real', // Spesial, dihitung manual via Haversine
-        4: 'rating_gmaps'
+        3: 'harga_tiket',
+        4: 'jarak_real' // Spesial, dihitung manual via Haversine
       };
 
       // --- FUNGSI PENCARI NILAI DARI SUB KRITERIA (LOGIC DB) ---

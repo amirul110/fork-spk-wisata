@@ -12,8 +12,8 @@ exports.seed = async function(knex) {
       user_longitude: 115.210000,
       
       // User memilih kriteria:
-      id_sub_harga: 2,             // Murah (ID 2)
-      id_sub_rating: 17,           // Baik (ID 17)
+      id_sub_harga: 12,            // Murah (ID 12)
+      id_sub_rating: 2,            // Baik (ID 2)
     }
   ]);
 };

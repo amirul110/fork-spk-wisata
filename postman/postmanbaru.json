@@ -1,0 +1,705 @@
+{
+  "info": {
+    "name": "SPK Wisata API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "id_alternatif",
+      "value": "1"
+    },
+    {
+      "key": "id_kriteria",
+      "value": "1"
+    },
+    {
+      "key": "id_sub",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register Wisatawan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user_test\",\n  \"email\": \"user_test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.auth && json.auth.token) {",
+                  "  pm.collectionVariables.set('token', json.auth.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@gmail.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin_update\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Alternatif Wisata",
+      "item": [
+        {
+          "name": "Get All Alternatif",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/wisata",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "wisata"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Alternatif By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/wisata/{{id_alternatif}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "wisata",
+                "{{id_alternatif}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Alternatif",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "nama_wisata",
+                  "value": "Wisata Test",
+                  "type": "text"
+                },
+                {
+                  "key": "deskripsi",
+                  "value": "Deskripsi wisata test",
+                  "type": "text"
+                },
+                {
+                  "key": "latitude",
+                  "value": "-7.6713",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "111.2215",
+                  "type": "text"
+                },
+                {
+                  "key": "rating_gmaps",
+                  "value": "4.6",
+                  "type": "text"
+                },
+                {
+                  "key": "harga_tiket",
+                  "value": "20000",
+                  "type": "text"
+                },
+                {
+                  "key": "atraksi_wisata",
+                  "value": "Spot Foto, Wahana Air, Kuliner, View Pegunungan",
+                  "type": "text"
+                },
+                {
+                  "key": "gambar",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/wisata",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "wisata"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Alternatif",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "nama_wisata",
+                  "value": "Wisata Test Update",
+                  "type": "text"
+                },
+                {
+                  "key": "deskripsi",
+                  "value": "Deskripsi wisata test update",
+                  "type": "text"
+                },
+                {
+                  "key": "latitude",
+                  "value": "-7.6713",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "111.2215",
+                  "type": "text"
+                },
+                {
+                  "key": "rating_gmaps",
+                  "value": "4.7",
+                  "type": "text"
+                },
+                {
+                  "key": "harga_tiket",
+                  "value": "25000",
+                  "type": "text"
+                },
+                {
+                  "key": "atraksi_wisata",
+                  "value": "Spot Foto, Wahana Air, Kuliner, View Pegunungan, Camping",
+                  "type": "text"
+                },
+                {
+                  "key": "gambar",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/wisata/{{id_alternatif}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "wisata",
+                "{{id_alternatif}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Alternatif",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/wisata/{{id_alternatif}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "wisata",
+                "{{id_alternatif}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wisatawan Wisata",
+      "item": [
+        {
+          "name": "Get All Wisata",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/wisata",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "wisata"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Detail Wisata",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/wisata/{{id_alternatif}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "wisata",
+                "{{id_alternatif}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Kriteria dan Sub Kriteria",
+      "item": [
+        {
+          "name": "Get All Kriteria",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/kriteria",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "kriteria"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Sub Kriteria By Kriteria",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subkriteria/{{id_kriteria}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subkriteria",
+                "{{id_kriteria}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Kriteria Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama_kriteria\": \"Contoh Kriteria\",\n  \"jenis\": \"benefit\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/kriteria",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "kriteria"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Kriteria Admin",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama_kriteria\": \"Contoh Kriteria Update\",\n  \"jenis\": \"benefit\",\n  \"bobot_prioritas\": 0.1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/kriteria/{{id_kriteria}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "kriteria",
+                "{{id_kriteria}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Kriteria Admin",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/kriteria/{{id_kriteria}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "kriteria",
+                "{{id_kriteria}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Sub Kriteria Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_kriteria\": 2,\n  \"code_kriteria\": \"C2\",\n  \"nama_sub_kriteria\": \"Contoh Sub Kriteria\",\n  \"nilai_bobot\": 3,\n  \"batas_bawah\": 3,\n  \"batas_atas\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/subkriteria",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "subkriteria"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Sub Kriteria Admin",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama_sub_kriteria\": \"Contoh Sub Kriteria Update\",\n  \"nilai_bobot\": 4,\n  \"batas_bawah\": 4,\n  \"batas_atas\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/subkriteria/{{id_sub}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "subkriteria",
+                "{{id_sub}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Sub Kriteria Admin",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/subkriteria/{{id_sub}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "subkriteria",
+                "{{id_sub}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rekomendasi",
+      "item": [
+        {
+          "name": "Hitung Rekomendasi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userLocation\": {\n    \"latitude\": -7.6499,\n    \"longitude\": 111.3386\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rekomendasi/hitung",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "rekomendasi",
+                "hitung"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Riwayat Saya",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rekomendasi/riwayat/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "rekomendasi",
+                "riwayat",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Riwayat Semua Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rekomendasi/riwayat",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "rekomendasi",
+                "riwayat"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
