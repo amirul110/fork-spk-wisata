@@ -3,31 +3,31 @@
  * @returns { Promise<void> } 
  */
 exports.seed = async function(knex) {
-  // Hasil perhitungan fiktif
+  // Deletes ALL existing entries
+  await knex('hasil_rekomendasi').del();
+  
+  // Insert data dengan struktur yang benar (tanpa skor_akhir_ahp_smart)
   await knex('hasil_rekomendasi').insert([
     {
-      id_hasil: 1,
+      id_alternatif: 2,
       id_preferensi: 1,
-      id_alternatif: 2, // Tanah Lot
       jarak_km_hasil: 12.5,
-      skor_akhir_ahp_smart: 0.875,
-      ranking: 1
+      ranking: 1,
+      skor_rekomendasi: 0.875
     },
     {
-      id_hasil: 2,
+      id_alternatif: 1,
       id_preferensi: 1,
-      id_alternatif: 1, // Pantai Kuta
       jarak_km_hasil: 5.2,
-      skor_akhir_ahp_smart: 0.750,
-      ranking: 2
+      ranking: 2,
+      skor_rekomendasi: 0.75
     },
     {
-      id_hasil: 3,
+      id_alternatif: 3,
       id_preferensi: 1,
-      id_alternatif: 3, // Monkey Forest
-      jarak_km_hasil: 25.0,
-      skor_akhir_ahp_smart: 0.620,
-      ranking: 3
+      jarak_km_hasil: 25,
+      ranking: 3,
+      skor_rekomendasi: 0.62
     }
   ]);
 };

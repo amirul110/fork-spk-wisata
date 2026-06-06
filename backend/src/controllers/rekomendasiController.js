@@ -4,19 +4,8 @@ const { TABLES } = require('../constants/database');
 const { API_STATUS, RESPONSE_DATA_KEYS } = require('../constants/general');
 const spkHelper = require('../utils/spkHelper');
 
-const SCORE_COLUMN_CANDIDATES = ['skor_akhir_wp', 'skor_rekomendasi', 'skor_akhir'];
-
-const getHasilRekomendasiScoreColumn = async (knexClient = db) => {
-  const columnInfo = await knexClient(TABLES.HASIL_REKOMENDASI).columnInfo();
-  const availableColumns = Object.keys(columnInfo || {});
-
-  for (const column of SCORE_COLUMN_CANDIDATES) {
-    if (availableColumns.includes(column)) return column;
-  }
-
-  // Fallback terakhir jika skema tidak terduga.
-  return SCORE_COLUMN_CANDIDATES[0];
-};
+// LANGSUNG PAKAI skor_rekomendasi - TIDAK PERLU DETEKSI OTOMATIS
+const SCORE_COLUMN = 'skor_rekomendasi';
 
 module.exports = {
 
@@ -38,10 +27,9 @@ module.exports = {
       }
 
       // --- AMBIL DATA DARI DATABASE (PRE-FETCHING) ---
-      // Kita ambil semua data yang dibutuhkan di awal agar cepat (hindari query dalam loop)
       const wisataRaw = await trx(TABLES.WISATA).select('*');
-      const dbKriteria = await trx('kriteria').select('*');         // Untuk cek Cost/Benefit
-      const dbSubKriteria = await trx('sub_kriteria').select('*');  // Untuk Range Nilai (1-5)
+      const dbKriteria = await trx('kriteria').select('*');
+      const dbSubKriteria = await trx('sub_kriteria').select('*');
       const kriteriaIds = dbKriteria
         .map((k) => Number(k.id_kriteria))
         .sort((a, b) => a - b);
@@ -55,44 +43,37 @@ module.exports = {
       }
 
       // --- MAPPING KOLOM ---
-      // Urutan kriteria seed: Rating, Atraksi Wisata, Harga Tiket, Jarak.
       const colMapper = {
         1: 'rating_gmaps',
         2: 'atraksi_wisata',
         3: 'harga_tiket',
-        4: 'jarak_real' // Spesial, dihitung manual via Haversine
+        4: 'jarak_real'
       };
 
-      // --- FUNGSI PENCARI NILAI DARI SUB KRITERIA (LOGIC DB) ---
+      // --- FUNGSI PENCARI NILAI DARI SUB KRITERIA ---
       const getScoreFromDb = (kriteriaId, rawValue) => {
-        // Ambil aturan range khusus untuk kriteria ini
         const rules = dbSubKriteria.filter(sub => sub.id_kriteria == kriteriaId);
         
-        // Loop setiap aturan
         for (const rule of rules) {
             const min = parseFloat(rule.batas_bawah);
             const max = parseFloat(rule.batas_atas);
             const score = parseInt(rule.nilai_bobot);
 
-            // A. Logika Atraksi Wisata (Hitung Jumlah Item string)
             if (kriteriaId == 2) { 
                 const itemsCount = rawValue ? rawValue.split(',').length : 0;
-                // Cek range
                 if (itemsCount >= min && (max >= 100 || itemsCount <= max)) {
                     return score;
                 }
-            } 
-            // B. Logika Angka Normal (Harga, Jarak, Rating)
-            else {
+            } else {
                 if (rawValue >= min && rawValue <= max) {
                     return score;
                 }
             }
         }
-        return 1; // Nilai default jika data tidak masuk range manapun
+        return 1;
       };
 
-      // --- BOBOT ADMIN (HASIL AHP) DARI TABEL KRITERIA ---
+      // --- BOBOT ADMIN (HASIL AHP) ---
       const totalBobotAdmin = dbKriteria.reduce((sum, k) => sum + Number(k.bobot_prioritas || 0), 0);
       if (totalBobotAdmin <= 0) {
         await trx.rollback();
@@ -101,8 +82,9 @@ module.exports = {
           message: 'Bobot kriteria belum diatur admin. Silakan admin menghitung bobot AHP terlebih dahulu.'
         });
       }
+      
       const weightByKriteriaId = {};
-      kriteriaIds.forEach((id, idx) => {
+      kriteriaIds.forEach((id) => {
         const kriteria = dbKriteria.find((k) => Number(k.id_kriteria) === id);
         const rawWeight = Number(kriteria?.bobot_prioritas || 0);
         weightByKriteriaId[id] = rawWeight / totalBobotAdmin;
@@ -113,6 +95,7 @@ module.exports = {
         id_kriteria: id,
         bobot: Number((weightByKriteriaId[id] || 0).toFixed(6))
       }));
+      
       const [preferensiId] = await trx('preferensi_wisatawan').insert({
         id_wisatawan: userId,
         user_latitude: userLocation.latitude,
@@ -184,13 +167,12 @@ module.exports = {
       // Sort Ranking (Besar ke Kecil)
       finalResult.sort((a, b) => Number(b.skor_rekomendasi) - Number(a.skor_rekomendasi));
 
-      // --- SIMPAN TOP 5 KE DATABASE ---
+      // --- SIMPAN TOP 5 KE DATABASE (PAKAI skor_rekomendasi LANGSUNG) ---
       const top5 = finalResult.slice(0, 5); 
-      const scoreColumn = await getHasilRekomendasiScoreColumn(trx);
       const dataToInsert = top5.map((item, index) => ({
         id_preferensi: preferensiId,
         id_alternatif: item.id_alternatif,
-        [scoreColumn]: Number(item.skor_rekomendasi),
+        skor_rekomendasi: Number(item.skor_rekomendasi), // LANGSUNG PAKAI skor_rekomendasi
         ranking: index + 1,
         jarak_km_hasil: parseFloat(item.jarak_km)
       }));
@@ -211,7 +193,6 @@ module.exports = {
           skor_rekomendasi: item.skor_rekomendasi
       }));
 
-      // Commit Transaksi (Simpan Permanen)
       await trx.commit();
 
       return res.json({
@@ -219,7 +200,7 @@ module.exports = {
         message: 'Perhitungan AHP + SMART selesai',
         data: {
           id_riwayat: preferensiId,
-          bobot_ahp: kriteriaIds.map((id, index) => ({
+          bobot_ahp: kriteriaIds.map((id) => ({
             id_kriteria: id,
             bobot: Number((weightByKriteriaId[id] || 0).toFixed(6))
           })),
@@ -230,18 +211,17 @@ module.exports = {
     } catch (error) {
       await trx.rollback();
       console.error("Error Hitung AHP+SMART:", error);
-      return res.status(500).json({ message: 'Gagal menghitung rekomendasi AHP + SMART' });
+      return res.status(500).json({ 
+        message: 'Gagal menghitung rekomendasi AHP + SMART',
+        error: error.message 
+      });
     }
   },
 
-  // ... (BAGIAN BAWAH: GET RIWAYAT SAYA & ADMIN BIARKAN SAMA, TIDAK PERLU DIUBAH) ...
-  // ... Paste fungsi getRiwayatSaya & getAllRiwayat di sini ...
-  
   // [GET] RIWAYAT SAYA (Versi Rapi untuk Wisatawan)
   getRiwayatSaya: async (req, res) => {
     try {
       const { id } = req.user;
-      const scoreColumn = await getHasilRekomendasiScoreColumn();
       
       const data = await db(TABLES.HASIL_REKOMENDASI)
         .join('preferensi_wisatawan', 'hasil_rekomendasi.id_preferensi', '=', 'preferensi_wisatawan.id_preferensi')
@@ -252,7 +232,7 @@ module.exports = {
             'preferensi_wisatawan.created_at as tanggal',
             'alternatif_wisata.nama_wisata as rekomendasi_utama',
             'alternatif_wisata.rating_gmaps',
-            `hasil_rekomendasi.${scoreColumn} as skor_akhir`,
+            'hasil_rekomendasi.skor_rekomendasi as skor_akhir', // LANGSUNG PAKAI skor_rekomendasi
             'hasil_rekomendasi.jarak_km_hasil'
         )
         .orderBy('preferensi_wisatawan.created_at', 'desc');
@@ -282,14 +262,16 @@ module.exports = {
 
     } catch (error) {
       console.error("Error Get Riwayat Me:", error);
-      return res.status(500).json({ message: 'Gagal mengambil riwayat' });
+      return res.status(500).json({ 
+        message: 'Gagal mengambil riwayat',
+        error: error.message 
+      });
     }
   },
 
   // [GET] SEMUA RIWAYAT (Admin Only)
   getAllRiwayat: async (req, res) => {
     try {
-      const scoreColumn = await getHasilRekomendasiScoreColumn();
       // Hitung jumlah wisatawan unik yang pernah melakukan perhitungan
       const wisatawanCountResult = await db('preferensi_wisatawan')
         .countDistinct('id_wisatawan as total')
@@ -299,7 +281,7 @@ module.exports = {
         .join(TABLES.WISATA, `${TABLES.HASIL_REKOMENDASI}.id_alternatif`, '=', `${TABLES.WISATA}.id_alternatif`)
         .select(
             `${TABLES.WISATA}.nama_wisata`,
-            db.raw(`AVG(${TABLES.HASIL_REKOMENDASI}.${scoreColumn}) as rata_rata_skor`),
+            db.raw(`AVG(${TABLES.HASIL_REKOMENDASI}.skor_rekomendasi) as rata_rata_skor`), // LANGSUNG PAKAI skor_rekomendasi
             db.raw('AVG(hasil_rekomendasi.ranking) as rata_rata_ranking_asli')
         )
         .groupBy(`${TABLES.WISATA}.id_alternatif`, `${TABLES.WISATA}.nama_wisata`)
@@ -321,7 +303,10 @@ module.exports = {
 
     } catch (error) {
       console.error("Error Get Laporan Global:", error);
-      return res.status(500).json({ message: 'Gagal mengambil laporan analitik' });
+      return res.status(500).json({ 
+        message: 'Gagal mengambil laporan analitik',
+        error: error.message 
+      });
     }
   }
 };
