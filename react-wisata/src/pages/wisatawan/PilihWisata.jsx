@@ -175,9 +175,9 @@ export default function PilihWisata() {
                 Anda harus memilih wisata yang diminati terlebih dahulu di halaman Dashboard sebelum melanjutkan aktivasi lokasi.
               </p>
               <Button
-                label="Kembali ke Dashboard"
+                label="Kembali ke Pilih Wisata"
                 icon="pi pi-arrow-left"
-                onClick={() => nav("/wisatawan/dashboard")}
+                onClick={() => nav("/wisatawan/pilih-wisata")}
               />
             </div>
           </Card>

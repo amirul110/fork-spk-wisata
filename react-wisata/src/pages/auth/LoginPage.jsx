@@ -63,7 +63,7 @@ export default function LoginPage() {
         <div className="text-center mb-4">
           <i className="pi pi-map-marker text-primary text-4xl mb-2"></i>
           <h1 className="text-xl font-bold text-800 m-0 line-height-3">
-            SPK REKOMENDASI DESTINASI WISATA
+            SISTEM PENUNJANG KEPUTUSAN REKOMENDASI DESTINASI WISATA
             <br />
             DI KABUPATEN MAGETAN
           </h1>

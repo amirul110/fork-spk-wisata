@@ -9,6 +9,7 @@ import AdminHasilRekomendasi from "../pages/admin/AdminHasilRekomendasi";
 import AdminProfile from "../pages/admin/AdminProfile";
 import AdminLogout from "../pages/admin/AdminLogout";
 import WisatawanDashboard from "../pages/wisatawan/WisatawanDashboard";
+import PilihWisataPage from "../pages/wisatawan/PilihWisataPage";
 import PilihWisata from "../pages/wisatawan/PilihWisata";
 import HasilRekomendasi from "../pages/wisatawan/HasilRekomendasi";
 import Profile from "../pages/wisatawan/Profile";
@@ -23,11 +24,10 @@ export default function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
-
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* Admin routes with shared layout */}
+        {/* Admin routes */}
         <Route
           path="/admin"
           element={
@@ -45,7 +45,7 @@ export default function AppRouter() {
           <Route path="logout" element={<AdminLogout />} />
         </Route>
 
-        {/* Wisatawan routes with shared layout */}
+        {/* Wisatawan routes */}
         <Route
           path="/wisatawan"
           element={
@@ -55,6 +55,7 @@ export default function AppRouter() {
           }
         >
           <Route path="dashboard" element={<WisatawanDashboard />} />
+          <Route path="pilih-wisata" element={<PilihWisataPage />} />
           <Route path="preferensi" element={<PilihWisata />} />
           <Route path="hasil" element={<HasilRekomendasi />} />
           <Route path="profile" element={<Profile />} />
