@@ -161,13 +161,14 @@ export default function WisatawanDashboard() {
                 : null;
 
             // Kumpulkan semua URL gambar: dari gambar_list (baru) + gambar utama (lama)
-            const gambarUrls = [];
-            if (w.gambar_list && w.gambar_list.length > 0) {
-              w.gambar_list.forEach((g) => gambarUrls.push(`${BACKEND_URL}/uploads/${g.nama_file}`));
-            } else if (w.gambar) {
-              gambarUrls.push(`${BACKEND_URL}/uploads/${w.gambar}`);
-            }
-
+         const gambarUrls = []
+if (w.gambar_dashboard_list && w.gambar_dashboard_list.length > 0) {
+  w.gambar_dashboard_list.forEach((g) => gambarUrls.push(`${BACKEND_URL}/uploads/${g.nama_file}`))
+} else if (w.gambar_list && w.gambar_list.length > 0) {
+  w.gambar_list.forEach((g) => gambarUrls.push(`${BACKEND_URL}/uploads/${g.nama_file}`))
+} else if (w.gambar) {
+  gambarUrls.push(`${BACKEND_URL}/uploads/${w.gambar}`)
+}
             return (
               <div key={w.id_alternatif} className="col-12 md:col-6 lg:col-4 p-2" style={{ display: "flex" }}>
                 <div

@@ -1,33 +1,23 @@
-// src/routes/adminRoute.js
 const express = require('express');
 const router = express.Router();
-
-const kriteriaController = require('../controllers/kriteriaController');
-// Import Middleware (Satpam)
+const alternatifController = require('../controllers/alternatifController');
+const upload = require('../middleware/upload');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 
-// Middleware Global untuk file ini:
-// Semua route di bawah ini WAJIB Login (Auth) DAN Wajib Admin
-router.use(requireAuth, requireAdmin); 
+// gambar_list      => Gambar Wisata (galeri)
+// gambar_dashboard => Gambar Dashboard (tampil di dashboard wisatawan)
+const uploadWisata = upload.fields([
+  { name: 'gambar_list', maxCount: 10 },
+  { name: 'gambar_dashboard', maxCount: 10 },
+]);
 
-// --- MANAJEMEN KRITERIA ---
-// POST /api/v1/admin/kriteria
-router.post('/kriteria', kriteriaController.createKriteria);
+router.get('/', requireAuth, requireAdmin, alternatifController.getAllAlternatif);
+router.get('/:id', requireAuth, requireAdmin, alternatifController.getAlternatifById);
+router.post('/', requireAuth, requireAdmin, uploadWisata, alternatifController.createAlternatif);
+router.put('/:id', requireAuth, requireAdmin, uploadWisata, alternatifController.updateAlternatif);
+router.delete('/:id', requireAuth, requireAdmin, alternatifController.deleteAlternatif);
 
-// PUT /api/v1/admin/kriteria/:id
-router.put('/kriteria/:id', kriteriaController.updateKriteria);
-
-// DELETE /api/v1/admin/kriteria/:id
-router.delete('/kriteria/:id', kriteriaController.deleteKriteria);
-
-// --- MANAJEMEN SUB-KRITERIA ---
-// POST /api/v1/admin/subkriteria
-router.post('/subkriteria', kriteriaController.createSubKriteria);
-
-// PUT /api/v1/admin/subkriteria/:id (id_sub)
-router.put('/subkriteria/:id', kriteriaController.updateSubKriteria);
-
-// DELETE /api/v1/admin/subkriteria/:id (id_sub)
-router.delete('/subkriteria/:id', kriteriaController.deleteSubKriteria);
+router.delete('/:id/gambar/:gambarId', requireAuth, requireAdmin, alternatifController.deleteGambarById);
+router.delete('/:id/gambar-dashboard/:gambarId', requireAuth, requireAdmin, alternatifController.deleteGambarDashboardById);
 
 module.exports = router;

@@ -13,13 +13,7 @@ import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog'
 import { ProgressSpinner } from 'primereact/progressspinner'
 import { Message } from 'primereact/message'
 import { Tag } from 'primereact/tag'
-
-import {
-  getAllAlternatif,
-  createAlternatif,
-  updateAlternatif,
-  deleteAlternatif,
-} from '../../services/alternatif.service'
+import { getAllAlternatif, createAlternatif, updateAlternatif, deleteAlternatif } from '../../services/alternatif.service'
 import api from '../../services/api'
 
 const BACKEND_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace('/api/v1', '')
@@ -34,6 +28,7 @@ const emptyForm = {
   deskripsi: '',
   gambar: null,
   gambar_list: [],
+  gambar_dashboard_list: [],
 }
 
 const getHargaSubKriteria = (harga) => {
@@ -47,7 +42,10 @@ const getHargaSubKriteria = (harga) => {
 
 const calculateAtraksiSubKriteria = (atraksiText) => {
   if (!atraksiText?.trim()) return { count: 0, category: 'Sangat Kurang (< 2 item)', bobot: 1 }
-  const count = atraksiText.split(',').map((f) => f.trim()).filter(Boolean).length
+  const count = atraksiText
+    .split(',')
+    .map((f) => f.trim())
+    .filter(Boolean).length
   if (count >= 6) return { count, category: 'Sangat Lengkap (> 5 item)', bobot: 5 }
   if (count >= 4) return { count, category: 'Lengkap (4-5 item)', bobot: 4 }
   if (count === 3) return { count, category: 'Cukup (3 item)', bobot: 3 }
@@ -77,12 +75,22 @@ export default function AdminAlternatif() {
   const [globalFilter, setGlobalFilter] = useState('')
   const [first, setFirst] = useState(0)
   const [saving, setSaving] = useState(false)
+
+  // Gambar Wisata (galeri)
   const [selectedFiles, setSelectedFiles] = useState([])
   const [deletingGambarId, setDeletingGambarId] = useState(null)
   const fileUploadRef = useRef(null)
+
+  // Gambar Dashboard
+  const [selectedDashboardFiles, setSelectedDashboardFiles] = useState([])
+  const [deletingDashboardId, setDeletingDashboardId] = useState(null)
+  const fileUploadDashboardRef = useRef(null)
+
   const toast = useRef(null)
 
-  useEffect(() => { fetchData() }, [])
+  useEffect(() => {
+    fetchData()
+  }, [])
 
   const fetchData = async () => {
     setLoading(true)
@@ -100,14 +108,21 @@ export default function AdminAlternatif() {
   const openNew = () => {
     setForm({ ...emptyForm })
     setSelectedFiles([])
+    setSelectedDashboardFiles([])
     setIsEdit(false)
     setEditId(null)
     setDialogVisible(true)
   }
 
   const openEdit = (rowData) => {
-    setForm({ ...rowData, atraksi_wisata: rowData.atraksi_wisata || '', gambar_list: rowData.gambar_list || [] })
+    setForm({
+      ...rowData,
+      atraksi_wisata: rowData.atraksi_wisata || '',
+      gambar_list: rowData.gambar_list || [],
+      gambar_dashboard_list: rowData.gambar_dashboard_list || [],
+    })
     setSelectedFiles([])
+    setSelectedDashboardFiles([])
     setIsEdit(true)
     setEditId(rowData.id_alternatif)
     setDialogVisible(true)
@@ -117,7 +132,9 @@ export default function AdminAlternatif() {
     setDialogVisible(false)
     setForm({ ...emptyForm })
     setSelectedFiles([])
+    setSelectedDashboardFiles([])
     if (fileUploadRef.current) fileUploadRef.current.clear()
+    if (fileUploadDashboardRef.current) fileUploadDashboardRef.current.clear()
   }
 
   const handleDeleteGambar = async (gambarId) => {
@@ -133,6 +150,22 @@ export default function AdminAlternatif() {
       toast.current.show({ severity: 'error', summary: 'Gagal', detail: 'Gagal menghapus gambar', life: 3000 })
     } finally {
       setDeletingGambarId(null)
+    }
+  }
+
+  const handleDeleteGambarDashboard = async (gambarId) => {
+    setDeletingDashboardId(gambarId)
+    try {
+      await api.delete(`/admin/wisata/${editId}/gambar-dashboard/${gambarId}`)
+      setForm((prev) => ({
+        ...prev,
+        gambar_dashboard_list: prev.gambar_dashboard_list.filter((g) => g.id !== gambarId),
+      }))
+      toast.current.show({ severity: 'success', summary: 'Berhasil', detail: 'Gambar dashboard dihapus', life: 2000 })
+    } catch {
+      toast.current.show({ severity: 'error', summary: 'Gagal', detail: 'Gagal menghapus gambar dashboard', life: 3000 })
+    } finally {
+      setDeletingDashboardId(null)
     }
   }
 
@@ -152,13 +185,13 @@ export default function AdminAlternatif() {
       formData.append('atraksi_wisata', form.atraksi_wisata || '')
       formData.append('deskripsi', form.deskripsi || '')
       selectedFiles.forEach((f) => formData.append('gambar_list', f))
+      selectedDashboardFiles.forEach((f) => formData.append('gambar_dashboard', f))
 
       if (isEdit) {
         await updateAlternatif(editId, formData)
       } else {
         await createAlternatif(formData)
       }
-
       toast.current.show({ severity: 'success', summary: 'Berhasil', detail: 'Data berhasil disimpan', life: 3000 })
       hideDialog()
       fetchData()
@@ -186,10 +219,22 @@ export default function AdminAlternatif() {
     <div className="flex gap-2">
       <Button icon="pi pi-pencil" severity="info" size="small" rounded onClick={() => openEdit(rowData)} tooltip="Edit" />
       <Button icon="pi pi-trash" severity="danger" size="small" rounded onClick={() => confirmDelete(rowData)} tooltip="Hapus" />
-      <Button icon="pi pi-chart-bar" severity="warning" size="small" rounded onClick={() => { setSelectedWisataForFacility(rowData); setFacilityDialogVisible(true) }} tooltip="Detail Sub Kriteria" tooltipOptions={{ position: 'top' }} />
+      <Button
+        icon="pi pi-chart-bar"
+        severity="warning"
+        size="small"
+        rounded
+        onClick={() => {
+          setSelectedWisataForFacility(rowData)
+          setFacilityDialogVisible(true)
+        }}
+        tooltip="Detail Sub Kriteria"
+        tooltipOptions={{ position: 'top' }}
+      />
     </div>
   )
 
+  // Kolom "Gambar Wisata" (galeri)
   const imageTemplate = (rowData) => {
     const gambarList = rowData.gambar_list || []
     const gambarUtama = gambarList[0]?.nama_file || rowData.gambar
@@ -204,9 +249,26 @@ export default function AdminAlternatif() {
           style={{ objectFit: 'cover', borderRadius: '4px' }}
           preview
         />
-        {gambarList.length > 1 && (
-          <Tag value={`+${gambarList.length - 1}`} severity="info" rounded style={{ fontSize: '0.7rem' }} />
-        )}
+        {gambarList.length > 1 && <Tag value={`+${gambarList.length - 1}`} severity="info" rounded style={{ fontSize: '0.7rem' }} />}
+      </div>
+    )
+  }
+
+  // Kolom "Gambar Dashboard"
+  const dashboardImageTemplate = (rowData) => {
+    const list = rowData.gambar_dashboard_list || []
+    if (list.length === 0) return <span className="text-400 text-sm">-</span>
+    return (
+      <div className="flex align-items-center gap-1">
+        <Image
+          src={`${BACKEND_URL}/uploads/${list[0].nama_file}`}
+          alt={rowData.nama_wisata}
+          width="60"
+          height="45"
+          style={{ objectFit: 'cover', borderRadius: '4px' }}
+          preview
+        />
+        {list.length > 1 && <Tag value={`+${list.length - 1}`} severity="info" rounded style={{ fontSize: '0.7rem' }} />}
       </div>
     )
   }
@@ -227,10 +289,8 @@ export default function AdminAlternatif() {
     <>
       <Toast ref={toast} />
       <ConfirmDialog />
-
       <h2 className="text-2xl font-bold text-800">Halaman Alternatif</h2>
       <hr className="border-top-1 border-300" />
-
       <div className="flex justify-content-between align-items-center mb-3">
         <span className="p-input-icon-left">
           <i className="pi pi-search" />
@@ -238,20 +298,27 @@ export default function AdminAlternatif() {
         </span>
         <Button label="Tambah Data" icon="pi pi-plus" onClick={openNew} />
       </div>
-
       {loading ? (
-        <div className="flex justify-content-center py-6"><ProgressSpinner /></div>
+        <div className="flex justify-content-center py-6">
+          <ProgressSpinner />
+        </div>
       ) : error ? (
         <Message severity="error" text={error} />
       ) : (
         <DataTable
-          value={data} paginator rows={5} stripedRows
-          first={first} onPage={(e) => setFirst(e.first)}
-          globalFilter={globalFilter} emptyMessage="Tidak ada data wisata."
+          value={data}
+          paginator
+          rows={5}
+          stripedRows
+          first={first}
+          onPage={(e) => setFirst(e.first)}
+          globalFilter={globalFilter}
+          emptyMessage="Tidak ada data wisata."
         >
           <Column header="No" body={rowNumber} style={{ width: '60px' }} />
           <Column field="nama_wisata" header="Nama Wisata" sortable />
-          <Column header="Gambar" body={imageTemplate} style={{ width: '110px' }} />
+          <Column header="Gambar Wisata" body={imageTemplate} style={{ width: '110px' }} />
+          <Column header="Gambar Dashboard" body={dashboardImageTemplate} style={{ width: '110px' }} />
           <Column field="latitude" header="Latitude" sortable />
           <Column field="longitude" header="Longitude" sortable />
           <Column field="rating_gmaps" header="Rating" sortable />
@@ -266,7 +333,8 @@ export default function AdminAlternatif() {
         visible={dialogVisible}
         header={isEdit ? 'Edit Data Wisata' : 'Tambah Data Wisata'}
         style={{ width: '560px', maxWidth: '95vw' }}
-        modal onHide={hideDialog}
+        modal
+        onHide={hideDialog}
         footer={
           <div className="flex justify-content-end gap-2">
             <Button label="Batal" icon="pi pi-times" severity="secondary" outlined onClick={hideDialog} />
@@ -277,19 +345,29 @@ export default function AdminAlternatif() {
         <div className="flex flex-column gap-3 pt-2">
           <div>
             <label className="block mb-1 font-semibold text-sm">Nama Wisata *</label>
-            <InputText className="w-full" value={form.nama_wisata} onChange={(e) => setForm({ ...form, nama_wisata: e.target.value })} placeholder="Nama Wisata" />
+            <InputText
+              className="w-full"
+              value={form.nama_wisata}
+              onChange={(e) => setForm({ ...form, nama_wisata: e.target.value })}
+              placeholder="Nama Wisata"
+            />
           </div>
-
           <div>
             <label className="block mb-1 font-semibold text-sm">Deskripsi Wisata</label>
-            <InputTextarea className="w-full" value={form.deskripsi} onChange={(e) => setForm({ ...form, deskripsi: e.target.value })} placeholder="Deskripsi Wisata" rows={3} />
+            <InputTextarea
+              className="w-full"
+              value={form.deskripsi}
+              onChange={(e) => setForm({ ...form, deskripsi: e.target.value })}
+              placeholder="Deskripsi Wisata"
+              rows={3}
+            />
           </div>
 
-          {/* Upload Gambar */}
+          {/* Upload Gambar Wisata (galeri) */}
           <div>
             <label className="block mb-1 font-semibold text-sm">
               <i className="pi pi-images mr-1"></i>
-              Tambah Gambar (bisa pilih lebih dari 1)
+              Gambar Wisata (galeri, bisa pilih lebih dari 1)
             </label>
             <FileUpload
               ref={fileUploadRef}
@@ -298,19 +376,11 @@ export default function AdminAlternatif() {
               accept="image/*"
               maxFileSize={10000000}
               chooseLabel="Pilih Gambar"
-              uploadLabel="Upload"
-              cancelLabel="Batal"
               customUpload
               auto={false}
               onSelect={(e) => setSelectedFiles(Array.from(e.files))}
               onClear={() => setSelectedFiles([])}
               onRemove={(e) => setSelectedFiles((prev) => prev.filter((f) => f.name !== e.file.name))}
-              emptyTemplate={
-                <div className="text-center text-500 py-3">
-                  <i className="pi pi-image text-3xl mb-2" style={{ display: 'block' }}></i>
-                  <span className="text-sm">Seret & lepas gambar di sini, atau klik "Pilih Gambar"</span>
-                </div>
-              }
             />
             {selectedFiles.length > 0 && (
               <div className="mt-1">
@@ -319,13 +389,10 @@ export default function AdminAlternatif() {
             )}
           </div>
 
-          {/* Daftar Gambar Existing (saat edit) */}
+          {/* Daftar Gambar Wisata tersimpan (saat edit) */}
           {isEdit && form.gambar_list && form.gambar_list.length > 0 && (
             <div>
-              <label className="block mb-1 font-semibold text-sm">
-                <i className="pi pi-images mr-1"></i>
-                Gambar Tersimpan ({form.gambar_list.length})
-              </label>
+              <label className="block mb-1 font-semibold text-sm">Gambar Wisata Tersimpan ({form.gambar_list.length})</label>
               <div className="flex flex-wrap gap-2">
                 {form.gambar_list.map((g, i) => (
                   <div key={g.id} className="relative border-round overflow-hidden border-1 border-300" style={{ width: '80px', height: '80px' }}>
@@ -333,24 +400,70 @@ export default function AdminAlternatif() {
                       src={`${BACKEND_URL}/uploads/${g.nama_file}`}
                       alt={`gambar-${i + 1}`}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e) => { e.target.style.display = 'none' }}
                     />
+                    {i === 0 && (
+                      <Tag value="Utama" severity="success" style={{ position: 'absolute', bottom: '2px', left: '2px', fontSize: '0.6rem' }} />
+                    )}
                     <Button
                       icon={deletingGambarId === g.id ? 'pi pi-spin pi-spinner' : 'pi pi-times'}
-                      size="small"
                       severity="danger"
                       rounded
                       disabled={deletingGambarId === g.id}
                       onClick={() => handleDeleteGambar(g.id)}
                       style={{ position: 'absolute', top: '2px', right: '2px', width: '20px', height: '20px', padding: 0 }}
-                      tooltip="Hapus gambar ini"
-                      tooltipOptions={{ position: 'top' }}
                     />
-                    {i === 0 && (
-                      <span style={{ position: 'absolute', bottom: '2px', left: '2px', background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.6rem', padding: '1px 4px', borderRadius: '2px' }}>
-                        Utama
-                      </span>
-                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Upload Gambar Dashboard */}
+          <div>
+            <label className="block mb-1 font-semibold text-sm">
+              <i className="pi pi-images mr-1"></i>
+              Gambar Dashboard (tampil di dashboard wisatawan, bisa lebih dari 1)
+            </label>
+            <FileUpload
+              ref={fileUploadDashboardRef}
+              mode="advanced"
+              multiple
+              accept="image/*"
+              maxFileSize={10000000}
+              chooseLabel="Pilih Gambar Dashboard"
+              customUpload
+              auto={false}
+              onSelect={(e) => setSelectedDashboardFiles(Array.from(e.files))}
+              onClear={() => setSelectedDashboardFiles([])}
+              onRemove={(e) => setSelectedDashboardFiles((prev) => prev.filter((f) => f.name !== e.file.name))}
+            />
+            {selectedDashboardFiles.length > 0 && (
+              <div className="mt-1">
+                <Tag icon="pi pi-check-circle" value={`${selectedDashboardFiles.length} file dipilih`} severity="success" />
+              </div>
+            )}
+          </div>
+
+          {/* Daftar Gambar Dashboard tersimpan (saat edit) */}
+          {isEdit && form.gambar_dashboard_list && form.gambar_dashboard_list.length > 0 && (
+            <div>
+              <label className="block mb-1 font-semibold text-sm">Gambar Dashboard Tersimpan ({form.gambar_dashboard_list.length})</label>
+              <div className="flex flex-wrap gap-2">
+                {form.gambar_dashboard_list.map((g, i) => (
+                  <div key={g.id} className="relative border-round overflow-hidden border-1 border-300" style={{ width: '80px', height: '80px' }}>
+                    <img
+                      src={`${BACKEND_URL}/uploads/${g.nama_file}`}
+                      alt={`dashboard-${i + 1}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <Button
+                      icon={deletingDashboardId === g.id ? 'pi pi-spin pi-spinner' : 'pi pi-times'}
+                      severity="danger"
+                      rounded
+                      disabled={deletingDashboardId === g.id}
+                      onClick={() => handleDeleteGambarDashboard(g.id)}
+                      style={{ position: 'absolute', top: '2px', right: '2px', width: '20px', height: '20px', padding: 0 }}
+                    />
                   </div>
                 ))}
               </div>
@@ -360,40 +473,86 @@ export default function AdminAlternatif() {
           <div className="grid">
             <div className="col-6">
               <label className="block mb-1 font-semibold text-sm">Latitude *</label>
-              <InputNumber className="w-full" value={form.latitude} onValueChange={(e) => setForm({ ...form, latitude: e.value })} placeholder="Latitude" mode="decimal" minFractionDigits={4} maxFractionDigits={6} />
+              <InputNumber
+                className="w-full"
+                value={form.latitude}
+                onValueChange={(e) => setForm({ ...form, latitude: e.value })}
+                placeholder="Latitude"
+                mode="decimal"
+                minFractionDigits={4}
+                maxFractionDigits={6}
+              />
             </div>
             <div className="col-6">
               <label className="block mb-1 font-semibold text-sm">Longitude *</label>
-              <InputNumber className="w-full" value={form.longitude} onValueChange={(e) => setForm({ ...form, longitude: e.value })} placeholder="Longitude" mode="decimal" minFractionDigits={4} maxFractionDigits={6} />
+              <InputNumber
+                className="w-full"
+                value={form.longitude}
+                onValueChange={(e) => setForm({ ...form, longitude: e.value })}
+                placeholder="Longitude"
+                mode="decimal"
+                minFractionDigits={4}
+                maxFractionDigits={6}
+              />
             </div>
           </div>
-
           <div>
             <label className="block mb-1 font-semibold text-sm">Rating Google Maps</label>
-            <InputNumber className="w-full" value={form.rating_gmaps} onValueChange={(e) => setForm({ ...form, rating_gmaps: e.value })} placeholder="0 - 5" mode="decimal" min={0} max={5} step={0.1} minFractionDigits={1} />
+            <InputNumber
+              className="w-full"
+              value={form.rating_gmaps}
+              onValueChange={(e) => setForm({ ...form, rating_gmaps: e.value })}
+              placeholder="0 - 5"
+              mode="decimal"
+              min={0}
+              max={5}
+              step={0.1}
+              minFractionDigits={1}
+            />
             {form.rating_gmaps > 0 && (
               <div className="mt-1 p-2 bg-blue-50 border-round">
-                <small className="text-600">{getRatingSubKriteria(form.rating_gmaps).category} <span className="text-blue-600">(Bobot: {getRatingSubKriteria(form.rating_gmaps).bobot})</span></small>
+                <small className="text-600">
+                  {getRatingSubKriteria(form.rating_gmaps).category}{' '}
+                  <span className="text-blue-600">(Bobot: {getRatingSubKriteria(form.rating_gmaps).bobot})</span>
+                </small>
               </div>
             )}
           </div>
-
           <div>
             <label className="block mb-1 font-semibold text-sm">Harga Tiket (Rupiah)</label>
-            <InputNumber className="w-full" value={form.harga_tiket} onValueChange={(e) => setForm({ ...form, harga_tiket: e.value })} placeholder="Harga Tiket (Rp)" min={0} mode="currency" currency="IDR" locale="id-ID" />
+            <InputNumber
+              className="w-full"
+              value={form.harga_tiket}
+              onValueChange={(e) => setForm({ ...form, harga_tiket: e.value })}
+              placeholder="Harga Tiket (Rp)"
+              min={0}
+              mode="currency"
+              currency="IDR"
+              locale="id-ID"
+            />
             {form.harga_tiket > 0 && (
               <div className="mt-1 p-2 bg-green-50 border-round">
-                <small className="text-600">{getHargaSubKriteria(form.harga_tiket).category} <span className="text-green-600">(Bobot: {getHargaSubKriteria(form.harga_tiket).bobot})</span></small>
+                <small className="text-600">
+                  {getHargaSubKriteria(form.harga_tiket).category}{' '}
+                  <span className="text-green-600">(Bobot: {getHargaSubKriteria(form.harga_tiket).bobot})</span>
+                </small>
               </div>
             )}
           </div>
-
           <div>
             <label className="block mb-1 font-semibold text-sm">Atraksi Wisata (pisahkan dengan koma)</label>
-            <InputText className="w-full" value={form.atraksi_wisata} onChange={(e) => setForm({ ...form, atraksi_wisata: e.target.value })} placeholder="Spot Foto, Wahana Air, Trekking" />
+            <InputText
+              className="w-full"
+              value={form.atraksi_wisata}
+              onChange={(e) => setForm({ ...form, atraksi_wisata: e.target.value })}
+              placeholder="Spot Foto, Wahana Air, Trekking"
+            />
             {form.atraksi_wisata?.trim() && (
               <div className="mt-1 p-2 bg-purple-50 border-round">
-                <small className="text-600">{calculateAtraksiSubKriteria(form.atraksi_wisata).count} item — {calculateAtraksiSubKriteria(form.atraksi_wisata).category} <span className="text-purple-600">(Bobot: {calculateAtraksiSubKriteria(form.atraksi_wisata).bobot})</span></small>
+                <small className="text-600">
+                  {calculateAtraksiSubKriteria(form.atraksi_wisata).count} item — {calculateAtraksiSubKriteria(form.atraksi_wisata).category}{' '}
+                  <span className="text-purple-600">(Bobot: {calculateAtraksiSubKriteria(form.atraksi_wisata).bobot})</span>
+                </small>
               </div>
             )}
           </div>
@@ -401,32 +560,53 @@ export default function AdminAlternatif() {
       </Dialog>
 
       {/* Dialog Sub Kriteria */}
-      <Dialog visible={facilityDialogVisible} header="Detail Sub Kriteria" modal style={{ width: '700px', maxWidth: '95vw' }} onHide={() => setFacilityDialogVisible(false)}>
-        {selectedWisataForFacility && (() => {
-          const f = calculateAtraksiSubKriteria(selectedWisataForFacility.atraksi_wisata)
-          const r = getRatingSubKriteria(selectedWisataForFacility.rating_gmaps)
-          const h = getHargaSubKriteria(selectedWisataForFacility.harga_tiket)
-          return (
-            <div className="flex flex-column gap-3">
-              <h3 className="text-xl font-bold text-800 mt-0 mb-0">{selectedWisataForFacility.nama_wisata}</h3>
-              <hr className="mt-0" />
-              {[
-                { label: 'Rating Google Maps', nilai: `${selectedWisataForFacility.rating_gmaps || 0} / 5.0`, cat: r, color: 'blue' },
-                { label: 'Harga Tiket', nilai: `Rp ${(selectedWisataForFacility.harga_tiket || 0).toLocaleString('id-ID')}`, cat: h, color: 'green' },
-                { label: 'Atraksi Wisata', nilai: `${f.count} item`, cat: f, color: 'purple' },
-              ].map(({ label, nilai, cat, color }) => (
-                <div key={label} className="surface-50 border-round p-3">
-                  <h4 className={`text-lg font-bold text-${color}-700 mt-0 mb-2`}>{label}</h4>
-                  <div className="grid">
-                    <div className="col-4"><span className="text-600 text-sm block mb-1">Nilai</span><div className="font-semibold text-xl">{nilai}</div></div>
-                    <div className="col-4"><span className="text-600 text-sm block mb-1">Kategori</span><div className="font-semibold">{cat.category}</div></div>
-                    <div className="col-4"><span className="text-600 text-sm block mb-1">Bobot</span><div className={`text-${color}-600 font-semibold text-2xl`}>{cat.bobot}</div></div>
+      <Dialog
+        visible={facilityDialogVisible}
+        header="Detail Sub Kriteria"
+        modal
+        style={{ width: '700px', maxWidth: '95vw' }}
+        onHide={() => setFacilityDialogVisible(false)}
+      >
+        {selectedWisataForFacility &&
+          (() => {
+            const f = calculateAtraksiSubKriteria(selectedWisataForFacility.atraksi_wisata)
+            const r = getRatingSubKriteria(selectedWisataForFacility.rating_gmaps)
+            const h = getHargaSubKriteria(selectedWisataForFacility.harga_tiket)
+            return (
+              <div className="flex flex-column gap-3">
+                <h3 className="text-xl font-bold text-800 mt-0 mb-0">{selectedWisataForFacility.nama_wisata}</h3>
+                <hr className="mt-0" />
+                {[
+                  { label: 'Rating Google Maps', nilai: `${selectedWisataForFacility.rating_gmaps || 0} / 5.0`, cat: r, color: 'blue' },
+                  {
+                    label: 'Harga Tiket',
+                    nilai: `Rp ${(selectedWisataForFacility.harga_tiket || 0).toLocaleString('id-ID')}`,
+                    cat: h,
+                    color: 'green',
+                  },
+                  { label: 'Atraksi Wisata', nilai: `${f.count} item`, cat: f, color: 'purple' },
+                ].map(({ label, nilai, cat, color }) => (
+                  <div key={label} className="surface-50 border-round p-3">
+                    <h4 className={`text-lg font-bold text-${color}-700 mt-0 mb-2`}>{label}</h4>
+                    <div className="grid">
+                      <div className="col-4">
+                        <span className="text-600 text-sm block mb-1">Nilai</span>
+                        <div className="font-semibold text-xl">{nilai}</div>
+                      </div>
+                      <div className="col-4">
+                        <span className="text-600 text-sm block mb-1">Kategori</span>
+                        <div className="font-semibold">{cat.category}</div>
+                      </div>
+                      <div className="col-4">
+                        <span className="text-600 text-sm block mb-1">Bobot</span>
+                        <div className={`text-${color}-600 font-semibold text-2xl`}>{cat.bobot}</div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )
-        })()}
+                ))}
+              </div>
+            )
+          })()}
       </Dialog>
     </>
   )

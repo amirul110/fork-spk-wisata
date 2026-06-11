@@ -3,21 +3,22 @@ const { WISATA_TABLE } = require('../constants/database');
 const { API_STATUS, RESPONSE_DATA_KEYS } = require('../constants/general');
 
 module.exports = {
-
-  // GET /api/v1/wisata
   getAllWisata: async (req, res) => {
     try {
       const data = await db(WISATA_TABLE).select('*');
 
-      // Ambil semua gambar sekaligus (1 query)
       const ids = data.map((w) => w.id_alternatif);
       const gambarArr = ids.length
         ? await db('wisata_gambar').whereIn('id_alternatif', ids).orderBy('urutan')
+        : [];
+      const gambarDashboardArr = ids.length
+        ? await db('wisata_gambar_dashboard').whereIn('id_alternatif', ids).orderBy('urutan')
         : [];
 
       const result = data.map((w) => ({
         ...w,
         gambar_list: gambarArr.filter((g) => g.id_alternatif === w.id_alternatif),
+        gambar_dashboard_list: gambarDashboardArr.filter((g) => g.id_alternatif === w.id_alternatif),
       }));
 
       return res.json({
@@ -31,7 +32,6 @@ module.exports = {
     }
   },
 
-  // GET /api/v1/wisata/:id
   getDetailWisata: async (req, res) => {
     try {
       const { id } = req.params;
@@ -41,15 +41,14 @@ module.exports = {
         return res.status(404).json({ status: API_STATUS.NOT_FOUND, message: 'Wisata tidak ditemukan' });
       }
 
-      const gambarArr = await db('wisata_gambar')
-        .where('id_alternatif', id)
-        .orderBy('urutan');
+      const gambarArr = await db('wisata_gambar').where('id_alternatif', id).orderBy('urutan');
+      const gambarDashboardArr = await db('wisata_gambar_dashboard').where('id_alternatif', id).orderBy('urutan');
 
       return res.json({
         status: API_STATUS.SUCCESS,
         message: 'Detail Wisata ditemukan',
         data: {
-          [RESPONSE_DATA_KEYS.WISATA_DETAIL]: { ...data, gambar_list: gambarArr },
+          [RESPONSE_DATA_KEYS.WISATA_DETAIL]: { ...data, gambar_list: gambarArr, gambar_dashboard_list: gambarDashboardArr },
         },
       });
     } catch (error) {
