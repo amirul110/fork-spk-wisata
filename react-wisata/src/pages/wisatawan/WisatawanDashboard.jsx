@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getAllWisata } from "../../services/wisata.service";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
@@ -102,7 +103,7 @@ function AtraksiList({ atraksi }) {
 export default function WisatawanDashboard() {
   const [wisataList, setWisataList] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const nav = useNavigate();
   useEffect(() => {
     getAllWisata()
       .then((res) => setWisataList(res.data?.data?.list_wisata || []))
@@ -271,6 +272,19 @@ if (w.gambar_dashboard_list && w.gambar_dashboard_list.length > 0) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Tombol lanjut ke halaman Pilih Wisata */}
+      {!loading && wisataList.length > 0 && (
+        <div className="flex justify-content-center mt-4 mb-5">
+          <Button
+            label="Lanjut pilih wisata"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            onClick={() => nav("/wisatawan/pilih-wisata")}
+            style={ { backgroundColor: "#0368ff", border: "none", padding: "0.9rem 2.2rem", fontWeight: 600, fontSize: "1rem", borderRadius: "8px" } }
+          />
         </div>
       )}
     </>
