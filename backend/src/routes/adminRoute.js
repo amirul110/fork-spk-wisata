@@ -1,23 +1,21 @@
+// src/routes/adminRoute.js
 const express = require('express');
 const router = express.Router();
-const alternatifController = require('../controllers/alternatifController');
-const upload = require('../middleware/upload');
+
+const kriteriaController = require('../controllers/kriteriaController');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 
-// gambar_list      => Gambar Wisata (galeri)
-// gambar_dashboard => Gambar Dashboard (tampil di dashboard wisatawan)
-const uploadWisata = upload.fields([
-  { name: 'gambar_list', maxCount: 10 },
-  { name: 'gambar_dashboard', maxCount: 10 },
-]);
+// Semua route admin di file ini wajib login + admin
+router.use(requireAuth, requireAdmin);
 
-router.get('/', requireAuth, requireAdmin, alternatifController.getAllAlternatif);
-router.get('/:id', requireAuth, requireAdmin, alternatifController.getAlternatifById);
-router.post('/', requireAuth, requireAdmin, uploadWisata, alternatifController.createAlternatif);
-router.put('/:id', requireAuth, requireAdmin, uploadWisata, alternatifController.updateAlternatif);
-router.delete('/:id', requireAuth, requireAdmin, alternatifController.deleteAlternatif);
+// --- MANAJEMEN KRITERIA ---
+router.post('/kriteria', kriteriaController.createKriteria);
+router.put('/kriteria/:id', kriteriaController.updateKriteria);
+router.delete('/kriteria/:id', kriteriaController.deleteKriteria);
 
-router.delete('/:id/gambar/:gambarId', requireAuth, requireAdmin, alternatifController.deleteGambarById);
-router.delete('/:id/gambar-dashboard/:gambarId', requireAuth, requireAdmin, alternatifController.deleteGambarDashboardById);
+// --- MANAJEMEN SUB-KRITERIA ---
+router.post('/subkriteria', kriteriaController.createSubKriteria);
+router.put('/subkriteria/:id', kriteriaController.updateSubKriteria);
+router.delete('/subkriteria/:id', kriteriaController.deleteSubKriteria);
 
 module.exports = router;
