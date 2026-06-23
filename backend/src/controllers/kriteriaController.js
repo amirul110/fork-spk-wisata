@@ -126,7 +126,7 @@ module.exports = {
   updateKriteria: async (req, res) => {
     try {
       const { id } = req.params; // id_kriteria dari URL
-      const { nama_kriteria, jenis, bobot_prioritas } = req.body;
+      const { nama_kriteria, jenis,  } = req.body;
       const payload = {
         updated_at: new Date()
       };

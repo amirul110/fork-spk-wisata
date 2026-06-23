@@ -1,158 +1,169 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getAllWisata } from "../../services/wisata.service";
-import { setSelectedWisata } from "../../store/wisataStore";
-import { Checkbox } from "primereact/checkbox";
-import { Button } from "primereact/button";
-import { ProgressSpinner } from "primereact/progressspinner";
-import { Message } from "primereact/message";
-import { formatTanggalIndonesia } from "../../utils/formatTanggal";
+import { useMemo, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { Card } from "primereact/card"
+import { Button } from "primereact/button"
+import { Dropdown } from "primereact/dropdown"
+import { Message } from "primereact/message"
+import { Tag } from "primereact/tag"
+import {
+	KRITERIA_AHP,
+	PASANGAN_AHP,
+	bangunMatriks,
+	hitungAHP,
+} from "../../utils/ahp"
+import { setPreferensi } from "../../store/preferensiStore"
 
-const BACKEND_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1").replace("/api/v1", "");
+function opsiSaaty(namaA, namaB) {
+	return [
+		{ label: `${namaA} mutlak lebih penting (9)`, value: 9 },
+		{ label: `${namaA} sangat lebih penting (7)`, value: 7 },
+		{ label: `${namaA} lebih penting (5)`, value: 5 },
+		{ label: `${namaA} sedikit lebih penting (3)`, value: 3 },
+		{ label: `Sama penting (1)`, value: 1 },
+		{ label: `${namaB} sedikit lebih penting (3)`, value: 1 / 3 },
+		{ label: `${namaB} lebih penting (5)`, value: 1 / 5 },
+		{ label: `${namaB} sangat lebih penting (7)`, value: 1 / 7 },
+		{ label: `${namaB} mutlak lebih penting (9)`, value: 1 / 9 },
+	]
+}
 
 export default function PilihWisataPage() {
-  const nav = useNavigate();
-  const [wisataList, setWisataList] = useState([]);
-  const [selected, setSelected] = useState([]);
-  const [loadingData, setLoadingData] = useState(true);
+	const navigate = useNavigate()
+	const [nilai, setNilai] = useState(() => PASANGAN_AHP.map(() => 1))
+	const [error, setError] = useState("")
 
-  useEffect(() => {
-    getAllWisata()
-      .then((res) => setWisataList(res.data?.data?.list_wisata || []))
-      .catch((err) => console.error("Gagal mengambil data wisata:", err))
-      .finally(() => setLoadingData(false));
-  }, []);
+	const ahp = useMemo(() => {
+		const matrix = bangunMatriks(nilai, KRITERIA_AHP.length)
+		return { matrix, ...hitungAHP(matrix) }
+	}, [nilai])
 
-  const toggle = (id) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  };
+	const konsisten = ahp.CR < 0.1
 
-  const handleLanjutkan = () => {
-    if (selected.length < 2) return;
-    setSelectedWisata(selected);
-    nav("/wisatawan/preferensi");
-  };
+	const setPasangan = (idx, v) => {
+		setNilai((prev) => {
+			const next = [...prev]
+			next[idx] = v
+			return next
+		})
+	}
 
-  return (
-    <>
-      <div className="mb-4">
-        <div className="mb-1" style={{ fontSize: "32px", fontWeight: "bold", color: "var(--text-color)" }}>
-          {formatTanggalIndonesia()}
-        </div>
-        <h2 className="text-2xl font-bold text-800 mt-0 mb-1">
-          <i className="pi pi-check-square mr-2"></i>Pilih Wisata yang Diminati
-        </h2>
-        <p className="text-600 mt-0 mb-3" style={{ fontSize: "0.95rem" }}>
-          Pilih minimal <strong>2 wisata</strong> yang ingin Anda bandingkan.
-          Sudah melihat info setiap wisata di Dashboard? Gunakan itu sebagai pertimbangan.
-        </p>
-        <hr className="border-top-1 border-300" />
-      </div>
+	const lanjut = () => {
+		setError("")
+		if (!konsisten) {
+			setError(
+				`Perbandingan tidak konsisten (CR = ${ahp.CR.toFixed(
+					4,
+				)} ≥ 0.1). Silakan ulangi.`,
+			)
+			return
+		}
+		setPreferensi({
+			matrix: ahp.matrix,
+			weights: ahp.weights,
+			cr: Number(ahp.CR.toFixed(4)),
+		})
+		navigate("/wisatawan/pilih-lokasi")
+	}
 
-      {loadingData ? (
-        <div className="flex justify-content-center p-6">
-          <ProgressSpinner style={{ width: "50px", height: "50px" }} />
-        </div>
-      ) : wisataList.length === 0 ? (
-        <Message severity="warn" text="Data wisata tidak tersedia. Pastikan backend berjalan." className="w-full" />
-      ) : (
-        <div className="grid" style={{ alignItems: "stretch" }}>
-          {wisataList.map((w) => (
-            <div key={w.id_alternatif} className="col-12 md:col-6 lg:col-4 p-2" style={{ display: "flex" }}>
-              <div
-                className={`border-round-lg border-1 cursor-pointer transition-colors transition-duration-200 overflow-hidden shadow-1 ${
-                  selected.includes(w.id_alternatif)
-                    ? "border-primary bg-blue-50"
-                    : "border-300 hover:border-primary"
-                }`}
-                style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}
-                onClick={() => toggle(w.id_alternatif)}
-              >
-                {/* Judul + Checkbox */}
-                <div
-                  className="flex align-items-start justify-content-between p-3 border-bottom-1 border-200"
-                  style={{ minHeight: "56px" }}
-                >
-                  <div
-                    className="font-bold text-800"
-                    style={{
-                      fontSize: "0.9rem",
-                      lineHeight: "1.3",
-                      overflow: "hidden",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                    }}
-                  >
-                    {w.nama_wisata}
-                  </div>
-                  <div className="ml-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <Checkbox
-                      checked={selected.includes(w.id_alternatif)}
-                      onChange={() => toggle(w.id_alternatif)}
-                    />
-                  </div>
-                </div>
+	return (
+		<div className="p-3" style={ { maxWidth: 960, margin: "0 auto" } }>
+			<h2 className="mb-1">Preferensi Kriteria Anda</h2>
+			<p className="text-color-secondary mt-0 mb-3">
+				Bandingkan tingkat kepentingan tiap pasang kriteria. Bobot dihitung
+				otomatis (AHP) dari pilihan Anda.
+			</p>
 
-                {/* Gambar */}
-                <div
-                  className="surface-200 flex align-items-center justify-content-center"
-                  style={{ height: "160px", overflow: "hidden" }}
-                >
-                  {w.gambar ? (
-                    <img
-                      src={`${BACKEND_URL}/uploads/${w.gambar}`}
-                      alt={w.nama_wisata}
-                      className="w-full h-full"
-                      style={{ objectFit: "cover", display: "block" }}
-                      onError={(e) => { e.target.style.display = "none"; }}
-                    />
-                  ) : (
-                    <i className="pi pi-image text-400" style={{ fontSize: "2rem" }}></i>
-                  )}
-                </div>
+			{error ? (
+				<Message severity="warn" text={error} className="w-full mb-3" />
+			) : null}
 
-                {/* Deskripsi singkat */}
-                <div className="p-3" style={{ flex: 1 }}>
-                  <p
-                    className="text-600 mt-0 mb-0 line-height-3"
-                    style={{
-                      fontSize: "0.82rem",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {w.deskripsi || "Deskripsi wisata belum tersedia."}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+			<Card title="1. Bandingkan Kriteria (Skala 1–9)" className="mb-3">
+				<div className="flex flex-column gap-3">
+					{PASANGAN_AHP.map((pair, idx) => {
+						const [a, b] = pair
+						const namaA = KRITERIA_AHP[a].nama
+						const namaB = KRITERIA_AHP[b].nama
+						return (
+							<div key={idx} className="flex flex-column gap-1">
+								<span className="font-medium">
+									{namaA}{" "}
+									<span className="text-color-secondary">vs</span> {namaB}
+								</span>
+								<Dropdown
+									value={nilai[idx]}
+									options={opsiSaaty(namaA, namaB)}
+									onChange={(e) => setPasangan(idx, e.value)}
+									className="w-full"
+								/>
+							</div>
+						)
+					})}
+				</div>
+			</Card>
 
-      {selected.length < 2 && !loadingData && wisataList.length > 0 && (
-        <Message
-          severity="info"
-          text={`Pilih minimal 2 wisata. Saat ini sudah dipilih: ${selected.length}.`}
-          className="w-full mt-3 mb-3"
-        />
-      )}
+			<Card title="2. Bobot Dinamis & Konsistensi" className="mb-3">
+				<div className="flex flex-column gap-2 mb-3">
+					{KRITERIA_AHP.map((k, i) => {
+						const persen = ((ahp.weights?.[i] ?? 0) * 100).toFixed(1)
+						return (
+							<div key={k.id} className="flex align-items-center gap-2">
+								<span style={ { width: 200 } }>
+									{k.nama}{" "}
+									<Tag
+										value={k.jenis === "benefit" ? "benefit" : "cost"}
+										severity={
+											k.jenis === "benefit" ? "success" : "danger"
+										}
+									/>
+								</span>
+								<div
+									style={ {
+										flex: 1,
+										height: 10,
+										background: "#e9ecef",
+										borderRadius: 6,
+										overflow: "hidden",
+									} }
+								>
+									<div
+										style={ {
+											width: `${persen}%`,
+											height: "100%",
+											background: "#3b82f6",
+										} }
+									/>
+								</div>
+								<span style={ { width: 56, textAlign: "right" } }>
+									{persen}%
+								</span>
+							</div>
+						)
+					})}
+				</div>
 
-      <div className="flex justify-content-center mt-3">
-        <Button
-          label="Lanjutkan ke Aktivasi Lokasi"
-          icon="pi pi-arrow-right"
-          iconPos="right"
-          onClick={handleLanjutkan}
-          disabled={selected.length < 2}
-          className="px-5"
-        />
-      </div>
-    </>
-  );
+				<div className="flex align-items-center gap-2">
+					<span>Consistency Ratio (CR):</span>
+					<Tag
+						value={ahp.CR.toFixed(4)}
+						severity={konsisten ? "success" : "danger"}
+					/>
+					<span className="text-color-secondary">
+						{konsisten
+							? "Konsisten (CR < 0.1)"
+							: "Tidak konsisten — silakan ulangi"}
+					</span>
+				</div>
+			</Card>
+
+			<div className="flex justify-content-end">
+				<Button
+					label="Simpan & Lanjut: Aktifkan Lokasi"
+					icon="pi pi-arrow-right"
+					iconPos="right"
+					onClick={lanjut}
+					disabled={!konsisten}
+				/>
+			</div>
+		</div>
+	)
 }

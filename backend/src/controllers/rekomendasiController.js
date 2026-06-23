@@ -15,7 +15,8 @@ module.exports = {
 
     try {
       const { id: userId } = req.user;
-      const { userLocation } = req.body;
+const { userLocation, matrix } = req.body;
+
 
       // --- VALIDASI INPUT ---
       if (!userLocation || !userLocation.latitude || !userLocation.longitude) {
@@ -42,6 +43,20 @@ module.exports = {
         });
       }
 
+      // --- VALIDASI MATRIKS PERBANDINGAN (AHP DINAMIS DARI USER) ---
+const n = kriteriaIds.length;
+const isMatrixValid =
+  Array.isArray(matrix) &&
+  matrix.length === n &&
+  matrix.every((row) => Array.isArray(row) && row.length === n);
+
+if (!isMatrixValid) {
+  await trx.rollback();
+  return res.status(400).json({
+    status: API_STATUS.BAD_REQUEST,
+    message: `Matriks perbandingan ${n}x${n} wajib dikirim (preferensi kriteria user).`
+  });
+}
       // --- MAPPING KOLOM ---
       const colMapper = {
         1: 'rating_gmaps',
@@ -73,42 +88,56 @@ module.exports = {
         return 1;
       };
 
-      // --- BOBOT ADMIN (HASIL AHP) ---
-      const totalBobotAdmin = dbKriteria.reduce((sum, k) => sum + Number(k.bobot_prioritas || 0), 0);
-      if (totalBobotAdmin <= 0) {
-        await trx.rollback();
-        return res.status(400).json({
-          status: API_STATUS.BAD_REQUEST,
-          message: 'Bobot kriteria belum diatur admin. Silakan admin menghitung bobot AHP terlebih dahulu.'
-        });
-      }
-      
-      const weightByKriteriaId = {};
-      kriteriaIds.forEach((id) => {
-        const kriteria = dbKriteria.find((k) => Number(k.id_kriteria) === id);
-        const rawWeight = Number(kriteria?.bobot_prioritas || 0);
-        weightByKriteriaId[id] = rawWeight / totalBobotAdmin;
-      });
+    // HAPUS seluruh blok lama mulai "// --- BOBOT ADMIN (HASIL AHP) ---"
+// sampai akhir pembuatan weightByKriteriaId, GANTI dengan:
+
+// --- BOBOT DINAMIS DARI USER (AHP PAIRWISE) ---
+const ahp = spkHelper.hitungBobotAHP(matrix);
+
+if (!ahp.konsisten) {
+  await trx.rollback();
+  return res.status(400).json({
+    status: API_STATUS.BAD_REQUEST,
+    message: `Perbandingan kriteria tidak konsisten (CR = ${ahp.CR.toFixed(4)} >= 0.1). Silakan isi ulang preferensi Anda.`,
+    data: { cr: Number(ahp.CR.toFixed(4)) }
+  });
+}
+
+const weightByKriteriaId = {};
+kriteriaIds.forEach((id, index) => {
+  weightByKriteriaId[id] = ahp.weights[index];
+});
 
       // --- SIMPAN RIWAYAT USER + SNAPSHOT BOBOT ADMIN ---
-      const adminBobotSnapshot = kriteriaIds.map((id) => ({
-        id_kriteria: id,
-        bobot: Number((weightByKriteriaId[id] || 0).toFixed(6))
-      }));
-      
-      const [preferensiId] = await trx('preferensi_wisatawan').insert({
-        id_wisatawan: userId,
-        user_latitude: userLocation.latitude,
-        user_longitude: userLocation.longitude,
-        data_preferensi: JSON.stringify({ bobot_admin: adminBobotSnapshot }),
-        created_at: new Date()
-      });
+const bobotUserSnapshot = {
+	metode: "AHP-dinamis (pairwise)",
+	matrix,
+	cr: Number(ahp.CR.toFixed(4)),
+	bobot_user: kriteriaIds.map((id, index) => ({
+		id_kriteria: id,
+		bobot: Number((ahp.weights[index] || 0).toFixed(6)),
+	})),
+}
+// simpan JSON.stringify(bobotUserSnapshot) ke data_preferensi & detail_pencarian
 
-      await trx(TABLES.RIWAYAT_PENCARIAN).insert({
-        id_wisatawan: userId,
-        detail_pencarian: JSON.stringify({ userLocation, bobot_admin: adminBobotSnapshot }),
-        created_at: new Date()
-      });
+const [preferensiId] = await trx('preferensi_wisatawan').insert({
+  id_wisatawan: userId,
+  user_latitude: userLocation.latitude,
+  user_longitude: userLocation.longitude,
+  data_preferensi: JSON.stringify({
+    metode: 'AHP-dinamis',
+    matrix,
+    bobot_user: bobotUserSnapshot,
+    cr: Number(ahp.CR.toFixed(4))
+  }),
+  created_at: new Date()
+});
+
+await trx(TABLES.RIWAYAT_PENCARIAN).insert({
+  id_wisatawan: userId,
+  detail_pencarian: JSON.stringify({ userLocation, matrix, bobot_user: bobotUserSnapshot, cr: Number(ahp.CR.toFixed(4)) }),
+  created_at: new Date()
+});
 
       // --- HITUNG NILAI ALTERNATIF DENGAN SMART ---
       const candidates = wisataRaw.map(w => {
@@ -216,6 +245,18 @@ module.exports = {
         error: error.message 
       });
     }
+    return res.status(200).json({
+	message: "Rekomendasi berhasil dihitung",
+	data: {
+		id_riwayat: preferensiId,
+		cr: Number(ahp.CR.toFixed(4)),
+		bobot_ahp: kriteriaIds.map((id, index) => ({
+			id_kriteria: id,
+			bobot: Number((ahp.weights[index] || 0).toFixed(6)),
+		})),
+		[RESPONSE_DATA_KEYS.REKOMENDASI]: responseData,
+	},
+})
   },
 
   // [GET] RIWAYAT SAYA (Versi Rapi untuk Wisatawan)
@@ -310,3 +351,4 @@ module.exports = {
     }
   }
 };
+

@@ -56,7 +56,7 @@ export default function AppRouter() {
         >
           <Route path="dashboard" element={<WisatawanDashboard />} />
           <Route path="pilih-wisata" element={<PilihWisataPage />} />
-          <Route path="preferensi" element={<PilihWisata />} />
+          <Route path="pilih-lokasi" element={<PilihWisata />} />
           <Route path="hasil" element={<HasilRekomendasi />} />
           <Route path="profile" element={<Profile />} />
           <Route path="logout" element={<Logout />} />

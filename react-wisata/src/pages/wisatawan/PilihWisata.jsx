@@ -1,357 +1,290 @@
-import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { getSelectedWisata, clearSelectedWisata } from "../../store/wisataStore";
-import { getAllWisata } from "../../services/wisata.service";
-import api from "../../services/api";
-import { Card } from "primereact/card";
-import { Button } from "primereact/button";
-import { Message } from "primereact/message";
-import { Tag } from "primereact/tag";
-import { Dialog } from "primereact/dialog";
-import { Chip } from "primereact/chip";
-import MapPickerDialog from "../../components/MapPickerDialog";
-import { formatTanggalIndonesia } from "../../utils/formatTanggal";
+import { useEffect, useMemo, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { Card } from "primereact/card"
+import { Button } from "primereact/button"
+import { Message } from "primereact/message"
+import { Dialog } from "primereact/dialog"
+import api from "../../services/api"
+import { getAllWisata } from "../../services/wisata.service"
+import MapPicker from "../../components/MapPicker"
+import { reverseGeocode } from "../../utils/geocode"
+import { getPreferensi } from "../../store/preferensiStore"
+
+const MAGETAN_CENTER = { lat: -7.6514, lng: 111.3292 }
+
+function hitungJarakKm(lat1, lon1, lat2, lon2) {
+	const R = 6371
+	const dLat = ((lat2 - lat1) * Math.PI) / 180
+	const dLon = ((lon2 - lon1) * Math.PI) / 180
+	const a =
+		Math.sin(dLat / 2) ** 2 +
+		Math.cos((lat1 * Math.PI) / 180) *
+			Math.cos((lat2 * Math.PI) / 180) *
+			Math.sin(dLon / 2) ** 2
+	return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
 
 export default function PilihWisata() {
-  const nav = useNavigate();
-  const [userLocation, setUserLocation] = useState(null);
-  const [locationStatus, setLocationStatus] = useState("belum");
-  const [locationMode, setLocationMode] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [showMapDialog, setShowMapDialog] = useState(false);
-  const [showLocationChoice, setShowLocationChoice] = useState(false);
-  const [belumPilihWisata, setBelumPilihWisata] = useState(false);
-  const [namaWisataDipilih, setNamaWisataDipilih] = useState([]);
-  const [showConfirmDashboard, setShowConfirmDashboard] = useState(false);
-  const [gpsInitialPos, setGpsInitialPos] = useState(null);
-  const [mapDialogTitle, setMapDialogTitle] = useState("");
+	const navigate = useNavigate()
+	const [userLocation, setUserLocation] = useState(null)
+	const [detailLokasi, setDetailLokasi] = useState(null)
+	const [loadingGeo, setLoadingGeo] = useState(false)
+	const [mapVisible, setMapVisible] = useState(false)
+	const [wisataList, setWisataList] = useState([])
+	const [loadingWisata, setLoadingWisata] = useState(false)
+	const [submitting, setSubmitting] = useState(false)
+	const [error, setError] = useState("")
 
-  // Guard: tampilkan pesan jika belum memilih wisata di dashboard
-  useEffect(() => {
-    const selected = getSelectedWisata();
+	const preferensi = getPreferensi() // { matrix, weights, cr }
 
-    if (!selected || selected.length === 0) {
-      // setTimeout(0) diperlukan agar ESLint react-hooks/set-state-in-effect tidak error
-      setTimeout(() => setBelumPilihWisata(true), 0);
-    } else {
-      // Ambil nama wisata yang dipilih dari backend
-      getAllWisata()
-        .then((res) => {
-          const allWisata = res.data?.data?.list_wisata || [];
-          const names = allWisata
-            .filter((w) => selected.includes(w.id_alternatif))
-            .map((w) => w.nama_wisata);
-          setNamaWisataDipilih(names);
-        })
-        .catch(() => {
-          // Fallback jika API gagal
-          setNamaWisataDipilih(selected.map((id) => `Wisata #${id}`));
-        });
+	useEffect(() => {
+		let aktif = true
+		setLoadingWisata(true)
+		getAllWisata()
+			.then((res) => {
+				if (!aktif) return
+				setWisataList(res?.data?.data?.list_wisata || [])
+			})
+			.catch(() => {})
+			.finally(() => {
+				if (aktif) setLoadingWisata(false)
+			})
+		return () => {
+			aktif = false
+		}
+	}, [])
 
-      // Delay agar halaman selesai render sebelum dialog muncul
-      const timer = setTimeout(() => {
-        setShowLocationChoice(true);
-      }, 600);
-      return () => clearTimeout(timer);
-    }
-  }, []);
+	const ambilDetail = async (lat, lon) => {
+		setLoadingGeo(true)
+		try {
+			setDetailLokasi(await reverseGeocode(lat, lon))
+		} catch {
+			setDetailLokasi(null)
+		} finally {
+			setLoadingGeo(false)
+		}
+	}
 
-  const handleAutoLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setLocationStatus("tidak_didukung");
-      return;
-    }
-    setLocationStatus("memuat");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const gpsPos = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        };
-        // Tampilkan map dengan posisi GPS untuk konfirmasi
-        setGpsInitialPos(gpsPos);
-        setMapDialogTitle("Konfirmasi Lokasi GPS");
-        setLocationMode("otomatis");
-        setLocationStatus("belum");
-        setShowMapDialog(true);
-      },
-      () => {
-        setLocationStatus("gagal");
-      },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
-    );
-  }, []);
+	const gunakanGPS = () => {
+		setError("")
+		if (!navigator.geolocation) {
+			setError("Browser tidak mendukung GPS. Silakan pilih lewat peta.")
+			return
+		}
+		navigator.geolocation.getCurrentPosition(
+			(pos) => {
+				const lokasi = {
+					latitude: pos.coords.latitude,
+					longitude: pos.coords.longitude,
+				}
+				setUserLocation(lokasi)
+				ambilDetail(lokasi.latitude, lokasi.longitude)
+			},
+			() => setError("Gagal mengambil lokasi GPS. Silakan pilih lewat peta."),
+			{ enableHighAccuracy: true, timeout: 10000 },
+		)
+	}
 
-  const handleMapSave = (loc) => {
-    setUserLocation(loc);
-    setLocationStatus("aktif");
-    // Preserve locationMode set before opening dialog
-    if (!locationMode) setLocationMode("manual");
-    setShowMapDialog(false);
-    setGpsInitialPos(null);
-  };
+	const onPilihPeta = (loc) => {
+		setUserLocation(loc)
+		setMapVisible(false)
+		ambilDetail(loc.latitude, loc.longitude)
+	}
 
-  const handleMapBatal = () => {
-    setShowMapDialog(false);
-    setGpsInitialPos(null);
-    setTimeout(() => setShowLocationChoice(true), 300);
-  };
+	const daftarJarak = useMemo(() => {
+		if (!userLocation) return []
+		return wisataList
+			.map((w) => {
+				const lat = Number(w.latitude ?? w.lat)
+				const lon = Number(w.longitude ?? w.lng)
+				const jarak =
+					Number.isFinite(lat) && Number.isFinite(lon)
+						? hitungJarakKm(
+								userLocation.latitude,
+								userLocation.longitude,
+								lat,
+								lon,
+							)
+						: null
+				return {
+					id: w.id_wisata ?? w.id,
+					nama: w.nama_wisata ?? w.nama ?? "Wisata",
+					jarak_km: jarak,
+				}
+			})
+			.sort((a, b) => (a.jarak_km ?? Infinity) - (b.jarak_km ?? Infinity))
+	}, [userLocation, wisataList])
 
-  const handleManualMap = () => {
-    setShowLocationChoice(false);
-    setGpsInitialPos(null);
-    setMapDialogTitle("Pilih Lokasi Manual");
-    setLocationMode("manual");
-    setShowMapDialog(true);
-  };
+	const handleHitung = async () => {
+		setError("")
+		if (!preferensi?.matrix) {
+			setError(
+				"Anda belum mengisi preferensi bobot. Buka menu 'Pilih Wisata' dulu.",
+			)
+			return
+		}
+		if (!userLocation) {
+			setError("Tentukan lokasi Anda terlebih dahulu (GPS atau peta).")
+			return
+		}
+		setSubmitting(true)
+		try {
+			const res = await api.post("/rekomendasi/hitung", {
+				userLocation,
+				matrix: preferensi.matrix,
+			})
+			const hasil = res?.data?.data?.hasil_rekomendasi || []
+			navigate("/wisatawan/hasil", { state: { hasil } })
+		} catch (err) {
+			setError(
+				err?.response?.data?.message || "Gagal menghitung rekomendasi.",
+			)
+		} finally {
+			setSubmitting(false)
+		}
+	}
 
-  const handleSimpan = async () => {
-    if (!userLocation) {
-      setErrorMsg("Lokasi belum ditentukan. Mohon pilih lokasi terlebih dahulu.");
-      return;
-    }
+	return (
+		<div className="p-3" style={ { maxWidth: 960, margin: "0 auto" } }>
+			<h2 className="mb-1">Aktifkan Lokasi Anda</h2>
+			<p className="text-color-secondary mt-0 mb-3">
+				Tentukan lokasi Anda untuk melihat jarak ke semua wisata, lalu hitung
+				rekomendasi.
+			</p>
 
-    setLoading(true);
-    setErrorMsg("");
+			{!preferensi?.matrix ? (
+				<Message
+					severity="info"
+					text="Anda belum mengisi preferensi bobot. Buka menu 'Pilih Wisata' terlebih dahulu."
+					className="w-full mb-3"
+				/>
+			) : null}
 
-    try {
-      const selectedIds = getSelectedWisata();
-      const res = await api.post("/rekomendasi/hitung", {
-        userLocation,
-      });
+			{error ? (
+				<Message severity="warn" text={error} className="w-full mb-3" />
+			) : null}
 
-      const hasilData = res.data?.data?.hasil_rekomendasi || [];
-      const filtered = hasilData.filter((item) =>
-        selectedIds.includes(item.id_alternatif)
-      );
-      const reranked = filtered.map((item, idx) => ({
-        ...item,
-        peringkat_ke: idx + 1,
-      }));
-      nav("/wisatawan/hasil", { state: { hasil: reranked } });
-    } catch (err) {
-      const pesan =
-        err?.response?.data?.message || err?.message || "Gagal menghitung rekomendasi";
-      setErrorMsg(pesan);
-    } finally {
-      setLoading(false);
-    }
-  };
+			<Card title="Lokasi Anda & Jarak ke Wisata" className="mb-3">
+				<div className="flex gap-2 mb-3 flex-wrap">
+					<Button
+						label="Gunakan GPS"
+						icon="pi pi-map-marker"
+						onClick={gunakanGPS}
+						loading={loadingGeo}
+						outlined
+					/>
+					<Button
+						label="Pilih di Peta"
+						icon="pi pi-map"
+						onClick={() => setMapVisible(true)}
+						outlined
+					/>
+				</div>
 
-  const locationSeverity =
-    locationStatus === "aktif" ? "success" :
-    locationStatus === "memuat" || locationStatus === "belum" ? "info" : "error";
+				{userLocation ? (
+					<>
+						<p className="m-0 mb-2">
+							Koordinat:{" "}
+							<b>
+								{userLocation.latitude.toFixed(5)},{" "}
+								{userLocation.longitude.toFixed(5)}
+							</b>
+						</p>
 
-  const locationText =
-    locationStatus === "belum" ? "Menunggu pilihan metode lokasi..." :
-    locationStatus === "memuat" ? "Sedang mendapatkan lokasi GPS..." :
-    locationStatus === "aktif" && userLocation
-      ? `Aktif - ${locationMode === "manual" ? "Manual (Peta)" : "Otomatis (GPS)"} (Lat: ${userLocation.latitude.toFixed(6)}, Lng: ${userLocation.longitude.toFixed(6)})`
-      : locationStatus === "gagal"
-        ? "Gagal mendapatkan lokasi GPS. Silakan coba lagi dengan metode manual."
-        : "Browser Anda tidak mendukung Geolocation. Gunakan metode manual.";
+						{loadingGeo ? (
+							<p className="m-0 mb-3 text-color-secondary">
+								Mengambil detail alamat…
+							</p>
+						) : detailLokasi ? (
+							<div
+								className="mb-3 p-3"
+								style={ {
+									background: "#f8f9fa",
+									borderRadius: 8,
+									lineHeight: 1.7,
+								} }
+							>
+								<div>
+									<b>Desa/Kelurahan:</b> {detailLokasi.desa}
+								</div>
+								<div>
+									<b>Kecamatan:</b> {detailLokasi.kecamatan}
+								</div>
+								<div>
+									<b>Kabupaten/Kota:</b> {detailLokasi.kabupaten}
+								</div>
+								<div>
+									<b>Provinsi:</b> {detailLokasi.provinsi}
+								</div>
+								<div>
+									<b>Kode Pos:</b> {detailLokasi.kodePos}
+								</div>
+								<div className="mt-1 text-color-secondary">
+									{detailLokasi.alamatLengkap}
+								</div>
+							</div>
+						) : null}
 
-  // Jika belum pilih wisata, tampilkan pesan
-  if (belumPilihWisata) {
-    return (
-      <>
-          <div className="mb-4">
-            <div className="mb-2" style={{ fontSize: "36px", fontWeight: "bold", color: "var(--text-color)" }}>
-              {formatTanggalIndonesia()}
-            </div>
-            <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
-              <i className="pi pi-sliders-h mr-2"></i>Pilih Lokasi Anda
-            </h2>
-            <hr className="border-top-1 border-300" />
-          </div>
-          <Card className="shadow-1">
-            <div className="text-center p-5">
-              <i className="pi pi-info-circle text-5xl text-primary mb-3" style={{ display: "block" }}></i>
-              <h3 className="text-xl font-semibold text-700 mt-0 mb-2">
-                Silakan pilih wisata di Dashboard
-              </h3>
-              <p className="text-500 mb-4">
-                Anda harus memilih wisata yang diminati terlebih dahulu di halaman Dashboard sebelum melanjutkan aktivasi lokasi.
-              </p>
-              <Button
-                label="Kembali ke Pilih Wisata"
-                icon="pi pi-arrow-left"
-                onClick={() => nav("/wisatawan/pilih-wisata")}
-              />
-            </div>
-          </Card>
-        </>
-    );
-  }
+						<h4 className="mb-2">Jarak ke Semua Wisata</h4>
+						<div
+							style={ {
+								maxHeight: 260,
+								overflowY: "auto",
+								border: "1px solid #e9ecef",
+								borderRadius: 8,
+							} }
+						>
+							{loadingWisata ? (
+								<p className="p-3 m-0">Memuat daftar wisata…</p>
+							) : (
+								daftarJarak.map((w) => (
+									<div
+										key={w.id}
+										className="flex justify-content-between p-2"
+										style={ { borderBottom: "1px solid #f1f3f5" } }
+									>
+										<span>{w.nama}</span>
+										<span className="font-medium">
+											{w.jarak_km != null
+												? `${w.jarak_km.toFixed(2)} km`
+												: "—"}
+										</span>
+									</div>
+								))
+							)}
+						</div>
+					</>
+				) : (
+					<p className="text-color-secondary m-0">
+						Belum ada lokasi. Tentukan lokasi untuk melihat jarak ke semua
+						wisata.
+					</p>
+				)}
+			</Card>
 
-  return (
-    <>
-        {/* Dialog Konfirmasi Kembali ke Dashboard */}
-        <Dialog
-          header="Konfirmasi"
-          visible={showConfirmDashboard}
-          onHide={() => setShowConfirmDashboard(false)}
-          style={{ width: "400px", maxWidth: "95vw" }}
-          modal
-          footer={
-            <div className="flex justify-content-end gap-2">
-              <Button
-                label="Batal"
-                icon="pi pi-times"
-                severity="secondary"
-                text
-                onClick={() => setShowConfirmDashboard(false)}
-              />
-              <Button
-                label="OK"
-                icon="pi pi-check"
-                onClick={() => {
-                  clearSelectedWisata();
-                  nav("/wisatawan/dashboard");
-                }}
-              />
-            </div>
-          }
-        >
-          <div className="flex align-items-center gap-3">
-            <i className="pi pi-exclamation-triangle text-3xl text-yellow-500"></i>
-            <p className="text-700 m-0">Apakah Anda ingin memilih wisata yang berbeda? Data preferensi yang sudah diisi akan hilang.</p>
-          </div>
-        </Dialog>
+			<div className="flex justify-content-end">
+				<Button
+					label="Hitung Rekomendasi"
+					icon="pi pi-check"
+					onClick={handleHitung}
+					loading={submitting}
+					disabled={!userLocation || !preferensi?.matrix}
+				/>
+			</div>
 
-        {/* Dialog Pilih Metode Lokasi */}
-        <Dialog
-          header="Pilih Metode Lokasi"
-          visible={showLocationChoice}
-          onHide={() => setShowLocationChoice(false)}
-          style={{ width: "450px", maxWidth: "95vw" }}
-          modal
-          closable={false}
-          footer={
-            <div className="flex justify-content-end">
-              <Button
-                label="Batal"
-                icon="pi pi-times"
-                severity="secondary"
-                text
-                onClick={() => setShowLocationChoice(false)}
-              />
-            </div>
-          }
-        >
-          <div className="text-center">
-            <i className="pi pi-map-marker text-4xl text-primary mb-3" style={{ display: "block" }}></i>
-            <p className="text-700 mb-4">Bagaimana Anda ingin menentukan lokasi?</p>
-            <div className="flex flex-column gap-2">
-              <Button
-                label="Otomatis (GPS)"
-                icon="pi pi-compass"
-                className="w-full"
-                onClick={() => {
-                  setShowLocationChoice(false);
-                  handleAutoLocation();
-                }}
-              />
-              <Button
-                label="Manual (Peta)"
-                icon="pi pi-map"
-                className="w-full"
-                severity="info"
-                outlined
-                onClick={() => {
-                  handleManualMap();
-                }}
-              />
-            </div>
-          </div>
-        </Dialog>
-
-        <div className="mb-4">
-          <div className="mb-2" style={{ fontSize: "36px", fontWeight: "bold", color: "var(--text-color)" }}>
-            {formatTanggalIndonesia()}
-          </div>
-          <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
-            <i className="pi pi-sliders-h mr-2"></i>Pilih Lokasi Anda
-          </h2>
-          <hr className="border-top-1 border-300" />
-        </div>
-
-        {/* Informasi Wisata yang Dipilih */}
-        {namaWisataDipilih.length > 0 && (
-          <Card className="mb-4 shadow-1">
-            <div className="flex align-items-start gap-3">
-              <i className="pi pi-check-circle text-2xl text-green-500 mt-1"></i>
-              <div>
-                <div className="font-bold mb-2">Wisata yang Anda Pilih ({namaWisataDipilih.length})</div>
-                <div className="flex flex-wrap gap-2">
-                  {namaWisataDipilih.map((nama, idx) => (
-                    <Chip key={idx} label={nama} icon="pi pi-map-marker" className="text-sm" />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Status Lokasi */}
-        <Card className="mb-4 shadow-1">
-          <div className="flex align-items-center justify-content-between">
-            <div className="flex align-items-center gap-3">
-              <i className={`pi pi-map-marker text-2xl ${locationStatus === "aktif" ? "text-green-500" : "text-500"}`}></i>
-              <div>
-                <div className="font-bold mb-1">Status Lokasi</div>
-                <Tag severity={locationSeverity} value={locationText} />
-              </div>
-            </div>
-            <Button
-              label="Ubah Lokasi"
-              icon="pi pi-map"
-              severity="info"
-              size="small"
-              outlined
-              onClick={() => setShowLocationChoice(true)}
-            />
-          </div>
-        </Card>
-
-        <Card className="mb-4 shadow-1">
-          <div className="flex align-items-start gap-3">
-            <i className="pi pi-info-circle text-2xl text-primary mt-1"></i>
-            <div>
-              <div className="font-bold mb-2">Informasi Perhitungan</div>
-              <p className="m-0 text-700">
-                Bobot kriteria menggunakan metode AHP yang sudah ditetapkan oleh admin.
-                Anda hanya perlu memilih lokasi, lalu sistem akan menghitung rekomendasi otomatis.
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Pesan Error */}
-        {errorMsg && (
-          <Message severity="error" text={errorMsg} className="w-full mb-3" />
-        )}
-
-        {/* Tombol Simpan */}
-        <div className="flex justify-content-center">
-          <Button
-            label={loading ? "Memproses..." : "Simpan & Lihat Hasil"}
-            icon={loading ? "pi pi-spin pi-spinner" : "pi pi-check"}
-            onClick={handleSimpan}
-            disabled={loading}
-            className="px-5"
-          />
-        </div>
-
-        {/* Map Picker Dialog */}
-        <MapPickerDialog
-          visible={showMapDialog}
-          onHide={handleMapBatal}
-          onSave={handleMapSave}
-          initialPosition={gpsInitialPos}
-          headerTitle={mapDialogTitle}
-        />
-    </>
-  );
+			<Dialog
+				header="Pilih Lokasi"
+				visible={mapVisible}
+				style={ { width: "90vw", maxWidth: 720 } }
+				onHide={() => setMapVisible(false)}
+			>
+				<MapPicker
+					center={MAGETAN_CENTER}
+					initial={userLocation}
+					onConfirm={onPilihPeta}
+					onCancel={() => setMapVisible(false)}
+				/>
+			</Dialog>
+		</div>
+	)
 }
