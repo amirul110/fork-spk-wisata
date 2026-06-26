@@ -23,26 +23,6 @@ const jenisOptions = [
   { label: "Benefit", value: "benefit" },
 ];
 
-const ahpScaleOptions = [
-  { label: "1 - Sama penting", value: 1 },
-  { label: "2 - Di antara 1 dan 3", value: 2 },
-  { label: "3 - Sedikit lebih penting", value: 3 },
-  { label: "4 - Di antara 3 dan 5", value: 4 },
-  { label: "5 - Lebih penting", value: 5 },
-  { label: "6 - Di antara 5 dan 7", value: 6 },
-  { label: "7 - Jelas lebih penting", value: 7 },
-  { label: "8 - Di antara 7 dan 9", value: 8 },
-  { label: "9 - Mutlak lebih penting", value: 9 },
-];
-
-const AHP_RI = {
-  1: 0.0, 2: 0.0, 3: 0.58, 4: 0.9, 5: 1.12,
-  6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49,
-  11: 1.51, 12: 1.48, 13: 1.56, 14: 1.57, 15: 1.59,
-};
-
-const AHP_DETAIL_STORAGE_KEY = "admin_kriteria_last_ahp_detail";
-
 const emptyKriteria = {
   id_kriteria: "",
   nama_kriteria: "",
@@ -58,13 +38,6 @@ export default function AdminKriteria() {
   const [form, setForm] = useState({ ...emptyKriteria });
   const [submitted, setSubmitted] = useState(false);
   const [globalFilter, setGlobalFilter] = useState("");
-  const [ahpDialogVisible, setAhpDialogVisible] = useState(false);
-  const [ahpPairwise, setAhpPairwise] = useState({});
-  const [ahpError, setAhpError] = useState("");
-  const [ahpCR, setAhpCR] = useState(null);
-  const [savingAHP, setSavingAHP] = useState(false);
-  const [ahpDetailDialogVisible, setAhpDetailDialogVisible] = useState(false);
-  const [lastAHPDetail, setLastAHPDetail] = useState(null);
   const toast = useRef(null);
 
   const fetchData = async () => {
@@ -83,12 +56,6 @@ export default function AdminKriteria() {
 
   useEffect(() => {
     fetchData();
-    try {
-      const saved = localStorage.getItem(AHP_DETAIL_STORAGE_KEY);
-      if (saved) setLastAHPDetail(JSON.parse(saved));
-    } catch (error) {
-      console.error("Gagal membaca detail AHP tersimpan:", error);
-    }
   }, []);
 
   const openAddDialog = () => {
@@ -112,14 +79,9 @@ export default function AdminKriteria() {
 
   const saveKriteria = async () => {
     setSubmitted(true);
-
-    if (
-      !form.nama_kriteria?.trim() ||
-      !form.jenis
-    ) {
+    if (!form.nama_kriteria?.trim() || !form.jenis) {
       return;
     }
-
     try {
       if (isEdit) {
         await updateKriteria(form.id_kriteria, {
@@ -157,125 +119,6 @@ export default function AdminKriteria() {
     }
   };
 
-  const openAHPDialog = () => {
-    const sorted = [...kriteriaList].sort((a, b) => Number(a.id_kriteria) - Number(b.id_kriteria));
-    const initialPairs = {};
-    for (let i = 0; i < sorted.length; i++) {
-      for (let j = i + 1; j < sorted.length; j++) {
-        initialPairs[`${sorted[i].id_kriteria}-${sorted[j].id_kriteria}`] = {
-          moreImportant: null,
-          intensity: null,
-        };
-      }
-    }
-    setAhpPairwise(initialPairs);
-    setAhpError("");
-    setAhpCR(null);
-    setAhpDialogVisible(true);
-  };
-
-  const setAHPPairValue = (pairKey, field, value) => {
-    setAhpPairwise((prev) => {
-      const curr = prev[pairKey] || { moreImportant: null, intensity: null };
-      const next = { ...curr, [field]: value };
-      if (field === "moreImportant" && value === "equal") next.intensity = 1;
-      return { ...prev, [pairKey]: next };
-    });
-  };
-
-  const saveAHPWeights = async () => {
-    const sorted = [...kriteriaList].sort((a, b) => Number(a.id_kriteria) - Number(b.id_kriteria));
-    const n = sorted.length;
-    if (n < 2) {
-      setAhpError("Minimal 2 kriteria diperlukan untuk perbandingan AHP.");
-      return;
-    }
-    if (n > 15) {
-      setAhpError("Jumlah kriteria maksimal 15 untuk perhitungan AHP.");
-      return;
-    }
-
-    const matrix = Array.from({ length: n }, () => Array(n).fill(1));
-    for (let i = 0; i < n; i++) {
-      for (let j = i + 1; j < n; j++) {
-        const idA = Number(sorted[i].id_kriteria);
-        const idB = Number(sorted[j].id_kriteria);
-        const pair = ahpPairwise[`${idA}-${idB}`];
-        if (!pair || pair.moreImportant === null || pair.intensity === null) {
-          setAhpError(`Perbandingan untuk pasangan ${sorted[i].nama_kriteria} vs ${sorted[j].nama_kriteria} belum lengkap.`);
-          return;
-        }
-        const intensity = Number(pair.intensity);
-        if (intensity < 1 || intensity > 9) {
-          setAhpError("Nilai skala AHP harus 1 sampai 9.");
-          return;
-        }
-        let aToB = 1;
-        if (pair.moreImportant !== "equal") {
-          aToB = Number(pair.moreImportant) === idA ? intensity : 1 / intensity;
-        }
-        matrix[i][j] = aToB;
-        matrix[j][i] = 1 / aToB;
-      }
-    }
-
-    const colSums = Array.from({ length: n }, (_, c) => matrix.reduce((s, r) => s + r[c], 0));
-    const normalized = matrix.map((row) => row.map((value, c) => (colSums[c] === 0 ? 0 : value / colSums[c])));
-    const weights = normalized.map((row) => row.reduce((s, v) => s + v, 0) / n);
-    const weightedSums = matrix.map((row) => row.reduce((s, v, c) => s + (v * weights[c]), 0));
-    const lambdaMax = weightedSums.reduce((s, val, i) => s + (weights[i] ? val / weights[i] : 0), 0) / n;
-    const ci = n > 1 ? (lambdaMax - n) / (n - 1) : 0;
-    const cr = (AHP_RI[n] || 0) === 0 ? 0 : ci / AHP_RI[n];
-    const detail = {
-      generated_at: new Date().toISOString(),
-      kriteria: sorted.map((k) => ({ id_kriteria: k.id_kriteria, nama_kriteria: k.nama_kriteria })),
-      matrix,
-      col_sums: colSums,
-      normalized_matrix: normalized,
-      bobot_prioritas: weights,
-      lambda_max: lambdaMax,
-      ci,
-      cr,
-    };
-    setAhpCR(Number(cr.toFixed(4)));
-
-    if (cr > 0.1) {
-      setAhpError(`Rasio konsistensi (CR=${cr.toFixed(4)}) > 0.1. Mohon perbaiki perbandingan.`);
-      return;
-    }
-
-    setSavingAHP(true);
-    setAhpError("");
-    try {
-      await Promise.all(
-        sorted.map((item, index) =>
-          updateKriteria(item.id_kriteria, { bobot_prioritas: weights[index] })
-        )
-      );
-      toast.current.show({
-        severity: "success",
-        summary: "Berhasil",
-        detail: "Bobot kriteria hasil AHP berhasil disimpan.",
-        life: 3000,
-      });
-      setLastAHPDetail(detail);
-      localStorage.setItem(AHP_DETAIL_STORAGE_KEY, JSON.stringify(detail));
-      setAhpDialogVisible(false);
-      fetchData();
-    } catch (err) {
-      console.error("Gagal menyimpan bobot AHP:", err);
-      setAhpError(err?.response?.data?.message || "Gagal menyimpan bobot hasil AHP.");
-    } finally {
-      setSavingAHP(false);
-    }
-  };
-
-  const openAHPDetailDialog = () => {
-    setAhpDetailDialogVisible(true);
-  };
-
-  const formatNumber = (value, digits = 3) => Number(value || 0).toFixed(digits);
-
   const confirmDelete = (rowData) => {
     confirmDialog({
       message: `Apakah Anda yakin ingin menghapus kriteria "${rowData.nama_kriteria}"?`,
@@ -299,8 +142,7 @@ export default function AdminKriteria() {
           toast.current.show({
             severity: "error",
             summary: "Gagal",
-            detail:
-              err.response?.data?.message || "Gagal menghapus data kriteria",
+            detail: err.response?.data?.message || "Gagal menghapus data kriteria",
             life: 4000,
           });
         }
@@ -308,39 +150,33 @@ export default function AdminKriteria() {
     });
   };
 
-  const rowNumberTemplate = (_rowData, options) => {
-    return options.rowIndex + 1;
-  };
+  const rowNumberTemplate = (_rowData, options) => options.rowIndex + 1;
 
-  const jenisTemplate = (rowData) => {
-    return (
-      <Tag
-        value={rowData.jenis}
-        severity={rowData.jenis === "benefit" ? "success" : "danger"}
+  const jenisTemplate = (rowData) => (
+    <Tag
+      value={rowData.jenis}
+      severity={rowData.jenis === "benefit" ? "success" : "danger"}
+    />
+  );
+
+  const aksiTemplate = (rowData) => (
+    <div className="flex gap-2">
+      <Button
+        icon="pi pi-pencil"
+        className="p-button-rounded p-button-info p-button-sm"
+        tooltip="Edit"
+        tooltipOptions={ { position: "top" } }
+        onClick={() => openEditDialog(rowData)}
       />
-    );
-  };
-
-  const aksiTemplate = (rowData) => {
-    return (
-      <div className="flex gap-2">
-        <Button
-          icon="pi pi-pencil"
-          className="p-button-rounded p-button-info p-button-sm"
-          tooltip="Edit"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => openEditDialog(rowData)}
-        />
-        <Button
-          icon="pi pi-trash"
-          className="p-button-rounded p-button-danger p-button-sm"
-          tooltip="Hapus"
-          tooltipOptions={{ position: "top" }}
-          onClick={() => confirmDelete(rowData)}
-        />
-      </div>
-    );
-  };
+      <Button
+        icon="pi pi-trash"
+        className="p-button-rounded p-button-danger p-button-sm"
+        tooltip="Hapus"
+        tooltipOptions={ { position: "top" } }
+        onClick={() => confirmDelete(rowData)}
+      />
+    </div>
+  );
 
   const header = (
     <div className="flex justify-content-between align-items-center">
@@ -352,26 +188,7 @@ export default function AdminKriteria() {
           placeholder="Cari kriteria..."
         />
       </span>
-      <div className="flex gap-2">
-        <Button
-          label="Hitung Bobot AHP"
-          icon="pi pi-calculator"
-          severity="help"
-          onClick={openAHPDialog}
-          disabled={kriteriaList.length < 2}
-        />
-        <Button
-          label="Detail Perhitungan AHP"
-          icon="pi pi-table"
-          severity="secondary"
-          onClick={openAHPDetailDialog}
-        />
-        <Button
-          label="Tambah Kriteria"
-          icon="pi pi-plus"
-          onClick={openAddDialog}
-        />
-      </div>
+      <Button label="Tambah Kriteria" icon="pi pi-plus" onClick={openAddDialog} />
     </div>
   );
 
@@ -392,317 +209,81 @@ export default function AdminKriteria() {
       <Toast ref={toast} />
       <ConfirmDialog />
 
-      <h2 className="text-2xl font-bold text-800">
-          Halaman Kriteria dan Bobot
-        </h2>
-        <hr className="border-top-1 border-300" />
+      <h2 className="text-2xl font-bold text-800">Halaman Kriteria</h2>
+      <hr className="border-top-1 border-300" />
 
-        {error && (
-          <Message severity="error" text={error} className="mb-3 w-full" />
-        )}
+      {error && <Message severity="error" text={error} className="mb-3 w-full" />}
 
-        {loading ? (
-          <div className="flex justify-content-center p-5">
-            <ProgressSpinner />
-          </div>
-        ) : (
-          <DataTable
-            value={kriteriaList}
-            paginator
-            rows={10}
-            dataKey="id_kriteria"
-            globalFilter={globalFilter}
-            header={header}
-            emptyMessage="Data kriteria tidak ditemukan."
-            responsiveLayout="scroll"
-          >
-            <Column
-              header="No"
-              body={rowNumberTemplate}
-              style={{ width: "60px" }}
-            />
-            <Column
-              field="nama_kriteria"
-              header="Nama Kriteria"
-              sortable
-            />
-            <Column
-              field="bobot_prioritas"
-              header="Bobot"
-              sortable
-              style={{ width: "120px" }}
-              body={(rowData) => formatNumber(rowData.bobot_prioritas, 3)}
-            />
-            <Column
-              field="jenis"
-              header="Jenis"
-              body={jenisTemplate}
-              sortable
-              style={{ width: "120px" }}
-            />
-            <Column
-              header="Aksi"
-              body={aksiTemplate}
-              style={{ width: "150px" }}
-            />
-          </DataTable>
-        )}
-
-        {/* Dialog Tambah/Edit */}
-        <Dialog
-          visible={dialogVisible}
-          style={{ width: "450px" }}
-          header={isEdit ? "Edit Kriteria" : "Tambah Kriteria"}
-          modal
-          className="p-fluid"
-          footer={dialogFooter}
-          onHide={hideDialog}
+      {loading ? (
+        <div className="flex justify-content-center p-5">
+          <ProgressSpinner />
+        </div>
+      ) : (
+        <DataTable
+          value={kriteriaList}
+          paginator
+          rows={10}
+          dataKey="id_kriteria"
+          globalFilter={globalFilter}
+          header={header}
+          emptyMessage="Data kriteria tidak ditemukan."
+          responsiveLayout="scroll"
         >
-          <div className="field mb-3">
-            <label htmlFor="nama_kriteria" className="font-bold mb-2 block">
-              Nama Kriteria
-            </label>
-            <InputText
-              id="nama_kriteria"
-              value={form.nama_kriteria}
-              onChange={(e) =>
-                setForm({ ...form, nama_kriteria: e.target.value })
-              }
-              className={
-                submitted && !form.nama_kriteria?.trim() ? "p-invalid" : ""
-              }
-            />
-            {submitted && !form.nama_kriteria?.trim() && (
-              <small className="p-error">Nama Kriteria wajib diisi.</small>
-            )}
-          </div>
-
-          <div className="field mb-3">
-            <Message
-              severity="info"
-              text="Bobot kriteria diisi otomatis dari proses AHP admin (tombol Hitung Bobot AHP)."
-              className="w-full"
-            />
-          </div>
-
-          <div className="field mb-3">
-            <label htmlFor="jenis" className="font-bold mb-2 block">
-              Jenis
-            </label>
-            <Dropdown
-              id="jenis"
-              value={form.jenis}
-              options={jenisOptions}
-              onChange={(e) => setForm({ ...form, jenis: e.value })}
-              placeholder="Pilih Jenis"
-              className={submitted && !form.jenis ? "p-invalid" : ""}
-            />
-            {submitted && !form.jenis && (
-              <small className="p-error">Jenis wajib dipilih.</small>
-            )}
-          </div>
-
-        </Dialog>
-
-        <Dialog
-          visible={ahpDialogVisible}
-          style={{ width: "900px", maxWidth: "95vw" }}
-          header="Perbandingan Berpasangan AHP (Admin)"
-          modal
-          className="p-fluid"
-          onHide={() => setAhpDialogVisible(false)}
-          footer={
-            <div className="flex justify-content-end gap-2">
-              <Button
-                label="Batal"
-                icon="pi pi-times"
-                className="p-button-text"
-                onClick={() => setAhpDialogVisible(false)}
-                disabled={savingAHP}
-              />
-              <Button
-                label={savingAHP ? "Menyimpan..." : "Hitung & Simpan Bobot"}
-                icon={savingAHP ? "pi pi-spin pi-spinner" : "pi pi-check"}
-                onClick={saveAHPWeights}
-                disabled={savingAHP}
-              />
-            </div>
-          }
-        >
-          <Message
-            severity="info"
-            text="Isi seluruh perbandingan antar kriteria dengan skala AHP 1-9. Bobot akan dihitung otomatis lalu disimpan ke bobot_prioritas."
-            className="mb-3 w-full"
+          <Column header="No" body={rowNumberTemplate} style={ { width: "80px" } } />
+          <Column field="nama_kriteria" header="Nama Kriteria" sortable />
+          <Column
+            field="jenis"
+            header="Jenis"
+            body={jenisTemplate}
+            sortable
+            style={ { width: "150px" } }
           />
-          {ahpError && <Message severity="error" text={ahpError} className="mb-3 w-full" />}
-          {ahpCR !== null && !ahpError && (
-            <Message severity="success" text={`Rasio konsistensi (CR): ${ahpCR}`} className="mb-3 w-full" />
+          <Column header="Aksi" body={aksiTemplate} style={ { width: "150px" } } />
+        </DataTable>
+      )}
+
+      {/* Dialog Tambah/Edit */}
+      <Dialog
+        visible={dialogVisible}
+        style={ { width: "450px" } }
+        header={isEdit ? "Edit Kriteria" : "Tambah Kriteria"}
+        modal
+        className="p-fluid"
+        footer={dialogFooter}
+        onHide={hideDialog}
+      >
+        <div className="field mb-3">
+          <label htmlFor="nama_kriteria" className="font-bold mb-2 block">
+            Nama Kriteria
+          </label>
+          <InputText
+            id="nama_kriteria"
+            value={form.nama_kriteria}
+            onChange={(e) => setForm({ ...form, nama_kriteria: e.target.value })}
+            className={submitted && !form.nama_kriteria?.trim() ? "p-invalid" : ""}
+          />
+          {submitted && !form.nama_kriteria?.trim() && (
+            <small className="p-error">Nama Kriteria wajib diisi.</small>
           )}
-          <div style={{ maxHeight: "55vh", overflow: "auto" }}>
-            <table className="w-full" style={{ borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  <th className="border-1 border-300 p-2 text-left surface-100">No</th>
-                  <th className="border-1 border-300 p-2 text-left surface-100">Kriteria A</th>
-                  <th className="border-1 border-300 p-2 text-left surface-100">Perbandingan</th>
-                  <th className="border-1 border-300 p-2 text-left surface-100">Kriteria B</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...kriteriaList]
-                  .sort((a, b) => Number(a.id_kriteria) - Number(b.id_kriteria))
-                  .flatMap((kA, i, arr) =>
-                    arr.slice(i + 1).map((kB, j) => {
-                      // Rumus deret untuk nomor urut pasangan (1..nC2) tanpa counter terpisah.
-                      const rowNo = ((i * (2 * arr.length - i - 1)) / 2) + j + 1;
-                      const key = `${kA.id_kriteria}-${kB.id_kriteria}`;
-                      const pair = ahpPairwise[key] || { moreImportant: null, intensity: null };
-                      const whoOptions = [
-                        { label: `${kA.nama_kriteria} lebih penting`, value: Number(kA.id_kriteria) },
-                        { label: "Keduanya sama penting", value: "equal" },
-                        { label: `${kB.nama_kriteria} lebih penting`, value: Number(kB.id_kriteria) },
-                      ];
-                      return (
-                        <tr key={key} className={rowNo % 2 === 0 ? "surface-50" : ""}>
-                          <td className="border-1 border-300 p-2">{rowNo}</td>
-                          <td className="border-1 border-300 p-2">{kA.nama_kriteria}</td>
-                          <td className="border-1 border-300 p-2">
-                            <div className="flex flex-column gap-2">
-                              <Dropdown
-                                value={pair.moreImportant}
-                                options={whoOptions}
-                                optionLabel="label"
-                                optionValue="value"
-                                onChange={(e) => setAHPPairValue(key, "moreImportant", e.value)}
-                                placeholder="Pilih arah kepentingan"
-                              />
-                              <Dropdown
-                                value={pair.intensity}
-                                options={ahpScaleOptions}
-                                optionLabel="label"
-                                optionValue="value"
-                                onChange={(e) => setAHPPairValue(key, "intensity", Number(e.value))}
-                                placeholder="Pilih skala 1-9"
-                                disabled={pair.moreImportant === null}
-                              />
-                            </div>
-                          </td>
-                          <td className="border-1 border-300 p-2">{kB.nama_kriteria}</td>
-                        </tr>
-                      );
-                    })
-                  )}
-              </tbody>
-            </table>
-          </div>
-        </Dialog>
+        </div>
 
-        <Dialog
-          visible={ahpDetailDialogVisible}
-          style={{ width: "1100px", maxWidth: "95vw" }}
-          header="Detail Perhitungan AHP"
-          modal
-          className="p-fluid"
-          onHide={() => setAhpDetailDialogVisible(false)}
-          footer={
-            <div className="flex justify-content-end">
-              <Button
-                label="Tutup"
-                icon="pi pi-times"
-                className="p-button-text"
-                onClick={() => setAhpDetailDialogVisible(false)}
-              />
-            </div>
-          }
-        >
-          {!lastAHPDetail ? (
-            <Message
-              severity="warn"
-              text="belum ada perhitungan ahp yang dilakukan"
-              className="w-full"
-            />
-          ) : (
-            <div className="flex flex-column gap-3">
-              <Message
-                severity="info"
-                text={`Terakhir dihitung: ${new Date(lastAHPDetail.generated_at).toLocaleString("id-ID")} | CR: ${formatNumber(lastAHPDetail.cr)}`}
-                className="w-full"
-              />
-
-              <div>
-                <h4 className="mt-0 mb-2">Matriks Perbandingan Berpasangan</h4>
-                <div style={{ overflowX: "auto" }}>
-                  <table className="w-full" style={{ borderCollapse: "collapse", minWidth: "700px" }}>
-                    <thead>
-                      <tr>
-                        <th className="border-1 border-300 p-2 text-left surface-100">Kriteria</th>
-                        {lastAHPDetail.kriteria.map((k) => (
-                          <th key={`pair-head-${k.id_kriteria}`} className="border-1 border-300 p-2 text-left surface-100">
-                            {k.nama_kriteria}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lastAHPDetail.matrix.map((row, rowIndex) => (
-                        <tr key={`pair-row-${lastAHPDetail.kriteria[rowIndex].id_kriteria}`}>
-                          <td className="border-1 border-300 p-2 font-medium">{lastAHPDetail.kriteria[rowIndex].nama_kriteria}</td>
-                          {row.map((cell, colIndex) => (
-                            <td key={`pair-cell-${rowIndex}-${colIndex}`} className="border-1 border-300 p-2">
-                              {formatNumber(cell)}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                      <tr>
-                        <td className="border-1 border-300 p-2 font-semibold">Jumlah Kolom (Matriks Awal)</td>
-                        {lastAHPDetail.col_sums.map((sum, index) => (
-                          <td key={`pair-sum-${index}`} className="border-1 border-300 p-2">
-                            {formatNumber(sum)}
-                          </td>
-                        ))}
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="mt-0 mb-2">Matriks Normalisasi & Bobot</h4>
-                <div style={{ overflowX: "auto" }}>
-                  <table className="w-full" style={{ borderCollapse: "collapse", minWidth: "700px" }}>
-                    <thead>
-                      <tr>
-                        <th className="border-1 border-300 p-2 text-left surface-100">Kriteria</th>
-                        {lastAHPDetail.kriteria.map((k) => (
-                          <th key={`norm-head-${k.id_kriteria}`} className="border-1 border-300 p-2 text-left surface-100">
-                            {k.nama_kriteria}
-                          </th>
-                        ))}
-                        <th className="border-1 border-300 p-2 text-left surface-100">Bobot</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lastAHPDetail.normalized_matrix.map((row, rowIndex) => (
-                        <tr key={`norm-row-${lastAHPDetail.kriteria[rowIndex].id_kriteria}`}>
-                          <td className="border-1 border-300 p-2 font-medium">{lastAHPDetail.kriteria[rowIndex].nama_kriteria}</td>
-                          {row.map((cell, colIndex) => (
-                            <td key={`norm-cell-${rowIndex}-${colIndex}`} className="border-1 border-300 p-2">
-                              {formatNumber(cell)}
-                            </td>
-                          ))}
-                          <td className="border-1 border-300 p-2 font-semibold">
-                             {formatNumber(lastAHPDetail.bobot_prioritas[rowIndex], 3)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+        <div className="field mb-3">
+          <label htmlFor="jenis" className="font-bold mb-2 block">
+            Jenis
+          </label>
+          <Dropdown
+            id="jenis"
+            value={form.jenis}
+            options={jenisOptions}
+            onChange={(e) => setForm({ ...form, jenis: e.value })}
+            placeholder="Pilih Jenis"
+            className={submitted && !form.jenis ? "p-invalid" : ""}
+          />
+          {submitted && !form.jenis && (
+            <small className="p-error">Jenis wajib dipilih.</small>
           )}
-        </Dialog>
+        </div>
+      </Dialog>
     </>
   );
 }

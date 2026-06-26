@@ -5,63 +5,46 @@ const db = require('../database/connection').db;
 const { KRITERIA_TABLE, SUB_KRITERIA_TABLE } = require('../constants/database');
 const { API_STATUS, RESPONSE_DATA_KEYS } = require('../constants/general');
 
-// Helper function to handle batas values (used in createSubKriteria and updateSubKriteria)
-// Returns the value as-is to preserve text format like "09.00", "09.01", "24 jam"
+// Helper untuk batas: kembalikan apa adanya supaya format "09.00", "24 jam" terjaga
 const parseBatasValue = (value) => {
   if (value === null || value === undefined) return null;
-  
-  // Return empty string as null
   if (typeof value === 'string' && value.trim() === '') return null;
-  
-  // Return the value as-is (string) to preserve format
-  // This allows "09.00", "09.01", "24 jam" to be stored exactly as entered
   return typeof value === 'string' ? value.trim() : String(value);
 };
 
 module.exports = {
   // GET /api/v1/kriteria
-  // Digunakan Frontend untuk membuat Label Dropdown Form SPK
   getAllKriteria: async (req, res) => {
     try {
       const data = await db(KRITERIA_TABLE)
-        .select(
-            'id_kriteria', 
-            'nama_kriteria', 
-            'jenis',          // cost / benefit
-            'bobot_prioritas'
-        ) 
+        .select('id_kriteria', 'nama_kriteria', 'jenis')
         .orderBy('id_kriteria', 'asc');
 
       return res.json({
         status: API_STATUS.SUCCESS,
         message: 'Data Kriteria berhasil diambil',
         data: {
-          // Hasilnya akan jadi -> "list_kriteria": [ ... ]
           [RESPONSE_DATA_KEYS.KRITERIA]: data
         }
       });
     } catch (error) {
       console.error("Error Get Kriteria:", error);
-      return res.status(500).json({ 
+      return res.status(500).json({
         status: API_STATUS.FAILED,
-        message: 'Gagal mengambil data kriteria' 
+        message: 'Gagal mengambil data kriteria'
       });
     }
   },
 
   // GET /api/v1/subkriteria/:id
-  // Menampilkan pilihan (dropdown options) berdasarkan kriteria yang dipilih
   getSubKriteriaByKriteria: async (req, res) => {
     try {
       const { id } = req.params;
 
-      // 1. AMBIL INFO KRITERIA (INDUKNYA) DULU
-      // Supaya kita tahu ID sekian itu namanya apa (Misal: "Harga Tiket")
       const detailKriteria = await db(KRITERIA_TABLE)
         .where('id_kriteria', id)
         .first();
 
-      // Validasi: Kalau kriterianya gak ada, stop.
       if (!detailKriteria) {
         return res.status(404).json({
           status: API_STATUS.NOT_FOUND,
@@ -69,29 +52,24 @@ module.exports = {
         });
       }
 
-      // 2. AMBIL LIST SUB-KRITERIA (ANAKNYA)
       const listSub = await db(SUB_KRITERIA_TABLE)
         .where('id_kriteria', id)
         .select('*')
-        .orderBy('nilai_bobot', 'asc'); // Sesuai kolom di database Anda
+        .orderBy('nilai_bobot', 'asc');
 
-      // 3. GABUNGKAN DALAM RESPON JSON
       return res.json({
         status: API_STATUS.SUCCESS,
         message: 'Data Sub-Kriteria berhasil diambil',
         data: {
-          // Info Induk (Supaya frontend gak bingung)
-          kriteria: detailKriteria, 
-          // Info Anak
+          kriteria: detailKriteria,
           [RESPONSE_DATA_KEYS.SUB_KRITERIA]: listSub
         }
       });
-
     } catch (error) {
       console.error("Error Get Sub-Kriteria:", error);
-      return res.status(500).json({ 
-          status: API_STATUS.FAILED,
-          message: 'Terjadi kesalahan server'
+      return res.status(500).json({
+        status: API_STATUS.FAILED,
+        message: 'Terjadi kesalahan server'
       });
     }
   },
@@ -101,15 +79,17 @@ module.exports = {
     try {
       const { nama_kriteria, jenis } = req.body;
 
-      // Validasi sederhana
       if (!nama_kriteria || !jenis) {
-        return res.status(400).json({ status: API_STATUS.BAD_REQUEST, message: 'Field nama_kriteria dan jenis wajib diisi' });
+        return res.status(400).json({
+          status: API_STATUS.BAD_REQUEST,
+          message: 'Field nama_kriteria dan jenis wajib diisi'
+        });
       }
 
       await db(KRITERIA_TABLE).insert({
         nama_kriteria,
-        jenis, // 'cost' atau 'benefit'
-        bobot_prioritas: 0
+        jenis,            // 'cost' atau 'benefit'
+        bobot_prioritas: 0 // default; bobot asli dihitung dari preferensi user (AHP)
       });
 
       return res.status(201).json({
@@ -122,18 +102,15 @@ module.exports = {
     }
   },
 
-  // [PUT] Update Kriteria
+  // [PUT] Update Kriteria (hanya nama & jenis)
   updateKriteria: async (req, res) => {
     try {
-      const { id } = req.params; // id_kriteria dari URL
-      const { nama_kriteria, jenis,  } = req.body;
-      const payload = {
-        updated_at: new Date()
-      };
+      const { id } = req.params;
+      const { nama_kriteria, jenis } = req.body;
 
+      const payload = { updated_at: new Date() };
       if (nama_kriteria !== undefined) payload.nama_kriteria = nama_kriteria;
       if (jenis !== undefined) payload.jenis = jenis;
-      if (bobot_prioritas !== undefined) payload.bobot_prioritas = Number(bobot_prioritas);
 
       await db(KRITERIA_TABLE)
         .where('id_kriteria', id)
@@ -154,10 +131,7 @@ module.exports = {
     try {
       const { id } = req.params;
 
-      // Hapus anak-anaknya (sub_kriteria) dulu agar tidak error constraint
       await db(SUB_KRITERIA_TABLE).where('id_kriteria', id).del();
-      
-      // Baru hapus bapaknya
       await db(KRITERIA_TABLE).where('id_kriteria', id).del();
 
       return res.json({
@@ -176,7 +150,10 @@ module.exports = {
       const { id_kriteria, code_kriteria, nama_sub_kriteria, nilai_bobot, batas_bawah, batas_atas } = req.body;
 
       if (!id_kriteria || !nama_sub_kriteria || nilai_bobot === undefined || nilai_bobot === null) {
-        return res.status(400).json({ status: API_STATUS.BAD_REQUEST, message: 'Field id_kriteria, nama_sub_kriteria, dan nilai_bobot wajib diisi' });
+        return res.status(400).json({
+          status: API_STATUS.BAD_REQUEST,
+          message: 'Field id_kriteria, nama_sub_kriteria, dan nilai_bobot wajib diisi'
+        });
       }
 
       await db(SUB_KRITERIA_TABLE).insert({
@@ -202,7 +179,6 @@ module.exports = {
   deleteSubKriteria: async (req, res) => {
     try {
       const { id } = req.params;
-
       const deleted = await db(SUB_KRITERIA_TABLE).where('id_sub', id).del();
 
       if (!deleted) {
@@ -225,7 +201,7 @@ module.exports = {
   // [PUT] Update Sub-Kriteria (Nilai/Nama)
   updateSubKriteria: async (req, res) => {
     try {
-      const { id } = req.params; // id_sub (bukan id_kriteria)
+      const { id } = req.params; // id_sub
       const { nama_sub_kriteria, nilai_bobot, batas_bawah, batas_atas } = req.body;
 
       await db(SUB_KRITERIA_TABLE)

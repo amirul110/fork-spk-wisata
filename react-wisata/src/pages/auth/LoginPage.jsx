@@ -76,7 +76,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="contoh: budi@gmail.com"
+        
               required
               className="w-full"
             />
@@ -87,7 +87,6 @@ export default function LoginPage() {
             <Password
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="masukkan password"
               toggleMask
               feedback={false}
               required
