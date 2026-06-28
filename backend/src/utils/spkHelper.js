@@ -29,37 +29,32 @@ const RI_TABLE = {
 
 // Bobot DINAMIS dari matriks perbandingan berpasangan AHP (input user)
 const hitungBobotAHP = (matrix) => {
-	const n = matrix.length
+  const n = matrix.length
 
-	// 1. Jumlah tiap kolom
-	const colSum = new Array(n).fill(0)
-	for (let j = 0; j < n; j++) {
-		for (let i = 0; i < n; i++) colSum[j] += Number(matrix[i][j])
-	}
+  // 1. Jumlah tiap kolom
+  const colSum = new Array(n).fill(0)
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) colSum[j] += Number(matrix[i][j])
+  }
 
-	// 2. Normalisasi -> rata-rata baris = bobot prioritas (eigenvector)
-	const weights = new Array(n).fill(0)
-	for (let i = 0; i < n; i++) {
-		let rowSum = 0
-		for (let j = 0; j < n; j++) rowSum += Number(matrix[i][j]) / colSum[j]
-		weights[i] = rowSum / n
-	}
+  // 2. Normalisasi -> rata-rata baris = bobot prioritas
+  const weights = new Array(n).fill(0)
+  for (let i = 0; i < n; i++) {
+    let rowSum = 0
+    for (let j = 0; j < n; j++) rowSum += Number(matrix[i][j]) / colSum[j]
+    weights[i] = rowSum / n
+  }
 
-	// 3. Lambda max
-	let lambdaMax = 0
-	for (let i = 0; i < n; i++) {
-		let aw = 0
-		for (let j = 0; j < n; j++) aw += Number(matrix[i][j]) * weights[j]
-		lambdaMax += aw / weights[i]
-	}
-	lambdaMax /= n
+  // 3. λmax (rumus manual AHP: Σⱼ jumlah kolom × bobot)
+  let lambdaMax = 0
+  for (let j = 0; j < n; j++) lambdaMax += colSum[j] * weights[j]
 
-	// 4. CI & CR
-	const CI = n > 1 ? (lambdaMax - n) / (n - 1) : 0
-	const RI = RI_TABLE[n] || 1.49
-	const CR = RI === 0 ? 0 : CI / RI
+  // 4. CI & CR
+  const CI = n > 1 ? (lambdaMax - n) / (n - 1) : 0
+  const RI = RI_TABLE[n] || 1.49
+  const CR = RI === 0 ? 0 : CI / RI
 
-	return { weights, lambdaMax, CI, CR, konsisten: CR < 0.1 }
+  return { weights, lambdaMax, CI, CR, konsisten: CR < 0.1 }
 }
 
 module.exports = { hitungJarakKm, hitungBobotAHP }

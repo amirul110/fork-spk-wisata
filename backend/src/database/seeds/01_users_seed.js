@@ -38,23 +38,18 @@ exports.seed = async function(knex) {
   // =========================================================
   // 4. INSERT WISATAWAN (Password Sama)
   // =========================================================
-  await knex('wisatawan').insert([
-    {
-      username: 'Budi Traveler',
-      email: 'budi@gmail.com',
-      password: hashedPassword, // Pakai password yang sama
-    },
-    {
-      username: 'Siti Petualang',
-      email: 'siti@gmail.com',
-      password: hashedPassword, 
-    },
-    {
-      username: 'Andi Backpacker',
-      email: 'andi@gmail.com',
-      password: hashedPassword,
-    }
-  ]);
+// =========================================================
+// 4. INSERT WISATAWAN (Password Sama) — 7 wisatawan
+// =========================================================
+await knex('wisatawan').insert([
+  { username: 'Budi Traveler',    email: 'budi@gmail.com',   password: hashedPassword },
+  { username: 'Siti Petualang',   email: 'siti@gmail.com',   password: hashedPassword },
+  { username: 'Andi Backpacker',  email: 'andi@gmail.com',   password: hashedPassword },
+  { username: 'Dewi Explorer',    email: 'dewi@gmail.com',   password: hashedPassword },
+  { username: 'Eko Wanderer',     email: 'eko@gmail.com',    password: hashedPassword },
+  { username: 'Fitri Adventurer', email: 'fitri@gmail.com',  password: hashedPassword },
+  { username: 'Gilang Nomad',     email: 'gilang@gmail.com', password: hashedPassword },
+]);
 
   console.log("✅ Seed Data Berhasil! Admin & Wisatawan passwordnya sama.");
 };

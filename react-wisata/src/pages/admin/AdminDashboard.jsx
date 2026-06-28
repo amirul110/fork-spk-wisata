@@ -103,7 +103,6 @@ export default function AdminDashboard() {
             >
               <Column header="No" body={kriteriaRowIndex} style={{ width: "60px" }} />
               <Column field="nama_kriteria" header="Nama Kriteria" sortable />
-              <Column field="bobot_prioritas" header="Bobot Prioritas" sortable style={{ width: "150px" }} />
               <Column header="Jenis" body={jenisTemplate} style={{ width: "120px" }} />
             </DataTable>
           </div>

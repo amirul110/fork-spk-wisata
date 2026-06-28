@@ -28,7 +28,6 @@ const emptyForm = {
   deskripsi: '',
   gambar: null,
   gambar_list: [],
-  gambar_dashboard_list: [],
 }
 
 const getHargaSubKriteria = (harga) => {
@@ -81,11 +80,6 @@ export default function AdminAlternatif() {
   const [deletingGambarId, setDeletingGambarId] = useState(null)
   const fileUploadRef = useRef(null)
 
-  // Gambar Dashboard
-  const [selectedDashboardFiles, setSelectedDashboardFiles] = useState([])
-  const [deletingDashboardId, setDeletingDashboardId] = useState(null)
-  const fileUploadDashboardRef = useRef(null)
-
   const toast = useRef(null)
 
   useEffect(() => {
@@ -108,7 +102,6 @@ export default function AdminAlternatif() {
   const openNew = () => {
     setForm({ ...emptyForm })
     setSelectedFiles([])
-    setSelectedDashboardFiles([])
     setIsEdit(false)
     setEditId(null)
     setDialogVisible(true)
@@ -119,10 +112,8 @@ export default function AdminAlternatif() {
       ...rowData,
       atraksi_wisata: rowData.atraksi_wisata || '',
       gambar_list: rowData.gambar_list || [],
-      gambar_dashboard_list: rowData.gambar_dashboard_list || [],
     })
     setSelectedFiles([])
-    setSelectedDashboardFiles([])
     setIsEdit(true)
     setEditId(rowData.id_alternatif)
     setDialogVisible(true)
@@ -132,9 +123,7 @@ export default function AdminAlternatif() {
     setDialogVisible(false)
     setForm({ ...emptyForm })
     setSelectedFiles([])
-    setSelectedDashboardFiles([])
     if (fileUploadRef.current) fileUploadRef.current.clear()
-    if (fileUploadDashboardRef.current) fileUploadDashboardRef.current.clear()
   }
 
   const handleDeleteGambar = async (gambarId) => {
@@ -150,22 +139,6 @@ export default function AdminAlternatif() {
       toast.current.show({ severity: 'error', summary: 'Gagal', detail: 'Gagal menghapus gambar', life: 3000 })
     } finally {
       setDeletingGambarId(null)
-    }
-  }
-
-  const handleDeleteGambarDashboard = async (gambarId) => {
-    setDeletingDashboardId(gambarId)
-    try {
-      await api.delete(`/admin/wisata/${editId}/gambar-dashboard/${gambarId}`)
-      setForm((prev) => ({
-        ...prev,
-        gambar_dashboard_list: prev.gambar_dashboard_list.filter((g) => g.id !== gambarId),
-      }))
-      toast.current.show({ severity: 'success', summary: 'Berhasil', detail: 'Gambar dashboard dihapus', life: 2000 })
-    } catch {
-      toast.current.show({ severity: 'error', summary: 'Gagal', detail: 'Gagal menghapus gambar dashboard', life: 3000 })
-    } finally {
-      setDeletingDashboardId(null)
     }
   }
 
@@ -185,7 +158,6 @@ export default function AdminAlternatif() {
       formData.append('atraksi_wisata', form.atraksi_wisata || '')
       formData.append('deskripsi', form.deskripsi || '')
       selectedFiles.forEach((f) => formData.append('gambar_list', f))
-      selectedDashboardFiles.forEach((f) => formData.append('gambar_dashboard', f))
 
       if (isEdit) {
         await updateAlternatif(editId, formData)
@@ -229,7 +201,7 @@ export default function AdminAlternatif() {
           setFacilityDialogVisible(true)
         }}
         tooltip="Detail Sub Kriteria"
-        tooltipOptions={{ position: 'top' }}
+        tooltipOptions={ { position: 'top' } }
       />
     </div>
   )
@@ -246,29 +218,10 @@ export default function AdminAlternatif() {
           alt={rowData.nama_wisata}
           width="60"
           height="45"
-          style={{ objectFit: 'cover', borderRadius: '4px' }}
+          style={ { objectFit: 'cover', borderRadius: '4px' } }
           preview
         />
-        {gambarList.length > 1 && <Tag value={`+${gambarList.length - 1}`} severity="info" rounded style={{ fontSize: '0.7rem' }} />}
-      </div>
-    )
-  }
-
-  // Kolom "Gambar Dashboard"
-  const dashboardImageTemplate = (rowData) => {
-    const list = rowData.gambar_dashboard_list || []
-    if (list.length === 0) return <span className="text-400 text-sm">-</span>
-    return (
-      <div className="flex align-items-center gap-1">
-        <Image
-          src={`${BACKEND_URL}/uploads/${list[0].nama_file}`}
-          alt={rowData.nama_wisata}
-          width="60"
-          height="45"
-          style={{ objectFit: 'cover', borderRadius: '4px' }}
-          preview
-        />
-        {list.length > 1 && <Tag value={`+${list.length - 1}`} severity="info" rounded style={{ fontSize: '0.7rem' }} />}
+        {gambarList.length > 1 && <Tag value={`+${gambarList.length - 1}`} severity="info" rounded style={ { fontSize: '0.7rem' } } />}
       </div>
     )
   }
@@ -315,10 +268,9 @@ export default function AdminAlternatif() {
           globalFilter={globalFilter}
           emptyMessage="Tidak ada data wisata."
         >
-          <Column header="No" body={rowNumber} style={{ width: '60px' }} />
+          <Column header="No" body={rowNumber} style={ { width: '60px' } } />
           <Column field="nama_wisata" header="Nama Wisata" sortable />
-          <Column header="Gambar Wisata" body={imageTemplate} style={{ width: '110px' }} />
-          <Column header="Gambar Dashboard" body={dashboardImageTemplate} style={{ width: '110px' }} />
+          <Column header="Gambar Wisata" body={imageTemplate} style={ { width: '110px' } } />
           <Column field="latitude" header="Latitude" sortable />
           <Column field="longitude" header="Longitude" sortable />
           <Column field="rating_gmaps" header="Rating" sortable />
@@ -332,7 +284,7 @@ export default function AdminAlternatif() {
       <Dialog
         visible={dialogVisible}
         header={isEdit ? 'Edit Data Wisata' : 'Tambah Data Wisata'}
-        style={{ width: '560px', maxWidth: '95vw' }}
+        style={ { width: '560px', maxWidth: '95vw' } }
         modal
         onHide={hideDialog}
         footer={
@@ -364,30 +316,32 @@ export default function AdminAlternatif() {
           </div>
 
           {/* Upload Gambar Wisata (galeri) */}
-          <div>
-            <label className="block mb-1 font-semibold text-sm">
-              <i className="pi pi-images mr-1"></i>
-              Gambar Wisata (galeri, bisa pilih lebih dari 1)
-            </label>
-            <FileUpload
-              ref={fileUploadRef}
-              mode="advanced"
-              multiple
-              accept="image/*"
-              maxFileSize={10000000}
-              chooseLabel="Pilih Gambar"
-              customUpload
-              auto={false}
-              onSelect={(e) => setSelectedFiles(Array.from(e.files))}
-              onClear={() => setSelectedFiles([])}
-              onRemove={(e) => setSelectedFiles((prev) => prev.filter((f) => f.name !== e.file.name))}
-            />
-            {selectedFiles.length > 0 && (
-              <div className="mt-1">
-                <Tag icon="pi pi-check-circle" value={`${selectedFiles.length} file dipilih`} severity="success" />
-              </div>
-            )}
-          </div>
+    {/* Upload Gambar Wisata (maksimal 1 foto) */}
+{/* Upload Gambar Wisata (maksimal 1 foto) */}
+<div>
+  <label className="block mb-1 font-semibold text-sm">
+    <i className="pi pi-image mr-1"></i>
+    Gambar Wisata (maksimal 1 foto)
+  </label>
+  <FileUpload
+    ref={fileUploadRef}
+    mode="advanced"
+    accept="image/*"
+    maxFileSize={10000000}
+    chooseLabel={(form.gambar_list?.length || 0) > 0 ? 'Ganti Foto' : 'Tambah Foto'}
+    customUpload
+    auto={false}
+    uploadOptions={ { style: { display: 'none' } } }
+    onSelect={(e) => setSelectedFiles(e.files.slice(0, 1))}
+    onClear={() => setSelectedFiles([])}
+    onRemove={() => setSelectedFiles([])}
+  />
+  {selectedFiles.length > 0 && (
+    <div className="mt-1">
+      <Tag icon="pi pi-check-circle" value="1 file dipilih" severity="success" />
+    </div>
+  )}
+</div>
 
           {/* Daftar Gambar Wisata tersimpan (saat edit) */}
           {isEdit && form.gambar_list && form.gambar_list.length > 0 && (
@@ -395,14 +349,14 @@ export default function AdminAlternatif() {
               <label className="block mb-1 font-semibold text-sm">Gambar Wisata Tersimpan ({form.gambar_list.length})</label>
               <div className="flex flex-wrap gap-2">
                 {form.gambar_list.map((g, i) => (
-                  <div key={g.id} className="relative border-round overflow-hidden border-1 border-300" style={{ width: '80px', height: '80px' }}>
+                  <div key={g.id} className="relative border-round overflow-hidden border-1 border-300" style={ { width: '80px', height: '80px' } }>
                     <img
                       src={`${BACKEND_URL}/uploads/${g.nama_file}`}
                       alt={`gambar-${i + 1}`}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      style={ { width: '100%', height: '100%', objectFit: 'cover' } }
                     />
                     {i === 0 && (
-                      <Tag value="Utama" severity="success" style={{ position: 'absolute', bottom: '2px', left: '2px', fontSize: '0.6rem' }} />
+                      <Tag value="Utama" severity="success" style={ { position: 'absolute', bottom: '2px', left: '2px', fontSize: '0.6rem' } } />
                     )}
                     <Button
                       icon={deletingGambarId === g.id ? 'pi pi-spin pi-spinner' : 'pi pi-times'}
@@ -410,59 +364,7 @@ export default function AdminAlternatif() {
                       rounded
                       disabled={deletingGambarId === g.id}
                       onClick={() => handleDeleteGambar(g.id)}
-                      style={{ position: 'absolute', top: '2px', right: '2px', width: '20px', height: '20px', padding: 0 }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Upload Gambar Dashboard */}
-          <div>
-            <label className="block mb-1 font-semibold text-sm">
-              <i className="pi pi-images mr-1"></i>
-              Gambar Dashboard (tampil di dashboard wisatawan, bisa lebih dari 1)
-            </label>
-            <FileUpload
-              ref={fileUploadDashboardRef}
-              mode="advanced"
-              multiple
-              accept="image/*"
-              maxFileSize={10000000}
-              chooseLabel="Pilih Gambar Dashboard"
-              customUpload
-              auto={false}
-              onSelect={(e) => setSelectedDashboardFiles(Array.from(e.files))}
-              onClear={() => setSelectedDashboardFiles([])}
-              onRemove={(e) => setSelectedDashboardFiles((prev) => prev.filter((f) => f.name !== e.file.name))}
-            />
-            {selectedDashboardFiles.length > 0 && (
-              <div className="mt-1">
-                <Tag icon="pi pi-check-circle" value={`${selectedDashboardFiles.length} file dipilih`} severity="success" />
-              </div>
-            )}
-          </div>
-
-          {/* Daftar Gambar Dashboard tersimpan (saat edit) */}
-          {isEdit && form.gambar_dashboard_list && form.gambar_dashboard_list.length > 0 && (
-            <div>
-              <label className="block mb-1 font-semibold text-sm">Gambar Dashboard Tersimpan ({form.gambar_dashboard_list.length})</label>
-              <div className="flex flex-wrap gap-2">
-                {form.gambar_dashboard_list.map((g, i) => (
-                  <div key={g.id} className="relative border-round overflow-hidden border-1 border-300" style={{ width: '80px', height: '80px' }}>
-                    <img
-                      src={`${BACKEND_URL}/uploads/${g.nama_file}`}
-                      alt={`dashboard-${i + 1}`}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    <Button
-                      icon={deletingDashboardId === g.id ? 'pi pi-spin pi-spinner' : 'pi pi-times'}
-                      severity="danger"
-                      rounded
-                      disabled={deletingDashboardId === g.id}
-                      onClick={() => handleDeleteGambarDashboard(g.id)}
-                      style={{ position: 'absolute', top: '2px', right: '2px', width: '20px', height: '20px', padding: 0 }}
+                      style={ { position: 'absolute', top: '2px', right: '2px', width: '20px', height: '20px', padding: 0 } }
                     />
                   </div>
                 ))}
@@ -564,7 +466,7 @@ export default function AdminAlternatif() {
         visible={facilityDialogVisible}
         header="Detail Sub Kriteria"
         modal
-        style={{ width: '700px', maxWidth: '95vw' }}
+        style={ { width: '700px', maxWidth: '95vw' } }
         onHide={() => setFacilityDialogVisible(false)}
       >
         {selectedWisataForFacility &&

@@ -11,14 +11,10 @@ module.exports = {
       const gambarArr = ids.length
         ? await db('wisata_gambar').whereIn('id_alternatif', ids).orderBy('urutan')
         : [];
-      const gambarDashboardArr = ids.length
-        ? await db('wisata_gambar_dashboard').whereIn('id_alternatif', ids).orderBy('urutan')
-        : [];
 
       const result = data.map((w) => ({
         ...w,
         gambar_list: gambarArr.filter((g) => g.id_alternatif === w.id_alternatif),
-        gambar_dashboard_list: gambarDashboardArr.filter((g) => g.id_alternatif === w.id_alternatif),
       }));
 
       return res.json({
@@ -42,13 +38,12 @@ module.exports = {
       }
 
       const gambarArr = await db('wisata_gambar').where('id_alternatif', id).orderBy('urutan');
-      const gambarDashboardArr = await db('wisata_gambar_dashboard').where('id_alternatif', id).orderBy('urutan');
 
       return res.json({
         status: API_STATUS.SUCCESS,
         message: 'Detail Wisata ditemukan',
         data: {
-          [RESPONSE_DATA_KEYS.WISATA_DETAIL]: { ...data, gambar_list: gambarArr, gambar_dashboard_list: gambarDashboardArr },
+          [RESPONSE_DATA_KEYS.WISATA_DETAIL]: { ...data, gambar_list: gambarArr },
         },
       });
     } catch (error) {

@@ -1,7 +1,6 @@
 // src/middleware/auth.js
 const { verifyToken } = require('../utils/jwt');
 const { API_STATUS } = require('../constants/general');
-const db = require('../database/connection').db; // <--- Import DB
 // 1. Cek Apakah User Login?
 const requireAuth =  async (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -16,15 +15,7 @@ const requireAuth =  async (req, res, next) => {
       message: 'Akses ditolak. Token tidak ditemukan.'
     });
   }
-
-  const isBlacklisted = await db('token_blacklist').where('token', token).first();
-  if (isBlacklisted) {
-    return res.status(401).json({
-      status: API_STATUS.UNAUTHORIZED,
-      message: 'Sesi Anda telah berakhir. Silakan login kembali.' // <--- INI EFEKNYA
-    });
-  }
-
+  
   const decoded = verifyToken(token);
   if (!decoded) {
     return res.status(401).json({

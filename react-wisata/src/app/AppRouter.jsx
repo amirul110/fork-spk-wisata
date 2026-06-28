@@ -9,8 +9,8 @@ import AdminHasilRekomendasi from "../pages/admin/AdminHasilRekomendasi";
 import AdminProfile from "../pages/admin/AdminProfile";
 import AdminLogout from "../pages/admin/AdminLogout";
 import WisatawanDashboard from "../pages/wisatawan/WisatawanDashboard";
-import PilihWisataPage from "../pages/wisatawan/PilihWisataPage";
-import PilihWisata from "../pages/wisatawan/PilihWisata";
+import PilihKriteria from "../pages/wisatawan/PilihKriteria";
+import PilihLokasi from "../pages/wisatawan/PilihLokasi";
 import HasilRekomendasi from "../pages/wisatawan/HasilRekomendasi";
 import Profile from "../pages/wisatawan/Profile";
 import Logout from "../pages/wisatawan/Logout";
@@ -55,8 +55,8 @@ export default function AppRouter() {
           }
         >
           <Route path="dashboard" element={<WisatawanDashboard />} />
-          <Route path="pilih-wisata" element={<PilihWisataPage />} />
-          <Route path="pilih-lokasi" element={<PilihWisata />} />
+          <Route path="pilih-kriteria" element={<PilihKriteria />} />
+          <Route path="pilih-lokasi" element={<PilihLokasi />} />
           <Route path="hasil" element={<HasilRekomendasi />} />
           <Route path="profile" element={<Profile />} />
           <Route path="logout" element={<Logout />} />

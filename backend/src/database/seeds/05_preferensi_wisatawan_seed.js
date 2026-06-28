@@ -14,6 +14,7 @@ exports.seed = async function(knex) {
       // User memilih kriteria:
       id_sub_harga: 12,            // Murah (ID 12)
       id_sub_rating: 2,            // Baik (ID 2)
+      
     }
   ]);
 };

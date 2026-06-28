@@ -156,42 +156,57 @@ await trx(TABLES.RIWAYAT_PENCARIAN).insert({
         return { ...w, jarak_km: jarakKm, rawByKriteria };
       });
 
-      const utilityBoundary = {};
-      kriteriaIds.forEach((kID) => {
-        const values = candidates.map(c => Number(c.rawByKriteria[kID]));
-        utilityBoundary[kID] = {
-          min: Math.min(...values),
-          max: Math.max(...values)
-        };
-      });
+ // --- NORMALISASI UTILITY SMART (SKALA BAKU 1-5) ---
+// Bound tetap sesuai hasil konversi sub_kriteria (1 = terendah, 5 = tertinggi).
+// Benefit : (v - 1) / 4   |   Cost : (5 - v) / 4
+const SKALA_MIN = 1;
+const SKALA_MAX = 5;
+const denomSmart = SKALA_MAX - SKALA_MIN; // = 4
 
-      const finalResult = candidates.map(item => {
-        let skorAkhir = 0;
+const finalResult = candidates.map(item => {
+  let skorAkhir = 0;
+  const detailKriteria = [];
 
-        kriteriaIds.forEach((kID) => {
-          const value = Number(item.rawByKriteria[kID]);
-          const { min, max } = utilityBoundary[kID];
-          const denom = max - min;
-          const kriteriaInfo = dbKriteria.find(k => Number(k.id_kriteria) === Number(kID));
+  kriteriaIds.forEach((kID) => {
+    const value = Number(item.rawByKriteria[kID]);
+    const kriteriaInfo = dbKriteria.find(k => Number(k.id_kriteria) === Number(kID));
+    const jenis = kriteriaInfo ? kriteriaInfo.jenis : 'benefit';
+    const bobot = weightByKriteriaId[kID] || 0;
 
-          let utility = 1;
-          if (denom !== 0) {
-            if (kriteriaInfo && kriteriaInfo.jenis === 'cost') {
-              utility = (max - value) / denom;
-            } else {
-              utility = (value - min) / denom;
-            }
-          }
+    let utility;
+    let rumusUtility;
+    if (jenis === 'cost') {
+      utility = (SKALA_MAX - value) / denomSmart;
+      rumusUtility = `(${SKALA_MAX} - ${value}) / ${denomSmart}`;
+    } else {
+      utility = (value - SKALA_MIN) / denomSmart;
+      rumusUtility = `(${value} - ${SKALA_MIN}) / ${denomSmart}`;
+    }
 
-          skorAkhir += (weightByKriteriaId[kID] || 0) * utility;
-        });
+    const kontribusi = bobot * utility;
+    skorAkhir += kontribusi;
 
-        return {
-          ...item,
-          skor_rekomendasi: skorAkhir.toFixed(4),
-          jarak_dari_anda: item.jarak_km.toFixed(2) + ' KM'
-        };
-      });
+    detailKriteria.push({
+      id_kriteria: kID,
+      nama_kriteria: kriteriaInfo ? kriteriaInfo.nama_kriteria : `C${kID}`,
+      jenis,
+      nilai_skala: value,
+      skala_min: SKALA_MIN,
+      skala_max: SKALA_MAX,
+      rumus_utility: rumusUtility,
+      utility: Number(utility.toFixed(4)),
+      bobot: Number(bobot.toFixed(4)),
+      kontribusi: Number(kontribusi.toFixed(4)),
+    });
+  });
+
+  return {
+    ...item,
+    skor_rekomendasi: skorAkhir.toFixed(4),
+    jarak_dari_anda: item.jarak_km.toFixed(2) + ' KM',
+    detail_kriteria: detailKriteria,
+  };
+});
 
       // Sort Ranking (Besar ke Kecil)
       finalResult.sort((a, b) => Number(b.skor_rekomendasi) - Number(a.skor_rekomendasi));
@@ -211,31 +226,49 @@ await trx(TABLES.RIWAYAT_PENCARIAN).insert({
       }
 
       // --- FORMAT RESPONSE JSON ---
-      const responseData = finalResult.map((item, index) => ({
-          peringkat_ke: index + 1,
-          id_alternatif: item.id_alternatif,
-          nama_wisata: item.nama_wisata,
-          rating_gmaps: item.rating_gmaps,
-          harga_tiket: item.harga_tiket,
-          atraksi_wisata: item.atraksi_wisata,
-          jarak_dari_anda: item.jarak_dari_anda,
-          skor_rekomendasi: item.skor_rekomendasi
-      }));
+     const responseData = finalResult.map((item, index) => ({
+    peringkat_ke: index + 1,
+    id_alternatif: item.id_alternatif,
+    nama_wisata: item.nama_wisata,
+    rating_gmaps: item.rating_gmaps,
+    harga_tiket: item.harga_tiket,
+    atraksi_wisata: item.atraksi_wisata,
+    jarak_dari_anda: item.jarak_dari_anda,
+    skor_rekomendasi: item.skor_rekomendasi
+}));
 
-      await trx.commit();
+// Rincian SMART per alternatif (untuk tombol "Detail Perhitungan")
+const detailSmart = finalResult.map((item, index) => ({
+  peringkat_ke: index + 1,
+  id_alternatif: item.id_alternatif,
+  nama_wisata: item.nama_wisata,
+  skor_akhir: item.skor_rekomendasi,
+  detail: item.detail_kriteria,
+}));
 
-      return res.json({
-        status: API_STATUS.SUCCESS,
-        message: 'Perhitungan AHP + SMART selesai',
-        data: {
-          id_riwayat: preferensiId,
-          bobot_ahp: kriteriaIds.map((id) => ({
-            id_kriteria: id,
-            bobot: Number((weightByKriteriaId[id] || 0).toFixed(6))
-          })),
-          [RESPONSE_DATA_KEYS.REKOMENDASI]: responseData
-        }
-      });
+await trx.commit();
+
+return res.json({
+  status: API_STATUS.SUCCESS,
+  message: 'Perhitungan AHP + SMART selesai',
+  data: {
+    id_riwayat: preferensiId,
+    cr: Number(ahp.CR.toFixed(4)),
+    lambda_max: Number(ahp.lambdaMax.toFixed(4)),
+    ci: Number(ahp.CI.toFixed(4)),
+    bobot_ahp: kriteriaIds.map((id) => {
+      const info = dbKriteria.find(k => Number(k.id_kriteria) === Number(id));
+      return {
+        id_kriteria: id,
+        nama_kriteria: info ? info.nama_kriteria : `C${id}`,
+        jenis: info ? info.jenis : 'benefit',
+        bobot: Number((weightByKriteriaId[id] || 0).toFixed(6)),
+      };
+    }),
+    detail_smart: detailSmart,
+    [RESPONSE_DATA_KEYS.REKOMENDASI]: responseData
+  }
+});
 
     } catch (error) {
       await trx.rollback();

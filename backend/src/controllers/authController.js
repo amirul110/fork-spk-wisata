@@ -206,27 +206,17 @@ module.exports = {
     }
   },
 
-  // --- LOGOUT (POST) ---
-  logout: async (req, res) => {
-    try {
-      // 1. Ambil token dari header
-      const authHeader = req.headers['authorization']
-      const token = authHeader && authHeader.split(' ')[1]
-
-      // 2. Masukkan ke Database Blacklist
-      if (token) {
-        await db('token_blacklist').insert({ token: token })
-      }
-
-      // 3. Beri respon sukses
-      return res.json({
-        status: API_STATUS.SUCCESS,
-        message: 'Logout berhasil. Token telah hangus. Silahkan login lagi',
-        datetime: getFormattedDate()
-      })
-    } catch (error) {
-      console.error('Logout Error:', error)
-      return res.status(500).json({ message: 'Gagal logout' })
-    }
+logout: async (req, res) => {
+  try {
+    // Logout ditangani di sisi klien: hapus token dari penyimpanan (localStorage/store).
+    return res.json({
+      status: API_STATUS.SUCCESS,
+      message: 'Logout berhasil. Silakan login lagi.',
+      datetime: getFormattedDate()
+    })
+  } catch (error) {
+    console.error('Logout Error:', error)
+    return res.status(500).json({ message: 'Gagal logout' })
   }
+}
 }

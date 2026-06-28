@@ -32,28 +32,24 @@ export function bangunMatriks(nilaiPasangan, n = KRITERIA_AHP.length) {
 
 // Mirror dari backend, untuk preview bobot & CR secara live di UI
 export function hitungAHP(matrix) {
-	const n = matrix.length
-	const colSum = new Array(n).fill(0)
-	for (let i = 0; i < n; i++)
-		for (let j = 0; j < n; j++) colSum[j] += matrix[i][j]
+  const n = matrix.length
+  const colSum = new Array(n).fill(0)
+  for (let i = 0; i < n; i++)
+    for (let j = 0; j < n; j++) colSum[j] += matrix[i][j]
 
-	const weights = new Array(n).fill(0)
-	for (let i = 0; i < n; i++) {
-		let rowSum = 0
-		for (let j = 0; j < n; j++) rowSum += matrix[i][j] / colSum[j]
-		weights[i] = rowSum / n
-	}
+  const weights = new Array(n).fill(0)
+  for (let i = 0; i < n; i++) {
+    let rowSum = 0
+    for (let j = 0; j < n; j++) rowSum += matrix[i][j] / colSum[j]
+    weights[i] = rowSum / n
+  }
 
-	let lambdaMax = 0
-	for (let i = 0; i < n; i++) {
-		let aw = 0
-		for (let j = 0; j < n; j++) aw += matrix[i][j] * weights[j]
-		lambdaMax += aw / weights[i]
-	}
-	lambdaMax /= n
+  // λmax = Σⱼ (jumlah kolom_j × bobot_j)
+  let lambdaMax = 0
+  for (let j = 0; j < n; j++) lambdaMax += colSum[j] * weights[j]
 
-	const CI = n > 1 ? (lambdaMax - n) / (n - 1) : 0
-	const RI = RI_TABLE[n] || 1.49
-	const CR = RI === 0 ? 0 : CI / RI
-	return { weights, lambdaMax, CI, CR, konsisten: CR < 0.1 }
+  const CI = n > 1 ? (lambdaMax - n) / (n - 1) : 0
+  const RI = RI_TABLE[n] || 1.49
+  const CR = RI === 0 ? 0 : CI / RI
+  return { weights, lambdaMax, CI, CR, konsisten: CR < 0.1 }
 }

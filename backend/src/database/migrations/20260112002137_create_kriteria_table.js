@@ -3,7 +3,6 @@ exports.up = function(knex) {
     // Spesifikasi Tabel 3.8
     table.increments('id_kriteria');
     table.string('nama_kriteria', 50).notNullable();
-    table.float('bobot_prioritas').notNullable();
     // Enum: cost atau benefit
     table.enum('jenis', ['cost', 'benefit']).notNullable();
     
