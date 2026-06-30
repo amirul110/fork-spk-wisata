@@ -115,34 +115,46 @@ export default function PilihWisata() {
 			.sort((a, b) => (a.jarak_km ?? Infinity) - (b.jarak_km ?? Infinity))
 	}, [userLocation, wisataList])
 
-	const handleHitung = async () => {
-		setError("")
-		if (!preferensi?.matrix) {
-			setError(
-				"Anda belum mengisi preferensi bobot. Buka menu 'Pilih Wisata' dulu.",
-			)
-			return
-		}
-		if (!userLocation) {
-			setError("Tentukan lokasi Anda terlebih dahulu (GPS atau peta).")
-			return
-		}
-		setSubmitting(true)
-		try {
-			const res = await api.post("/rekomendasi/hitung", {
-				userLocation,
-				matrix: preferensi.matrix,
-			})
-			const hasil = res?.data?.data?.hasil_rekomendasi || []
-			navigate("/wisatawan/hasil", { state: { hasil } })
-		} catch (err) {
-			setError(
-				err?.response?.data?.message || "Gagal menghitung rekomendasi.",
-			)
-		} finally {
-			setSubmitting(false)
-		}
+const handleHitung = async () => {
+	setError("")
+	if (!preferensi?.matrix) {
+		setError(
+			"Anda belum mengisi preferensi bobot. Buka menu 'Pilih Wisata' dulu.",
+		)
+		return
 	}
+	if (!userLocation) {
+		setError("Tentukan lokasi Anda terlebih dahulu (GPS atau peta).")
+		return
+	}
+	setSubmitting(true)
+	try {
+		const res = await api.post("/rekomendasi/hitung", {
+			userLocation,
+			matrix: preferensi.matrix,
+		})
+
+		// Ambil SELURUH payload dari backend (bukan cuma hasil)
+		const payload = res?.data?.data || {}
+
+		navigate("/wisatawan/hasil", {
+			state: {
+				hasil: payload.hasil_rekomendasi || [],
+				bobotAhp: payload.bobot_ahp || [],
+				cr: payload.cr,
+				lambdaMax: payload.lambda_max,
+				ci: payload.ci,
+				detailSmart: payload.detail_smart || [],
+			},
+		})
+	} catch (err) {
+		setError(
+			err?.response?.data?.message || "Gagal menghitung rekomendasi.",
+		)
+	} finally {
+		setSubmitting(false)
+	}
+}
 
 	return (
 		<div className="p-3" style={ { maxWidth: 960, margin: "0 auto" } }>

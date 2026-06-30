@@ -19,12 +19,22 @@ export default function HasilRekomendasi() {
 	const location = useLocation()
 	const nav = useNavigate()
 
-	const hasil = location.state?.hasil || []
-	const bobotAhp = location.state?.bobotAhp || []
+	// === Bungkus semua state.location di useMemo agar referensi stabil ===
+	const hasil = useMemo(
+		() => location.state?.hasil || [],
+		[location.state?.hasil],
+	)
+	const bobotAhp = useMemo(
+		() => location.state?.bobotAhp || [],
+		[location.state?.bobotAhp],
+	)
+	const detailSmart = useMemo(
+		() => location.state?.detailSmart || [],
+		[location.state?.detailSmart],
+	)
 	const cr = location.state?.cr
 	const lambdaMax = location.state?.lambdaMax
 	const ci = location.state?.ci
-	const detailSmart = location.state?.detailSmart || []
 
 	const [detailDialog, setDetailDialog] = useState(false)
 	const [selectedWisata, setSelectedWisata] = useState(null)
@@ -43,6 +53,16 @@ export default function HasilRekomendasi() {
 	)
 
 	const konsisten = cr !== undefined && cr !== null ? cr < 0.1 : null
+
+	// Daftar kriteria yang muncul (urutkan berdasar urutan dari detail pertama)
+	const daftarKriteria = useMemo(() => {
+		if (!detailSmart[0]?.detail) return []
+		return detailSmart[0].detail.map((d) => ({
+			id_kriteria: d.id_kriteria,
+			nama_kriteria: d.nama_kriteria,
+			jenis: d.jenis,
+		}))
+	}, [detailSmart])
 
 	const hargaTemplate = (rowData) =>
 		`Rp ${Number(rowData.harga_tiket).toLocaleString("id-ID")}`
@@ -74,8 +94,6 @@ export default function HasilRekomendasi() {
 			tooltipOptions={ { position: "top" } }
 		/>
 	)
-
-	const getAtraksiWisata = (rowData) => rowData?.atraksi_wisata || "-"
 
 	const thStyle = {
 		border: "1px solid #dee2e6",
@@ -110,13 +128,13 @@ export default function HasilRekomendasi() {
 					<div className="text-center p-4">
 						<i className="pi pi-info-circle text-4xl text-500 mb-3"></i>
 						<p className="font-semibold text-700">
-							Belum ada data hasil rekomendasi. Silakan pilih wisata di
-							Dashboard dan aktifkan lokasi terlebih dahulu.
+							Belum ada data hasil rekomendasi. Silakan pilih kriteria di
+							Menu Pilih Kriteria dan aktifkan lokasi terlebih dahulu.
 						</p>
 						<Button
-							label="Ke Dashboard"
+							label="Ke Pilih Kriteria"
 							icon="pi pi-arrow-left"
-							onClick={() => nav("/wisatawan/dashboard")}
+							onClick={() => nav("/wisatawan/pilih-kriteria")}
 							className="mt-2"
 						/>
 					</div>
@@ -175,7 +193,7 @@ export default function HasilRekomendasi() {
 						</DataTable>
 					</Card>
 
-					{/* DIALOG DETAIL WISATA PER BARIS */}
+					{/* DIALOG DETAIL WISATA */}
 					<Dialog
 						visible={detailDialog}
 						header="Detail Informasi Wisata"
@@ -192,22 +210,15 @@ export default function HasilRekomendasi() {
 								<div className="grid">
 									<div className="col-12 md:col-6">
 										<div className="mb-3">
-											<span className="font-bold text-600 text-sm">
-												Harga Tiket
-											</span>
+											<span className="font-bold text-600 text-sm">Harga Tiket</span>
 											<div className="text-800 font-semibold mt-1">
-												Rp{" "}
-												{Number(selectedWisata.harga_tiket).toLocaleString(
-													"id-ID",
-												)}
+												Rp {Number(selectedWisata.harga_tiket).toLocaleString("id-ID")}
 											</div>
 										</div>
 									</div>
 									<div className="col-12 md:col-6">
 										<div className="mb-3">
-											<span className="font-bold text-600 text-sm">
-												Rating Google Maps
-											</span>
+											<span className="font-bold text-600 text-sm">Rating Google Maps</span>
 											<div className="text-800 font-semibold mt-1">
 												<i className="pi pi-star-fill text-yellow-500 mr-1"></i>
 												{selectedWisata.rating_gmaps}
@@ -216,9 +227,7 @@ export default function HasilRekomendasi() {
 									</div>
 									<div className="col-12 md:col-6">
 										<div className="mb-3">
-											<span className="font-bold text-600 text-sm">
-												Jarak dari Anda
-											</span>
+											<span className="font-bold text-600 text-sm">Jarak dari Anda</span>
 											<div className="text-800 font-semibold mt-1">
 												<i className="pi pi-map-marker text-red-500 mr-1"></i>
 												{selectedWisata.jarak_dari_anda}
@@ -227,24 +236,17 @@ export default function HasilRekomendasi() {
 									</div>
 									<div className="col-12">
 										<div className="mb-3">
-											<span className="font-bold text-600 text-sm">
-												Atraksi Wisata
-											</span>
+											<span className="font-bold text-600 text-sm">Atraksi Wisata</span>
 											<div className="text-800 mt-1">
-												{getAtraksiWisata(selectedWisata)}
+												{selectedWisata.atraksi_wisata || "-"}
 											</div>
 										</div>
 									</div>
 									<div className="col-12">
 										<div className="mb-0">
-											<span className="font-bold text-600 text-sm">
-												Skor Rekomendasi (SMART)
-											</span>
+											<span className="font-bold text-600 text-sm">Skor Rekomendasi (SMART)</span>
 											<div className="text-800 font-semibold mt-1">
-												<Tag
-													value={selectedWisata.skor_rekomendasi}
-													severity="success"
-												/>
+												<Tag value={selectedWisata.skor_rekomendasi} severity="success" />
 											</div>
 										</div>
 									</div>
@@ -258,10 +260,10 @@ export default function HasilRekomendasi() {
 						visible={perhitunganOpen}
 						header="Detail Perhitungan AHP + SMART"
 						modal
-						style={ { width: "95vw", maxWidth: 900 } }
+						style={ { width: "95vw", maxWidth: 1000 } }
 						onHide={() => setPerhitunganOpen(false)}
 					>
-						{/* BAGIAN 1: AHP */}
+						{/* ============ BAGIAN 1: AHP ============ */}
 						<h3 className="text-lg font-bold text-800 mt-0 mb-2">
 							1. Bobot Kriteria (AHP)
 						</h3>
@@ -274,13 +276,10 @@ export default function HasilRekomendasi() {
 							/>
 						) : (
 							<>
-								<table
-									style={ {
-										width: "100%",
-										borderCollapse: "collapse",
-										marginBottom: "1rem",
-									} }
-								>
+								<p className="text-600 text-sm mt-0 mb-2">
+									Bobot prioritas (eigen vektor) hasil AHP:
+								</p>
+								<table style={ { width: "100%", borderCollapse: "collapse", marginBottom: "1rem" } }>
 									<thead>
 										<tr>
 											<th style={thStyle}>Kriteria</th>
@@ -297,9 +296,7 @@ export default function HasilRekomendasi() {
 												<td style={tdStyle}>
 													<Tag
 														value={b.jenis === "cost" ? "Cost" : "Benefit"}
-														severity={
-															b.jenis === "cost" ? "warning" : "success"
-														}
+														severity={b.jenis === "cost" ? "warning" : "success"}
 													/>
 												</td>
 												<td style={tdStyle}>{fmt(b.bobot, 4)}</td>
@@ -309,39 +306,30 @@ export default function HasilRekomendasi() {
 								</table>
 
 								<div className="flex flex-wrap gap-2 mb-2">
-									<Tag
-										value={`λ max = ${fmt(lambdaMax, 4)}`}
-										severity="info"
-									/>
+									<Tag value={`λ max = ${fmt(lambdaMax, 4)}`} severity="info" />
 									<Tag value={`CI = ${fmt(ci, 4)}`} severity="info" />
 									<Tag value={`CR = ${fmt(cr, 4)}`} severity="info" />
 									{konsisten !== null && (
 										<Tag
-											value={
-												konsisten
-													? "Konsisten (CR < 0.1)"
-													: "Tidak konsisten (CR ≥ 0.1)"
-											}
+											value={konsisten ? "Konsisten (CR < 0.1)" : "Tidak konsisten (CR ≥ 0.1)"}
 											severity={konsisten ? "success" : "danger"}
 										/>
 									)}
 								</div>
+								<p className="text-500 text-xs mt-2 mb-0">
+									Detail 6 langkah AHP (matriks → ternormalisasi → eigen → λmax → CI/CR) dapat dilihat di halaman <b>Preferensi Kriteria</b>.
+								</p>
 							</>
 						)}
 
 						<hr className="my-3" />
 
-						{/* BAGIAN 2: SMART */}
+						{/* ============ BAGIAN 2: SMART ============ */}
 						<h3 className="text-lg font-bold text-800 mt-0 mb-2">
-							2. Perhitungan SMART per Alternatif
+							2. Perhitungan SMART
 						</h3>
-						<p className="text-600 text-sm mt-0 mb-3">
-							Normalisasi utility memakai skala baku 1–5. Benefit:{" "}
-							<b>(nilai − 1) / 4</b>. Cost: <b>(5 − nilai) / 4</b>. Skor akhir =
-							Σ (bobot × utility).
-						</p>
 
-						{detailSmart.length === 0 ? (
+						{detailSmart.length === 0 || daftarKriteria.length === 0 ? (
 							<Message
 								severity="warn"
 								className="w-full"
@@ -349,6 +337,103 @@ export default function HasilRekomendasi() {
 							/>
 						) : (
 							<>
+								{/* LANGKAH 1: Konversi 1-5 */}
+								<h4 className="text-base font-bold text-800 mb-2">
+									Langkah 1 — Konversi Nilai Alternatif ke Skala 1–5
+								</h4>
+								<div style={ { overflowX: "auto", marginBottom: "1rem" } }>
+									<table style={ { width: "100%", borderCollapse: "collapse", minWidth: 600 } }>
+										<thead>
+											<tr>
+												<th style={thStyle}>Alternatif</th>
+												{daftarKriteria.map((k) => (
+													<th key={k.id_kriteria} style={thStyle}>
+														{k.nama_kriteria}
+														<div>
+															<Tag
+																value={k.jenis === "cost" ? "Cost" : "Benefit"}
+																severity={k.jenis === "cost" ? "warning" : "success"}
+															/>
+														</div>
+													</th>
+												))}
+											</tr>
+										</thead>
+										<tbody>
+											{detailSmart.map((a) => (
+												<tr key={a.id_alternatif}>
+													<td style={ { ...tdStyle, textAlign: "left", fontWeight: 600 } }>
+														{a.nama_wisata}
+													</td>
+													{a.detail.map((d) => (
+														<td key={d.id_kriteria} style={tdStyle}>
+															{d.nilai_skala}
+														</td>
+													))}
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+
+								{/* LANGKAH 2: Matriks Ternormalisasi (Utility) */}
+								<h4 className="text-base font-bold text-800 mb-2">
+									Langkah 2 — Normalisasi Utility (Matriks Ternormalisasi)
+								</h4>
+								<p className="text-600 text-sm mt-0 mb-2">
+									<b>Benefit:</b> u = (Cout − Cmin) / (Cmax − Cmin) ={" "}
+									<b>(nilai − 1) / 4</b>
+									<br />
+									<b>Cost:</b> u = (Cmax − Cout) / (Cmax − Cmin) ={" "}
+									<b>(5 − nilai) / 4</b>
+								</p>
+								<div style={ { overflowX: "auto", marginBottom: "1rem" } }>
+									<table style={ { width: "100%", borderCollapse: "collapse", minWidth: 600 } }>
+										<thead>
+											<tr>
+												<th style={thStyle}>Alternatif</th>
+												{daftarKriteria.map((k) => (
+													<th key={k.id_kriteria} style={thStyle}>
+														{k.nama_kriteria}
+													</th>
+												))}
+											</tr>
+										</thead>
+										<tbody>
+											{detailSmart.map((a) => (
+												<tr key={a.id_alternatif}>
+													<td style={ { ...tdStyle, textAlign: "left", fontWeight: 600 } }>
+														{a.nama_wisata}
+													</td>
+													{a.detail.map((d) => (
+														<td key={d.id_kriteria} style={tdStyle}>
+															{fmt(d.utility, 4)}
+														</td>
+													))}
+												</tr>
+											))}
+											<tr>
+												<td style={ { ...thStyle, textAlign: "right" } }>Bobot (wⱼ)</td>
+												{daftarKriteria.map((k) => {
+													const b = bobotAhp.find((x) => x.id_kriteria === k.id_kriteria)
+													return (
+														<td key={k.id_kriteria} style={ { ...tdStyle, fontWeight: 700 } }>
+															{fmt(b?.bobot, 4)}
+														</td>
+													)
+												})}
+											</tr>
+										</tbody>
+									</table>
+								</div>
+
+								{/* LANGKAH 3: Per-Alternatif Breakdown */}
+								<h4 className="text-base font-bold text-800 mb-2">
+									Langkah 3 — Perhitungan Nilai Akhir (per Alternatif)
+								</h4>
+								<p className="text-600 text-sm mt-0 mb-3">
+									<b>u(aᵢ) = Σⱼ (wⱼ × uᵢⱼ)</b>
+								</p>
 								<div className="mb-3">
 									<Dropdown
 										value={pilihAlternatif}
@@ -367,9 +452,7 @@ export default function HasilRekomendasi() {
 										<div className="mb-2 font-semibold text-800">
 											{alternatifTerpilih.nama_wisata}
 										</div>
-										<table
-											style={ { width: "100%", borderCollapse: "collapse" } }
-										>
+										<table style={ { width: "100%", borderCollapse: "collapse", marginBottom: "1rem" } }>
 											<thead>
 												<tr>
 													<th style={thStyle}>Kriteria</th>
@@ -384,17 +467,11 @@ export default function HasilRekomendasi() {
 											<tbody>
 												{alternatifTerpilih.detail.map((d) => (
 													<tr key={d.id_kriteria}>
-														<td style={ { ...tdStyle, textAlign: "left" } }>
-															{d.nama_kriteria}
-														</td>
+														<td style={ { ...tdStyle, textAlign: "left" } }>{d.nama_kriteria}</td>
 														<td style={tdStyle}>
 															<Tag
-																value={
-																	d.jenis === "cost" ? "Cost" : "Benefit"
-																}
-																severity={
-																	d.jenis === "cost" ? "warning" : "success"
-																}
+																value={d.jenis === "cost" ? "Cost" : "Benefit"}
+																severity={d.jenis === "cost" ? "warning" : "success"}
 															/>
 														</td>
 														<td style={tdStyle}>{d.nilai_skala}</td>
@@ -406,14 +483,10 @@ export default function HasilRekomendasi() {
 												))}
 												<tr>
 													<td
-														style={ {
-															...tdStyle,
-															textAlign: "right",
-															fontWeight: 700,
-														} }
+														style={ { ...tdStyle, textAlign: "right", fontWeight: 700 } }
 														colSpan={6}
 													>
-														Skor Akhir
+														Skor Akhir u(aᵢ)
 													</td>
 													<td style={ { ...tdStyle, fontWeight: 700 } }>
 														{fmt(alternatifTerpilih.skor_akhir, 4)}
@@ -423,6 +496,40 @@ export default function HasilRekomendasi() {
 										</table>
 									</>
 								)}
+
+								{/* LANGKAH 4: Perangkingan Akhir */}
+								<h4 className="text-base font-bold text-800 mb-2">
+									Langkah 4 — Tabel Perangkingan Akhir
+								</h4>
+								<table style={ { width: "100%", borderCollapse: "collapse" } }>
+									<thead>
+										<tr>
+											<th style={thStyle}>Peringkat</th>
+											<th style={thStyle}>Alternatif</th>
+											<th style={thStyle}>Skor Akhir</th>
+										</tr>
+									</thead>
+									<tbody>
+										{detailSmart.map((a) => (
+											<tr key={a.id_alternatif}>
+												<td style={tdStyle}>
+													<Tag
+														value={`#${a.peringkat_ke}`}
+														severity={
+															a.peringkat_ke === 1
+																? "success"
+																: a.peringkat_ke <= 3
+																	? "info"
+																	: null
+														}
+													/>
+												</td>
+												<td style={ { ...tdStyle, textAlign: "left" } }>{a.nama_wisata}</td>
+												<td style={ { ...tdStyle, fontWeight: 700 } }>{fmt(a.skor_akhir, 4)}</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
 							</>
 						)}
 					</Dialog>

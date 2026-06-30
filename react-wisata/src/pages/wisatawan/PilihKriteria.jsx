@@ -16,29 +16,38 @@ import { setPreferensi } from "../../store/preferensiStore"
 
 const RI_TABLE = { 1: 0, 2: 0, 3: 0.58, 4: 0.9, 5: 1.12 }
 
+// Skala Saaty 1–9 LENGKAP dengan nilai antara (2,4,6,8) & kebalikannya
 function opsiSaaty(namaA, namaB) {
 	return [
 		{ label: `${namaA} mutlak lebih penting (9)`, value: 9 },
+		{ label: `${namaA} antara mutlak & sangat (8)`, value: 8 },
 		{ label: `${namaA} sangat lebih penting (7)`, value: 7 },
+		{ label: `${namaA} antara sangat & lebih (6)`, value: 6 },
 		{ label: `${namaA} lebih penting (5)`, value: 5 },
+		{ label: `${namaA} antara lebih & sedikit (4)`, value: 4 },
 		{ label: `${namaA} sedikit lebih penting (3)`, value: 3 },
+		{ label: `${namaA} antara sedikit & sama (2)`, value: 2 },
 		{ label: `Sama penting (1)`, value: 1 },
-		{ label: `${namaB} sedikit lebih penting (3)`, value: 1 / 3 },
-		{ label: `${namaB} lebih penting (5)`, value: 1 / 5 },
-		{ label: `${namaB} sangat lebih penting (7)`, value: 1 / 7 },
-		{ label: `${namaB} mutlak lebih penting (9)`, value: 1 / 9 },
+		{ label: `${namaB} antara sedikit & sama (1/2)`, value: 1 / 2 },
+		{ label: `${namaB} sedikit lebih penting (1/3)`, value: 1 / 3 },
+		{ label: `${namaB} antara lebih & sedikit (1/4)`, value: 1 / 4 },
+		{ label: `${namaB} lebih penting (1/5)`, value: 1 / 5 },
+		{ label: `${namaB} antara sangat & lebih (1/6)`, value: 1 / 6 },
+		{ label: `${namaB} sangat lebih penting (1/7)`, value: 1 / 7 },
+		{ label: `${namaB} antara mutlak & sangat (1/8)`, value: 1 / 8 },
+		{ label: `${namaB} mutlak lebih penting (1/9)`, value: 1 / 9 },
 	]
 }
 
-// Format angka untuk display di matriks: bilangan utuh tetap, pecahan < 1 jadi 1/n
+// Tampilkan pecahan rapi: 1, 1/3, 1/9, dll
 const fmtCell = (v) => {
 	if (v === 1) return "1"
 	if (v > 1) return String(v)
 	const inv = 1 / v
 	if (Math.abs(inv - Math.round(inv)) < 1e-6) return `1/${Math.round(inv)}`
-	return v.toFixed(4)
+	return v.toFixed(3)
 }
-const fmt = (v, d = 4) =>
+const fmt = (v, d = 3) =>
 	v === null || v === undefined || isNaN(Number(v))
 		? "-"
 		: Number(v).toFixed(d)
@@ -56,7 +65,7 @@ export default function PilihKriteria() {
 
 	const konsisten = ahp.CR < 0.1
 
-	// Rincian intermediate (untuk dialog detail AHP)
+	// Rincian intermediate untuk dialog detail
 	const detailAhp = useMemo(() => {
 		const n = KRITERIA_AHP.length
 		const m = ahp.matrix
@@ -68,8 +77,14 @@ export default function PilihKriteria() {
 		const normMatrix = Array.from({ length: n }, (_, i) =>
 			Array.from({ length: n }, (_, j) => m[i][j] / colSum[j]),
 		)
+		// Nilai baris (Σ baris dari matriks ternormalisasi)
+		const rowSums = normMatrix.map((row) =>
+			row.reduce((a, b) => a + b, 0),
+		)
+		// Eigen vektor = nilai baris / n (= bobot prioritas)
+		const eigen = rowSums.map((r) => r / n)
 		const RI = RI_TABLE[n] || 1.49
-		return { n, colSum, normMatrix, RI }
+		return { n, colSum, normMatrix, rowSums, eigen, RI }
 	}, [ahp])
 
 	const setPasangan = (idx, v) => {
@@ -217,21 +232,20 @@ export default function PilihKriteria() {
 				/>
 			</div>
 
-			{/* DIALOG DETAIL PERHITUNGAN AHP */}
+			{/* DIALOG: DETAIL PERHITUNGAN AHP (6 LANGKAH) */}
 			<Dialog
 				visible={showDetail}
 				header="Detail Perhitungan AHP"
 				modal
-				style={ { width: "95vw", maxWidth: 900 } }
+				style={ { width: "95vw", maxWidth: 950 } }
 				onHide={() => setShowDetail(false)}
 			>
-				{/* LANGKAH 1: Matriks Perbandingan */}
+				{/* LANGKAH 1 */}
 				<h3 className="text-lg font-bold text-800 mt-0 mb-2">
-					Langkah 1 — Matriks Perbandingan Berpasangan
+					Langkah 1 — Membuat Matriks Perbandingan Berpasangan
 				</h3>
 				<p className="text-600 text-sm mt-0 mb-3">
-					Matriks <i>n × n</i> dibangun dari pilihan skala Saaty. Nilai
-					diagonal = 1, dan elemen kebalikannya = 1 / nilai.
+					Diagonal = 1, kebalikannya = 1 / nilai input.
 				</p>
 				<table style={ { width: "100%", borderCollapse: "collapse", marginBottom: "1rem" } }>
 					<thead>
@@ -257,20 +271,19 @@ export default function PilihKriteria() {
 							<td style={ { ...thStyle, textAlign: "right" } }>Σ kolom</td>
 							{detailAhp.colSum.map((s, j) => (
 								<td key={j} style={ { ...tdStyle, fontWeight: 700 } }>
-									{fmt(s, 4)}
+									{fmt(s, 3)}
 								</td>
 							))}
 						</tr>
 					</tbody>
 				</table>
 
-				{/* LANGKAH 2: Matriks Ternormalisasi & Bobot */}
+				{/* LANGKAH 2 */}
 				<h3 className="text-lg font-bold text-800 mt-0 mb-2">
-					Langkah 2 — Matriks Ternormalisasi & Bobot Prioritas
+					Langkah 2 — Matriks Perbandingan (3 desimal)
 				</h3>
 				<p className="text-600 text-sm mt-0 mb-3">
-					Setiap sel dibagi dengan jumlah kolomnya. Bobot prioritas = rata-rata
-					tiap baris dari matriks ternormalisasi.
+					Versi desimal dari matriks di atas.
 				</p>
 				<table style={ { width: "100%", borderCollapse: "collapse", marginBottom: "1rem" } }>
 					<thead>
@@ -279,7 +292,6 @@ export default function PilihKriteria() {
 							{KRITERIA_AHP.map((k) => (
 								<th key={k.id} style={thStyle}>{k.nama}</th>
 							))}
-							<th style={thStyle}>Bobot</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -288,23 +300,81 @@ export default function PilihKriteria() {
 								<td style={ { ...thStyle, textAlign: "left" } }>{kRow.nama}</td>
 								{KRITERIA_AHP.map((kCol, j) => (
 									<td key={kCol.id} style={tdStyle}>
-										{fmt(detailAhp.normMatrix[i][j], 4)}
+										{fmt(ahp.matrix[i][j], 3)}
 									</td>
 								))}
+							</tr>
+						))}
+					</tbody>
+				</table>
+
+				{/* LANGKAH 3 */}
+				<h3 className="text-lg font-bold text-800 mt-0 mb-2">
+					Langkah 3 — Matriks Ternormalisasi (Bobot Relatif yang Dinormalkan)
+				</h3>
+				<p className="text-600 text-sm mt-0 mb-3">
+					Setiap sel = nilai sel / Σ kolomnya.
+				</p>
+				<table style={ { width: "100%", borderCollapse: "collapse", marginBottom: "1rem" } }>
+					<thead>
+						<tr>
+							<th style={thStyle}></th>
+							{KRITERIA_AHP.map((k) => (
+								<th key={k.id} style={thStyle}>{k.nama}</th>
+							))}
+						</tr>
+					</thead>
+					<tbody>
+						{KRITERIA_AHP.map((kRow, i) => (
+							<tr key={kRow.id}>
+								<td style={ { ...thStyle, textAlign: "left" } }>{kRow.nama}</td>
+								{KRITERIA_AHP.map((kCol, j) => (
+									<td key={kCol.id} style={tdStyle}>
+										{fmt(detailAhp.normMatrix[i][j], 3)}
+									</td>
+								))}
+							</tr>
+						))}
+					</tbody>
+				</table>
+
+				{/* LANGKAH 4 & 5 */}
+				<h3 className="text-lg font-bold text-800 mt-0 mb-2">
+					Langkah 4 & 5 — Nilai Baris & Eigen Vektor (Bobot Prioritas)
+				</h3>
+				<p className="text-600 text-sm mt-0 mb-3">
+					Nilai baris = Σ baris matriks ternormalisasi. Eigen vektor = nilai
+					baris / n (= bobot prioritas).
+				</p>
+				<table style={ { width: "100%", borderCollapse: "collapse", marginBottom: "1rem" } }>
+					<thead>
+						<tr>
+							<th style={thStyle}>Kriteria</th>
+							<th style={thStyle}>Nilai Baris</th>
+							<th style={thStyle}>÷ n</th>
+							<th style={thStyle}>Eigen Vektor (Bobot)</th>
+						</tr>
+					</thead>
+					<tbody>
+						{KRITERIA_AHP.map((k, i) => (
+							<tr key={k.id}>
+								<td style={ { ...tdStyle, textAlign: "left" } }>{k.nama}</td>
+								<td style={tdStyle}>{fmt(detailAhp.rowSums[i], 3)}</td>
+								<td style={tdStyle}>{detailAhp.n}</td>
 								<td style={ { ...tdStyle, fontWeight: 700 } }>
-									{fmt(ahp.weights[i], 4)}
+									{fmt(detailAhp.eigen[i], 3)}
 								</td>
 							</tr>
 						))}
 					</tbody>
 				</table>
 
-				{/* LANGKAH 3: λmax */}
+				{/* LANGKAH 6: λmax */}
 				<h3 className="text-lg font-bold text-800 mt-0 mb-2">
-					Langkah 3 — Hitung λ max
+					Langkah 6 — Nilai Maksimum (λ max)
 				</h3>
 				<p className="text-600 text-sm mt-0 mb-3">
-					Rumus: <b>λ max = Σⱼ (jumlah kolomⱼ × bobotⱼ)</b>
+					<b>λ max = Σⱼ (Σ kolomⱼ × bobotⱼ)</b>
 				</p>
 				<table style={ { width: "100%", borderCollapse: "collapse", marginBottom: "1rem" } }>
 					<thead>
@@ -319,8 +389,8 @@ export default function PilihKriteria() {
 						{KRITERIA_AHP.map((k, j) => (
 							<tr key={k.id}>
 								<td style={ { ...tdStyle, textAlign: "left" } }>{k.nama}</td>
-								<td style={tdStyle}>{fmt(detailAhp.colSum[j], 4)}</td>
-								<td style={tdStyle}>{fmt(ahp.weights[j], 4)}</td>
+								<td style={tdStyle}>{fmt(detailAhp.colSum[j], 3)}</td>
+								<td style={tdStyle}>{fmt(ahp.weights[j], 3)}</td>
 								<td style={tdStyle}>
 									{fmt(detailAhp.colSum[j] * ahp.weights[j], 4)}
 								</td>
@@ -340,9 +410,9 @@ export default function PilihKriteria() {
 					</tbody>
 				</table>
 
-				{/* LANGKAH 4: CI, RI, CR */}
+				{/* CI, RI, CR */}
 				<h3 className="text-lg font-bold text-800 mt-0 mb-2">
-					Langkah 4 — Konsistensi (CI, RI, CR)
+					Konsistensi: CI, RI, CR
 				</h3>
 				<p className="text-600 text-sm mt-0 mb-3">
 					<b>CI = (λ max − n) / (n − 1)</b> &nbsp;|&nbsp;{" "}
@@ -352,13 +422,80 @@ export default function PilihKriteria() {
 					<Tag value={`n = ${detailAhp.n}`} severity="info" />
 					<Tag value={`λ max = ${fmt(ahp.lambdaMax, 4)}`} severity="info" />
 					<Tag value={`CI = ${fmt(ahp.CI, 4)}`} severity="info" />
-					<Tag value={`RI = ${fmt(detailAhp.RI, 4)}`} severity="info" />
+					<Tag value={`RI = ${fmt(detailAhp.RI, 3)}`} severity="info" />
 					<Tag value={`CR = ${fmt(ahp.CR, 4)}`} severity="info" />
 					<Tag
 						value={konsisten ? "Konsisten (CR < 0.1)" : "Tidak konsisten (CR ≥ 0.1)"}
 						severity={konsisten ? "success" : "danger"}
 					/>
 				</div>
+				{/* LANGKAH 7: BOBOT YANG DIPEROLEH */}
+<h3 className="text-lg font-bold text-800 mt-4 mb-2">
+	Langkah 7 — Bobot Akhir yang Diperoleh
+</h3>
+<p className="text-600 text-sm mt-0 mb-3">
+	Bobot tiap kriteria diambil <b>langsung dari nilai Eigen Vektor</b>{" "}
+	(Langkah 5), karena eigen vektor sudah ternormalisasi sehingga total
+	seluruh bobot = 1 (100%).
+	<br />
+	<b>
+		Wⱼ = Eigen Vektorⱼ = (Nilai Barisⱼ ÷ n) ; dengan Σ Wⱼ = 1
+	</b>
+</p>
+<table style={ { width: "100%", borderCollapse: "collapse", marginBottom: "0.5rem" } }>
+	<thead>
+		<tr>
+			<th style={thStyle}>Kriteria</th>
+			<th style={thStyle}>Nilai Baris</th>
+			<th style={thStyle}>Eigen Vektor (÷ n)</th>
+			<th style={thStyle}>Bobot (Wⱼ)</th>
+			<th style={thStyle}>Persentase</th>
+		</tr>
+	</thead>
+	<tbody>
+		{KRITERIA_AHP.map((k, i) => (
+			<tr key={k.id}>
+				<td style={ { ...tdStyle, textAlign: "left" } }>
+					{k.nama}{" "}
+					<Tag
+						value={k.jenis === "benefit" ? "benefit" : "cost"}
+						severity={k.jenis === "benefit" ? "success" : "danger"}
+					/>
+				</td>
+				<td style={tdStyle}>{fmt(detailAhp.rowSums[i], 3)}</td>
+				<td style={tdStyle}>
+					{fmt(detailAhp.rowSums[i], 3)} ÷ {detailAhp.n} ={" "}
+					{fmt(detailAhp.eigen[i], 3)}
+				</td>
+				<td style={ { ...tdStyle, fontWeight: 700 } }>
+					{fmt(ahp.weights[i], 3)}
+				</td>
+				<td style={tdStyle}>
+					{fmt((ahp.weights[i] ?? 0) * 100, 1)}%
+				</td>
+			</tr>
+		))}
+		<tr>
+			<td
+				style={ { ...thStyle, textAlign: "right" } }
+				colSpan={3}
+			>
+				Total
+			</td>
+			<td style={ { ...tdStyle, fontWeight: 700 } }>
+				{fmt(
+					ahp.weights.reduce((a, b) => a + (b || 0), 0),
+					3,
+				)}
+			</td>
+			<td style={ { ...tdStyle, fontWeight: 700 } }>100%</td>
+		</tr>
+	</tbody>
+</table>
+<p className="text-500 text-xs mt-1 mb-0">
+	Inilah bobot final yang dipakai pada perhitungan SMART (kontribusi =
+	bobot × utility).
+</p>
 			</Dialog>
 		</div>
 	)
