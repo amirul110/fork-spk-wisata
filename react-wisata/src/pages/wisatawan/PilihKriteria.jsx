@@ -339,35 +339,75 @@ export default function PilihKriteria() {
 				</table>
 
 				{/* LANGKAH 4 & 5 */}
-				<h3 className="text-lg font-bold text-800 mt-0 mb-2">
-					Langkah 4 & 5 — Nilai Baris & Eigen Vektor (Bobot Prioritas)
-				</h3>
-				<p className="text-600 text-sm mt-0 mb-3">
-					Nilai baris = Σ baris matriks ternormalisasi. Eigen vektor = nilai
-					baris / n (= bobot prioritas).
-				</p>
-				<table style={ { width: "100%", borderCollapse: "collapse", marginBottom: "1rem" } }>
-					<thead>
-						<tr>
-							<th style={thStyle}>Kriteria</th>
-							<th style={thStyle}>Nilai Baris</th>
-							<th style={thStyle}>÷ n</th>
-							<th style={thStyle}>Eigen Vektor (Bobot)</th>
-						</tr>
-					</thead>
-					<tbody>
-						{KRITERIA_AHP.map((k, i) => (
-							<tr key={k.id}>
-								<td style={ { ...tdStyle, textAlign: "left" } }>{k.nama}</td>
-								<td style={tdStyle}>{fmt(detailAhp.rowSums[i], 3)}</td>
-								<td style={tdStyle}>{detailAhp.n}</td>
-								<td style={ { ...tdStyle, fontWeight: 700 } }>
-									{fmt(detailAhp.eigen[i], 3)}
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
+		{/* LANGKAH 4 — NILAI BARIS */}
+{/* LANGKAH 4 — NILAI BARIS (penjabaran penjumlahan) */}
+<h3 className="text-lg font-bold text-800 mt-0 mb-2">
+	Langkah 4 — Nilai Baris
+</h3>
+<p className="text-600 text-sm mt-0 mb-3">
+	<b>Nilai Barisᵢ = Σⱼ (Matriks Ternormalisasiᵢⱼ)</b>{" "}
+	— jumlahkan seluruh sel pada baris ke-i dari Matriks Ternormalisasi
+	(Langkah 3).
+</p>
+
+<div
+	style={ {
+		fontSize: "1.05rem",
+		lineHeight: 2,
+		padding: "16px 20px",
+		background: "#f8fafc",
+		borderRadius: 8,
+		border: "1px solid #e2e8f0",
+		marginBottom: "1rem",
+	} }
+>
+	{KRITERIA_AHP.map((kRow, i) => (
+		<div key={kRow.id} className="mb-2">
+			<b>{kRow.nama}</b> ={" "}
+			{detailAhp.normMatrix[i]
+				.map((v) => fmt(v, 3))
+				.join(" + ")}{" "}
+			={" "}
+			<b style={ { color: "#1d4ed8" } }>
+				{fmt(detailAhp.rowSums[i], 3)}
+			</b>
+		</div>
+	))}
+</div>
+{/* LANGKAH 5 — EIGEN VEKTOR */}
+<h3 className="text-lg font-bold text-800 mt-0 mb-2">
+	Langkah 5 — Eigen Vektor (Bobot Prioritas)
+</h3>
+<p className="text-600 text-sm mt-0 mb-3">
+	<b>Eigen Vektorᵢ = Nilai Barisᵢ ÷ n</b> (di mana n = jumlah kriteria
+	= {detailAhp.n}).
+</p>
+<table style={ { width: "100%", borderCollapse: "collapse", marginBottom: "1rem" } }>
+	<thead>
+		<tr>
+			<th style={thStyle}>Kriteria</th>
+			<th style={thStyle}>Nilai Baris</th>
+			<th style={thStyle}>÷ n</th>
+			<th style={thStyle}>Perhitungan</th>
+			<th style={thStyle}>Eigen Vektor</th>
+		</tr>
+	</thead>
+	<tbody>
+		{KRITERIA_AHP.map((k, i) => (
+			<tr key={k.id}>
+				<td style={ { ...tdStyle, textAlign: "left" } }>{k.nama}</td>
+				<td style={tdStyle}>{fmt(detailAhp.rowSums[i], 3)}</td>
+				<td style={tdStyle}>{detailAhp.n}</td>
+				<td style={tdStyle}>
+					{fmt(detailAhp.rowSums[i], 3)} ÷ {detailAhp.n}
+				</td>
+				<td style={ { ...tdStyle, fontWeight: 700 } }>
+					{fmt(detailAhp.eigen[i], 3)}
+				</td>
+			</tr>
+		))}
+	</tbody>
+</table>
 
 				{/* LANGKAH 6: λmax */}
 				<h3 className="text-lg font-bold text-800 mt-0 mb-2">
@@ -411,27 +451,61 @@ export default function PilihKriteria() {
 				</table>
 
 				{/* CI, RI, CR */}
-				<h3 className="text-lg font-bold text-800 mt-0 mb-2">
-					Konsistensi: CI, RI, CR
-				</h3>
-				<p className="text-600 text-sm mt-0 mb-3">
-					<b>CI = (λ max − n) / (n − 1)</b> &nbsp;|&nbsp;{" "}
-					<b>CR = CI / RI</b>. Konsisten jika <b>CR &lt; 0.1</b>.
-				</p>
-				<div className="flex flex-wrap gap-2 mb-2">
-					<Tag value={`n = ${detailAhp.n}`} severity="info" />
-					<Tag value={`λ max = ${fmt(ahp.lambdaMax, 4)}`} severity="info" />
-					<Tag value={`CI = ${fmt(ahp.CI, 4)}`} severity="info" />
-					<Tag value={`RI = ${fmt(detailAhp.RI, 3)}`} severity="info" />
-					<Tag value={`CR = ${fmt(ahp.CR, 4)}`} severity="info" />
-					<Tag
-						value={konsisten ? "Konsisten (CR < 0.1)" : "Tidak konsisten (CR ≥ 0.1)"}
-						severity={konsisten ? "success" : "danger"}
-					/>
-				</div>
+			{/* LANGKAH 7 — KONSISTENSI: CI, RI, CR */}
+<h3 className="text-lg font-bold text-800 mt-0 mb-2">
+	Langkah 7 — Konsistensi: CI, RI, CR
+</h3>
+<p className="text-600 text-sm mt-0 mb-3">
+	<b>CI = (λ max − n) / (n − 1)</b> &nbsp;|&nbsp;{" "}
+	<b>CR = CI / RI</b>. Perbandingan dinyatakan konsisten jika{" "}
+	<b>CR &lt; 0.1</b>.
+</p>
+
+<div
+	style={ {
+		fontSize: "1.05rem",
+		lineHeight: 2,
+		padding: "16px 20px",
+		background: "#f8fafc",
+		borderRadius: 8,
+		border: "1px solid #e2e8f0",
+		marginBottom: "0.75rem",
+	} }
+>
+	<div className="mb-2">
+		<b>n</b> = {detailAhp.n} &nbsp;&nbsp;|&nbsp;&nbsp;{" "}
+		<b>λ max</b> = {fmt(ahp.lambdaMax, 4)} &nbsp;&nbsp;|&nbsp;&nbsp;{" "}
+		<b>RI</b> (n = {detailAhp.n}) = {fmt(detailAhp.RI, 2)}
+	</div>
+
+	<div className="mb-2">
+		<b>CI</b> = (λ max − n) / (n − 1) ={" "}
+		<b>({fmt(ahp.lambdaMax, 4)} − {detailAhp.n})</b> /{" "}
+		<b>({detailAhp.n} − 1)</b> ={" "}
+		<b>{fmt(ahp.lambdaMax - detailAhp.n, 4)} / {detailAhp.n - 1}</b>{" "}
+		= <b style={ { color: "#1d4ed8" } }>{fmt(ahp.CI, 4)}</b>
+	</div>
+
+	<div className="mb-2">
+		<b>CR</b> = CI / RI ={" "}
+		<b>{fmt(ahp.CI, 4)} / {fmt(detailAhp.RI, 2)}</b> ={" "}
+		<b style={ { color: "#1d4ed8" } }>{fmt(ahp.CR, 4)}</b>
+	</div>
+
+	<div>
+		Karena <b>CR = {fmt(ahp.CR, 4)} {konsisten ? "<" : "≥"} 0.1</b>,
+		maka perbandingan kriteria dinyatakan{" "}
+		<b
+			style={ { color: konsisten ? "#15803d" : "#b91c1c" } }
+		>
+			{konsisten ? "KONSISTEN" : "TIDAK KONSISTEN"}
+		</b>
+		.
+	</div>
+</div>
 				{/* LANGKAH 7: BOBOT YANG DIPEROLEH */}
 <h3 className="text-lg font-bold text-800 mt-4 mb-2">
-	Langkah 7 — Bobot Akhir yang Diperoleh
+	Langkah 8 — Bobot Akhir yang Diperoleh
 </h3>
 <p className="text-600 text-sm mt-0 mb-3">
 	Bobot tiap kriteria diambil <b>langsung dari nilai Eigen Vektor</b>{" "}

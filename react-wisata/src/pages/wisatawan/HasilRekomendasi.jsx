@@ -8,7 +8,6 @@ import { Message } from "primereact/message"
 import { Tag } from "primereact/tag"
 import { Dialog } from "primereact/dialog"
 import { Dropdown } from "primereact/dropdown"
-import { formatTanggalIndonesia } from "../../utils/formatTanggal"
 
 const fmt = (v, d = 4) =>
 	v === null || v === undefined || isNaN(Number(v))
@@ -111,17 +110,11 @@ export default function HasilRekomendasi() {
 	return (
 		<>
 			<div className="mb-4">
-				<div
-					className="mb-2 text-color-secondary"
-					style={ { fontSize: "0.9rem" } }
-				>
-					{formatTanggalIndonesia()}
-				</div>
-				<h2 className="text-2xl font-bold text-800 mt-0 mb-2">
-					<i className="pi pi-chart-bar mr-2"></i>Hasil Rekomendasi Wisata
-				</h2>
-				<hr className="border-top-1 border-300" />
-			</div>
+  <h2 className="text-2xl font-bold text-800 mt-0 mb-2">
+    <i className="pi pi-chart-bar mr-2"></i>Hasil Rekomendasi Wisata
+  </h2>
+  <hr className="border-top-1 border-300" />
+</div>
 
 			{hasil.length === 0 ? (
 				<Card className="shadow-1">
