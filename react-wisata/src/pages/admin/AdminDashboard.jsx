@@ -36,8 +36,8 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
-  const wisataRowIndex = (_rowData, { rowIndex }) => wisataFirst + rowIndex + 1;
-  const kriteriaRowIndex = (_rowData, { rowIndex }) => kriteriaFirst + rowIndex + 1;
+const wisataRowIndex = (_rowData, { rowIndex }) => rowIndex + 1;
+const kriteriaRowIndex = (_rowData, { rowIndex }) => rowIndex + 1;
 
   const jenisTemplate = (rowData) => {
     const isCost = rowData.jenis?.toLowerCase() === "cost";
@@ -74,7 +74,6 @@ export default function AdminDashboard() {
               stripedRows
               paginator
               rows={5}
-              rowsPerPageOptions={[5, 10, 25]}
               first={wisataFirst}
               onPage={(e) => setWisataFirst(e.first)}
               emptyMessage="Tidak ada data wisata."
@@ -95,7 +94,7 @@ export default function AdminDashboard() {
               stripedRows
               paginator
               rows={5}
-              rowsPerPageOptions={[5, 10, 25]}
+       
               first={kriteriaFirst}
               onPage={(e) => setKriteriaFirst(e.first)}
               emptyMessage="Tidak ada data kriteria."

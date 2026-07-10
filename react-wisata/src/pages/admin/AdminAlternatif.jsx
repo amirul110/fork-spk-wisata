@@ -236,7 +236,7 @@ export default function AdminAlternatif() {
     )
   }
 
-  const rowNumber = (_rowData, options) => first + options.rowIndex + 1
+ const rowNumber = (_rowData, options) => options.rowIndex + 1
 
   return (
     <>
