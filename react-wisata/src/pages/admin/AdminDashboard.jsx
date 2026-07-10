@@ -92,7 +92,7 @@ const kriteriaRowIndex = (_rowData, { rowIndex }) => rowIndex + 1;
             <DataTable
               value={kriteriaList}
               stripedRows
-              paginator
+         
               rows={5}
        
               first={kriteriaFirst}
