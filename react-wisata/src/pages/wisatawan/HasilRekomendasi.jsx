@@ -9,7 +9,8 @@ import { Tag } from "primereact/tag"
 import { Dialog } from "primereact/dialog"
 import { Dropdown } from "primereact/dropdown"
 
-const fmt = (v, d = 8) =>
+// Default diubah menjadi 4 desimal
+const fmt = (v, d = 4) =>
   v === null || v === undefined || isNaN(Number(v))
     ? "-"
     : Number(v).toFixed(d)
@@ -86,7 +87,7 @@ export default function HasilRekomendasi() {
         setDetailDialog(true)
       }}
       tooltip="Lihat Detail Wisata"
-      tooltipOptions={ { position: "top" } }
+      tooltipOptions={{ position: "top" }}
     />
   )
 
@@ -135,7 +136,7 @@ export default function HasilRekomendasi() {
             text="Berikut adalah hasil rekomendasi wisata menggunakan kombinasi metode AHP (bobot kriteria) dan SMART (nilai akhir alternatif):"
             className="w-full mb-4"
           />
-<div className="flex justify-content-end gap-3 mb-3">
+          <div className="flex justify-content-end gap-3 mb-3">
             <Button
               label="Lihat Detail Perhitungan AHP + SMART"
               icon="pi pi-calculator"
@@ -159,12 +160,12 @@ export default function HasilRekomendasi() {
               showGridlines
               responsiveLayout="scroll"
             >
-              <Column header="Peringkat" body={peringkatTemplate} style={ { width: "8rem" } } />
+              <Column header="Peringkat" body={peringkatTemplate} style={{ width: "8rem" }} />
               <Column field="nama_wisata" header="Nama Wisata" />
-              <Column header="Harga Tiket" body={hargaTemplate} style={ { width: "10rem" } } />
-              <Column field="jarak_dari_anda" header="Jarak dari Anda" style={ { width: "10rem" } } />
-              <Column field="skor_rekomendasi" header="Skor Akhir SMART" style={ { width: "9rem" } } />
-              <Column header="Detail" body={detailTemplate} style={ { width: "6rem" } } />
+              <Column header="Harga Tiket" body={hargaTemplate} style={{ width: "10rem" }} />
+              <Column field="jarak_dari_anda" header="Jarak dari Anda" style={{ width: "10rem" }} />
+              <Column field="skor_rekomendasi" header="Skor Akhir SMART" style={{ width: "9rem" }} />
+              <Column header="Detail" body={detailTemplate} style={{ width: "6rem" }} />
             </DataTable>
           </Card>
 
@@ -173,7 +174,7 @@ export default function HasilRekomendasi() {
             visible={detailDialog}
             header="Detail Informasi Wisata"
             modal
-            style={ { width: "90vw", maxWidth: 600 } }
+            style={{ width: "90vw", maxWidth: 600 }}
             onHide={() => setDetailDialog(false)}
           >
             {selectedWisata && (
@@ -235,7 +236,7 @@ export default function HasilRekomendasi() {
             visible={perhitunganOpen}
             header="Detail Perhitungan AHP + SMART"
             modal
-            style={ { width: "95vw", maxWidth: 1000 } }
+            style={{ width: "95vw", maxWidth: 1000 }}
             onHide={() => setPerhitunganOpen(false)}
           >
             {/* ============ BAGIAN 1: AHP ============ */}
@@ -253,7 +254,7 @@ export default function HasilRekomendasi() {
                 <p className="text-600 text-sm mt-0 mb-2">
                   Bobot prioritas (eigen vektor) hasil AHP:
                 </p>
-                <table style={ { width: "100%", borderCollapse: "collapse", marginBottom: "1rem" } }>
+                <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "1rem" }}>
                   <thead>
                     <tr>
                       <th style={thStyle}>Kriteria</th>
@@ -264,7 +265,7 @@ export default function HasilRekomendasi() {
                   <tbody>
                     {bobotAhp.map((b) => (
                       <tr key={b.id_kriteria}>
-                        <td style={ { ...tdStyle, textAlign: "left" } }>
+                        <td style={{ ...tdStyle, textAlign: "left" }}>
                           {b.nama_kriteria || `C${b.id_kriteria}`}
                         </td>
                         <td style={tdStyle}>
@@ -273,15 +274,15 @@ export default function HasilRekomendasi() {
                             severity={b.jenis === "cost" ? "warning" : "success"}
                           />
                         </td>
-                        <td style={tdStyle}>{fmt(b.bobot, 8)}</td>
+                        <td style={tdStyle}>{fmt(b.bobot)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 <div className="flex flex-wrap gap-2 mb-2">
-                  <Tag value={`λ max = ${fmt(lambdaMax, 8)}`} severity="info" />
-                  <Tag value={`CI = ${fmt(ci, 8)}`} severity="info" />
-                  <Tag value={`CR = ${fmt(cr, 8)}`} severity="info" />
+                  <Tag value={`λ max = ${fmt(lambdaMax)}`} severity="info" />
+                  <Tag value={`CI = ${fmt(ci)}`} severity="info" />
+                  <Tag value={`CR = ${fmt(cr)}`} severity="info" />
                   {konsisten !== null && (
                     <Tag
                       value={konsisten ? "Konsisten (CR < 0.1)" : "Tidak konsisten (CR ≥ 0.1)"}
@@ -313,8 +314,8 @@ export default function HasilRekomendasi() {
                 <h4 className="text-base font-bold text-800 mb-2">
                   Langkah 1 — Konversi Nilai Alternatif ke Skala 1–5
                 </h4>
-                <div style={ { overflowX: "auto", marginBottom: "1rem" } }>
-                  <table style={ { width: "100%", borderCollapse: "collapse", minWidth: 600 } }>
+                <div style={{ overflowX: "auto", marginBottom: "1rem" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
                     <thead>
                       <tr>
                         <th style={thStyle}>Alternatif</th>
@@ -334,7 +335,7 @@ export default function HasilRekomendasi() {
                     <tbody>
                       {detailSmart.map((a) => (
                         <tr key={a.id_alternatif}>
-                          <td style={ { ...tdStyle, textAlign: "left", fontWeight: 600 } }>
+                          <td style={{ ...tdStyle, textAlign: "left", fontWeight: 600 }}>
                             {a.nama_wisata}
                           </td>
                           {a.detail.map((d) => (
@@ -359,8 +360,8 @@ export default function HasilRekomendasi() {
                   <b>Cost:</b> u = (Cmax − Cout) / (Cmax − Cmin) ={" "}
                   <b>(5 − nilai) / 4</b>
                 </p>
-                <div style={ { overflowX: "auto", marginBottom: "1rem" } }>
-                  <table style={ { width: "100%", borderCollapse: "collapse", minWidth: 600 } }>
+                <div style={{ overflowX: "auto", marginBottom: "1rem" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
                     <thead>
                       <tr>
                         <th style={thStyle}>Alternatif</th>
@@ -374,23 +375,23 @@ export default function HasilRekomendasi() {
                     <tbody>
                       {detailSmart.map((a) => (
                         <tr key={a.id_alternatif}>
-                          <td style={ { ...tdStyle, textAlign: "left", fontWeight: 600 } }>
+                          <td style={{ ...tdStyle, textAlign: "left", fontWeight: 600 }}>
                             {a.nama_wisata}
                           </td>
                           {a.detail.map((d) => (
                             <td key={d.id_kriteria} style={tdStyle}>
-                              {fmt(d.utility, 8)}
+                              {fmt(d.utility)}
                             </td>
                           ))}
                         </tr>
                       ))}
                       <tr>
-                        <td style={ { ...thStyle, textAlign: "right" } }>Bobot (wⱼ)</td>
+                        <td style={{ ...thStyle, textAlign: "right" }}>Bobot (wⱼ)</td>
                         {daftarKriteria.map((k) => {
                           const b = bobotAhp.find((x) => x.id_kriteria === k.id_kriteria)
                           return (
-                            <td key={k.id_kriteria} style={ { ...tdStyle, fontWeight: 700 } }>
-                              {fmt(b?.bobot, 8)}
+                            <td key={k.id_kriteria} style={{ ...tdStyle, fontWeight: 700 }}>
+                              {fmt(b?.bobot)}
                             </td>
                           )
                         })}
@@ -423,7 +424,7 @@ export default function HasilRekomendasi() {
                     <div className="mb-2 font-semibold text-800">
                       {alternatifTerpilih.nama_wisata}
                     </div>
-                    <table style={ { width: "100%", borderCollapse: "collapse", marginBottom: "1rem" } }>
+                    <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "1rem" }}>
                       <thead>
                         <tr>
                           <th style={thStyle}>Kriteria</th>
@@ -438,7 +439,7 @@ export default function HasilRekomendasi() {
                       <tbody>
                         {alternatifTerpilih.detail.map((d) => (
                           <tr key={d.id_kriteria}>
-                            <td style={ { ...tdStyle, textAlign: "left" } }>{d.nama_kriteria}</td>
+                            <td style={{ ...tdStyle, textAlign: "left" }}>{d.nama_kriteria}</td>
                             <td style={tdStyle}>
                               <Tag
                                 value={d.jenis === "cost" ? "Cost" : "Benefit"}
@@ -447,20 +448,20 @@ export default function HasilRekomendasi() {
                             </td>
                             <td style={tdStyle}>{d.nilai_skala}</td>
                             <td style={tdStyle}>{d.rumus_utility}</td>
-                            <td style={tdStyle}>{fmt(d.utility, 8)}</td>
-                            <td style={tdStyle}>{fmt(d.bobot, 8)}</td>
-                            <td style={tdStyle}>{fmt(d.kontribusi, 8)}</td>
+                            <td style={tdStyle}>{fmt(d.utility)}</td>
+                            <td style={tdStyle}>{fmt(d.bobot)}</td>
+                            <td style={tdStyle}>{fmt(d.kontribusi)}</td>
                           </tr>
                         ))}
                         <tr>
                           <td
-                            style={ { ...tdStyle, textAlign: "right", fontWeight: 700 } }
+                            style={{ ...tdStyle, textAlign: "right", fontWeight: 700 }}
                             colSpan={6}
                           >
                             Skor Akhir u(aᵢ)
                           </td>
-                          <td style={ { ...tdStyle, fontWeight: 700 } }>
-                            {fmt(alternatifTerpilih.skor_akhir, 8)}
+                          <td style={{ ...tdStyle, fontWeight: 700 }}>
+                            {fmt(alternatifTerpilih.skor_akhir)}
                           </td>
                         </tr>
                       </tbody>
@@ -472,7 +473,7 @@ export default function HasilRekomendasi() {
                 <h4 className="text-base font-bold text-800 mb-2">
                   Langkah 4 — Tabel Perangkingan Akhir
                 </h4>
-                <table style={ { width: "100%", borderCollapse: "collapse" } }>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr>
                       <th style={thStyle}>Peringkat</th>
@@ -495,8 +496,8 @@ export default function HasilRekomendasi() {
                             }
                           />
                         </td>
-                        <td style={ { ...tdStyle, textAlign: "left" } }>{a.nama_wisata}</td>
-                        <td style={ { ...tdStyle, fontWeight: 700 } }>{fmt(a.skor_akhir, 8)}</td>
+                        <td style={{ ...tdStyle, textAlign: "left" }}>{a.nama_wisata}</td>
+                        <td style={{ ...tdStyle, fontWeight: 700 }}>{fmt(a.skor_akhir)}</td>
                       </tr>
                     ))}
                   </tbody>
