@@ -15,6 +15,10 @@ export default function AdminHasilRekomendasi() {
   const [error, setError] = useState(null);
   const toast = useRef(null);
 
+  const skorTemplate = (rowData) => {
+    if (rowData.skor_rata_rata == null) return "-";
+    return Number(rowData.skor_rata_rata).toFixed(4);
+  }
   const fetchData = async () => {
     setLoading(true);
     setError(null);
@@ -91,12 +95,13 @@ export default function AdminHasilRekomendasi() {
                 header="Nama Wisata"
                 sortable
               />
-              <Column
-                field="skor_rata_rata"
-                header="Skor Akhir SMART"
-                sortable
-                style={{ width: "150px" }}
-              />
+            <Column
+  field="skor_rata_rata" // Tetap biarkan field ini agar sortable bekerja
+  header="Skor Akhir SMART"
+  body={skorTemplate}    // Ini yang akan mengubah tampilan jadi 4 digit
+  sortable
+  style={{ width: "180px" }} 
+/>
             </DataTable>
           </>
         )}

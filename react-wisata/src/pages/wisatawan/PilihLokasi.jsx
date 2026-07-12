@@ -65,25 +65,40 @@ export default function PilihWisata() {
 		}
 	}
 
-	const gunakanGPS = () => {
-		setError("")
-		if (!navigator.geolocation) {
-			setError("Browser tidak mendukung GPS. Silakan pilih lewat peta.")
-			return
-		}
-		navigator.geolocation.getCurrentPosition(
-			(pos) => {
-				const lokasi = {
-					latitude: pos.coords.latitude,
-					longitude: pos.coords.longitude,
-				}
-				setUserLocation(lokasi)
-				ambilDetail(lokasi.latitude, lokasi.longitude)
-			},
-			() => setError("Gagal mengambil lokasi GPS. Silakan pilih lewat peta."),
-			{ enableHighAccuracy: true, timeout: 10000 },
-		)
-	}
+const gunakanGPS = () => {
+    setError("")
+    if (!navigator.geolocation) {
+      setError("Browser tidak mendukung GPS. Silakan pilih lewat peta.")
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lokasi = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        }
+        setUserLocation(lokasi)
+        ambilDetail(lokasi.latitude, lokasi.longitude)
+      },
+      (err) => {
+        // Deteksi kode error spesifik dari browser
+        let pesanPenyebab = "Gagal mengambil lokasi GPS.";
+        
+        if (err.code === err.PERMISSION_DENIED) {
+          pesanPenyebab = "Izin akses lokasi ditolak oleh browser HP Anda.";
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          pesanPenyebab = "Sinyal GPS tidak tersedia saat ini.";
+        } else if (err.code === err.TIMEOUT) {
+          pesanPenyebab = "Pencarian lokasi butuh waktu terlalu lama (Timeout).";
+        }
+
+        setError(`${pesanPenyebab} Silakan pilih lewat peta.`);
+      },
+      // PERBAIKAN: Tambah timeout jadi 30 detik dan matikan cache (maximumAge: 0)
+      { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+    )
+  }
 
 	const onPilihPeta = (loc) => {
 		setUserLocation(loc)

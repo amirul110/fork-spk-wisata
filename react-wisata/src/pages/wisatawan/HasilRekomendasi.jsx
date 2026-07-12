@@ -59,7 +59,7 @@ export default function HasilRekomendasi() {
       jenis: d.jenis,
     }))
   }, [detailSmart])
-
+const skorTemplate = (rowData) => fmt(rowData.skor_rekomendasi, 4)
   const hargaTemplate = (rowData) =>
     `Rp ${Number(rowData.harga_tiket).toLocaleString("id-ID")}`
 
@@ -164,8 +164,9 @@ export default function HasilRekomendasi() {
               <Column field="nama_wisata" header="Nama Wisata" />
               <Column header="Harga Tiket" body={hargaTemplate} style={{ width: "10rem" }} />
               <Column field="jarak_dari_anda" header="Jarak dari Anda" style={{ width: "10rem" }} />
-              <Column field="skor_rekomendasi" header="Skor Akhir SMART" style={{ width: "9rem" }} />
-              <Column header="Detail" body={detailTemplate} style={{ width: "6rem" }} />
+           <Column header="Skor Akhir SMART" body={skorTemplate} style={{ width: "9rem" }} />
+  
+  <Column header="Detail" body={detailTemplate} style={{ width: "6rem" }} />
             </DataTable>
           </Card>
 
@@ -222,7 +223,7 @@ export default function HasilRekomendasi() {
                     <div className="mb-0">
                       <span className="font-bold text-600 text-sm">Skor Rekomendasi (SMART)</span>
                       <div className="text-800 font-semibold mt-1">
-                        <Tag value={selectedWisata.skor_rekomendasi} severity="success" />
+<Tag value={fmt(selectedWisata.skor_rekomendasi, 4)} severity="success" />
                       </div>
                     </div>
                   </div>

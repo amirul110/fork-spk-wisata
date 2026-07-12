@@ -315,8 +315,7 @@ export default function AdminSubKriteria() {
                 ) : (
                   <DataTable
                     value={subKriteriaList}
-                    paginator
-                    rows={10}
+                   
                     dataKey="id_sub"
                     globalFilter={globalFilter}
                     header={header}

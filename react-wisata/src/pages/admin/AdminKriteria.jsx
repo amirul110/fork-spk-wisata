@@ -221,8 +221,7 @@ export default function AdminKriteria() {
       ) : (
         <DataTable
           value={kriteriaList}
-          paginator
-          rows={10}
+        
           dataKey="id_kriteria"
           globalFilter={globalFilter}
           header={header}
