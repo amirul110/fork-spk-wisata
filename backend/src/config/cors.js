@@ -5,7 +5,8 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "https://wisatamagetan.xyz",
-  "https://www.wisatamagetan.xyz"
+  "https://www.wisatamagetan.xyz",
+  "https://www.wisatamagetan.my.id"
 ];
 
 // Saat development, kita izinkan juga akses dari IP LAN (HP di WiFi yang sama),

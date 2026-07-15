@@ -11,6 +11,10 @@ import AdminLogout from "../pages/admin/AdminLogout";
 import WisatawanDashboard from "../pages/wisatawan/WisatawanDashboard";
 import PilihKriteria from "../pages/wisatawan/PilihKriteria";
 import PilihLokasi from "../pages/wisatawan/PilihLokasi";
+
+// 1. IMPORT HALAMAN BARU DI SINI:
+import PilihPreferensi from "../pages/wisatawan/PilihPreferensi"; 
+
 import HasilRekomendasi from "../pages/wisatawan/HasilRekomendasi";
 import Profile from "../pages/wisatawan/Profile";
 import Logout from "../pages/wisatawan/Logout";
@@ -57,6 +61,10 @@ export default function AppRouter() {
           <Route path="dashboard" element={<WisatawanDashboard />} />
           <Route path="pilih-kriteria" element={<PilihKriteria />} />
           <Route path="pilih-lokasi" element={<PilihLokasi />} />
+          
+          {/* 2. DAFTARKAN RUTENYA DI SINI: */}
+          <Route path="pilih-preferensi" element={<PilihPreferensi />} />
+          
           <Route path="hasil" element={<HasilRekomendasi />} />
           <Route path="profile" element={<Profile />} />
           <Route path="logout" element={<Logout />} />

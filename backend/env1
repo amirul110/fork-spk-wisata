@@ -5,11 +5,11 @@ NODE_ENV=production
 # --- DATABASE CONFIGURATION (XAMPP Default) ---
 # Jika pakai XAMPP, password biasanya kosong
 DB_HOST=localhost
-DB_PORT=3306
-DB_USER= wisatama_spk_wisata_db
-DB_PASSWORD=AKLSXZS3HkLWyJF2hmGc
+
+DB_USER= 	wisatam1_spk_wisata_db
+DB_PASSWORD=nLS9Qwk5jL7sRD6KhbQ8
 DB_NAME= wisatama_spk_wisata_db
-ALLOWED_ORIGINS=https://wisatamagetan.xyz
+ALLOWED_ORIGINS=https://wisatamagetan.my.id
 
 # --- SECURITY (JWT) ---
 # Ganti tulisan acak ini dengan apa saja, yang penting rahasia
