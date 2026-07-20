@@ -89,6 +89,9 @@ export default function WisatawanDashboard() {
   const [loading, setLoading] = useState(true);
   const nav = useNavigate();
 
+const authData = JSON.parse(localStorage.getItem("spk_auth")) || {};
+const username = authData.user?.username || "Sobat Wisata";
+
   useEffect(() => {
     getAllWisata()
       .then((res) => setWisataList(res.data?.data?.list_wisata || []))
@@ -98,13 +101,20 @@ export default function WisatawanDashboard() {
 
   return (
     <>
-      {/* Header (tanpa tanggal/hari) */}
-      <div className="mb-4">
-        <h2 className="text-2xl font-bold text-800 mt-0 mb-1">
-          <i className="pi pi-compass mr-2 text-primary"></i>Informasi Destinasi Wisata Magetan
+     <div className="mb-4">
+        {/* Sapaan Username */}
+        <h2 className="text-3xl font-bold text-primary mt-0 mb-2">
+          Halo, {username}! 👋
         </h2>
-        <p className="text-600 mt-0 mb-3" style={ { fontSize: "20px" } }>
-          Kenali setiap destinasi sebelum menentukan pilihan terbaik Anda.
+        
+        {/* Judul Halaman */}
+        <h3 className="text-xl font-semibold text-800 mt-0 mb-2">
+          <i className="pi pi-compass mr-2"></i>Eksplorasi Destinasi Wisata Magetan
+        </h3>
+        
+        {/* Sub-judul / Deskripsi */}
+        <p className="text-600 mt-0 mb-3" style={{ fontSize: "18px", lineHeight: "1.5" }}>
+          Pelajari berbagai pesona wisata yang ada dan temukan pilihan liburan terbaik sesuai keinginan Anda.
         </p>
         <hr className="border-top-1 border-300" />
       </div>
