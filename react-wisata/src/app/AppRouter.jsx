@@ -13,7 +13,7 @@ import PilihKriteria from "../pages/wisatawan/PilihKriteria";
 import PilihLokasi from "../pages/wisatawan/PilihLokasi";
 
 // 1. IMPORT HALAMAN BARU DI SINI:
-import PilihPreferensi from "../pages/wisatawan/PilihPreferensi"; 
+import FilterWisata from "../pages/wisatawan/FilterWisata"; 
 
 import HasilRekomendasi from "../pages/wisatawan/HasilRekomendasi";
 import Profile from "../pages/wisatawan/Profile";
@@ -63,7 +63,7 @@ export default function AppRouter() {
           <Route path="pilih-lokasi" element={<PilihLokasi />} />
           
           {/* 2. DAFTARKAN RUTENYA DI SINI: */}
-          <Route path="pilih-preferensi" element={<PilihPreferensi />} />
+          <Route path="filter-wisata" element={<FilterWisata />} />
           
           <Route path="hasil" element={<HasilRekomendasi />} />
           <Route path="profile" element={<Profile />} />

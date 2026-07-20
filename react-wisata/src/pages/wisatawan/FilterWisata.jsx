@@ -10,7 +10,8 @@ import api from "../../services/api"
 import { getPreferensi } from "../../store/preferensiStore"
 import { getAllKriteria, getSubKriteriaByKriteria } from "../../services/subkriteria.service"
 
-export default function PilihPreferensi() {
+// Nama fungsi diubah menjadi FilterWisata
+export default function FilterWisata() {
   const navigate = useNavigate()
   const location = useLocation()
   
@@ -48,7 +49,7 @@ export default function PilihPreferensi() {
         if (isMounted) setKriteriaWithSub(fullData)
       } catch (err) {
         console.error("Gagal memuat kriteria dan sub:", err)
-        if (isMounted) setError("Gagal memuat detail preferensi dari server.")
+        if (isMounted) setError("Gagal memuat data filter wisata dari server.")
       } finally {
         if (isMounted) setLoadingKriteria(false)
       }
@@ -66,11 +67,11 @@ export default function PilihPreferensi() {
   const handleHitung = async () => {
     setError("")
     
-    // Validasi Dropdown Sub Kriteria (pastikan user sudah memilih semua)
+    // Validasi Dropdown Sub Kriteria (pastikan user sudah memilih semua filter)
     const kriteriaWajib = kriteriaWithSub.filter(k => k.sub_kriteria && k.sub_kriteria.length > 0).length;
     const totalTerisi = Object.keys(userPrefs).length;
     if (totalTerisi < kriteriaWajib) {
-        setError("Silakan lengkapi semua pilihan preferensi di bawah ini.");
+        setError("Silakan lengkapi semua pilihan filter wisata di bawah ini.");
         return;
     }
 
@@ -113,7 +114,7 @@ export default function PilihPreferensi() {
           <i className="pi pi-list text-6xl text-orange-500 mb-4"></i>
           <h2 className="mt-0 text-700">Preferensi Kriteria Belum Diisi</h2>
           <p className="text-600 mb-4" style={{ maxWidth: 500, margin: "0 auto" }}>
-            Anda belum mengisi perbandingan kriteria. Sistem membutuhkan bobot kriteria Anda untuk dapat merekomendasikan wisata.
+            Anda belum mengisi perbandingan kriteria. Sistem membutuhkan bobot kriteria Anda untuk dapat memfilter dan merekomendasikan wisata.
           </p>
           <Button 
             label="Ke Menu Pilih Kriteria" 
@@ -153,9 +154,10 @@ export default function PilihPreferensi() {
 
   return (
     <div className="p-3" style={{ maxWidth: 960, margin: "0 auto" }}>
-      <h2 className="mb-1">Langkah 3: Detail Preferensi Wisata</h2>
+      {/* Teks Judul Diubah */}
+      <h2 className="mb-1">Langkah 3: Filter Wisata</h2>
       <p className="text-color-secondary mt-0 mb-3">
-        Lengkapi detail keinginan Anda (misal: budget tiket, kelengkapan atraksi) agar sistem dapat merekomendasikan wisata yang paling sesuai.
+        Lengkapi filter pencarian Anda (misal: budget tiket, kelengkapan atraksi) agar sistem dapat merekomendasikan wisata yang paling sesuai dengan keinginan Anda.
       </p>
 
       {error ? <Message severity="warn" text={error} className="w-full mb-3" /> : null}
@@ -181,7 +183,7 @@ export default function PilihPreferensi() {
                                 optionValue="id_sub"
                                 value={userPrefs[k.id_kriteria]}
                                 onChange={(e) => setUserPrefs({ ...userPrefs, [k.id_kriteria]: e.value })}
-                                placeholder={`-- Pilih detail ${k.nama_kriteria} --`}
+                                placeholder={`-- Filter ${k.nama_kriteria} --`}
                             />
                         </div>
                     )

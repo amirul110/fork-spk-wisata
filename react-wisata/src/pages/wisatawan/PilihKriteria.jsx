@@ -12,7 +12,7 @@ import {
   bangunMatriks,
   hitungAHP,
 } from "../../utils/ahp"
-import { setPreferensi } from "../../store/preferensiStore"
+import { setPreferensi, getPreferensi } from "../../store/preferensiStore"
 
 const RI_TABLE = { 1: 0, 2: 0, 3: 0.58, 4: 0.9, 5: 1.12 }
 
@@ -56,7 +56,18 @@ const fmt = (v, d = 4) =>
 
 export default function PilihKriteria() {
   const navigate = useNavigate()
-  const [nilai, setNilai] = useState(() => PASANGAN_AHP.map(() => 1))
+
+  // Ambil state dari sessionStorage (jika ada)
+  const [nilai, setNilai] = useState(() => {
+    const saved = getPreferensi();
+    if (saved && saved.matrix) {
+      // Jika ada data tersimpan, kembalikan nilai dropdown berdasarkan matriks
+      return PASANGAN_AHP.map(([a, b]) => saved.matrix[a][b]);
+    }
+    // Jika masih kosong, default ke nilai 1
+    return PASANGAN_AHP.map(() => 1);
+  });
+
   const [error, setError] = useState("")
   const [showDetail, setShowDetail] = useState(false)
 
@@ -95,6 +106,14 @@ export default function PilihKriteria() {
       next[idx] = v
       return next
     })
+  }
+
+  // Fungsi untuk mengisi nilai contoh yang pasti konsisten
+  const isiContohKonsisten = () => {
+    const contoh = [3, 5, 7, 2, 4, 2];
+    // Memasukkan array contoh sesuai jumlah pasangan AHP
+    const nilaiBaru = PASANGAN_AHP.map((_, idx) => contoh[idx] || 1);
+    setNilai(nilaiBaru);
   }
 
   const lanjut = () => {
@@ -136,6 +155,31 @@ export default function PilihKriteria() {
         otomatis (AHP) dari pilihan Anda.
       </p>
 
+      {/* Bagian Bantuan & Tips Konsistensi */}
+      <div className="mb-4">
+        <Message 
+          severity="info" 
+          content={
+            <div className="flex flex-column gap-2">
+              <div className="font-bold">💡 Tips Mengisi Agar Konsisten:</div>
+              <div className="text-sm">
+                Gunakan logika perbandingan berantai. Misal: Jika <b>Atraksi</b> Anda anggap lebih penting dari <b>Harga</b>, dan <b>Harga</b> lebih penting dari <b>Jarak</b>, maka <b>Atraksi</b> otomatis harus lebih penting dari <b>Jarak</b>.
+              </div>
+            </div>
+          }
+          className="w-full mb-2" 
+        />
+        <Button 
+          label="Gunakan Contoh Pengisian yang Benar (CR: 0.0166)" 
+          icon="pi pi-magic" 
+          severity="help" 
+          outlined
+          size="small"
+          onClick={isiContohKonsisten} 
+          tooltip="Klik ini jika Anda bingung cara mengisi form di bawah"
+        />
+      </div>
+
       {error ? (
         <Message severity="warn" text={error} className="w-full mb-3" />
       ) : null}
@@ -167,7 +211,7 @@ export default function PilihKriteria() {
       <Card title="2. Bobot Dinamis & Konsistensi" className="mb-3">
         <div className="flex flex-column gap-2 mb-3">
           {KRITERIA_AHP.map((k, i) => {
-            const bobot = (ahp.weights?.[i] ?? 0).toFixed(4) // Tampilan slider 4 desimal
+            const bobot = (ahp.weights?.[i] ?? 0).toFixed(4)
             const persenBar = (ahp.weights?.[i] ?? 0) * 100
             return (
               <div key={k.id} className="flex align-items-center gap-2">
@@ -380,8 +424,7 @@ export default function PilihKriteria() {
           Langkah 5 — Eigen Vektor (Bobot Prioritas)
         </h3>
         <p className="text-600 text-sm mt-0 mb-3">
-          <b>Eigen Vektorᵢ = Nilai Barisᵢ ÷ n</b> (di mana n = jumlah kriteria
-          = {detailAhp.n}).
+          <b>Eigen Vektor<sub>i</sub> = Nilai Baris<sub>i</sub> ÷ n</b> (di mana n = jumlah kriteria = {detailAhp.n}).
         </p>
         <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "1rem" }}>
           <thead>
@@ -403,7 +446,7 @@ export default function PilihKriteria() {
                   {fmt(detailAhp.rowSums[i])} ÷ {detailAhp.n}
                 </td>
                 <td style={{ ...tdStyle, fontWeight: 700 }}>
-                  {fmt(detailAhp.eigen[i])}
+                  {fmt(ahp.weights[i])}
                 </td>
               </tr>
             ))}
@@ -506,16 +549,12 @@ export default function PilihKriteria() {
 
         {/* LANGKAH 8: BOBOT YANG DIPEROLEH */}
         <h3 className="text-lg font-bold text-800 mt-4 mb-2">
-          Langkah 8 — Bobot Akhir yang Diperoleh
+          Langkah 8   Bobot Akhir yang Diperoleh
         </h3>
         <p className="text-600 text-sm mt-0 mb-3">
           Bobot tiap kriteria diambil <b>langsung dari nilai Eigen Vektor</b>{" "}
-          (Langkah 5), karena eigen vektor sudah ternormalisasi sehingga total
+          (Langkah 5), karena eigen vektor iteratif sudah ternormalisasi sempurna sehingga total
           seluruh bobot = 1 (100%).
-          <br />
-          <b>
-            Wⱼ = Eigen Vektorⱼ = (Nilai Barisⱼ ÷ n) ; dengan Σ Wⱼ = 1
-          </b>
         </p>
         <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "0.5rem" }}>
           <thead>

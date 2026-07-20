@@ -25,7 +25,12 @@ function hitungJarakKm(lat1, lon1, lat2, lon2) {
 
 export default function PilihWisata() {
   const navigate = useNavigate()
-  const [userLocation, setUserLocation] = useState(null)
+
+  const [userLocation, setUserLocation] = useState(() => {
+    const saved = sessionStorage.getItem("spk_user_loc");
+    return saved ? JSON.parse(saved) : null;
+  });
+
   const [detailLokasi, setDetailLokasi] = useState(null)
   const [loadingGeo, setLoadingGeo] = useState(false)
   const [mapVisible, setMapVisible] = useState(false)
@@ -38,6 +43,12 @@ export default function PilihWisata() {
   useEffect(() => {
     let aktif = true
     setLoadingWisata(true)
+
+    // Langsung ambil detail alamat saat awal load jika koordinat sudah ada
+    if (userLocation) {
+      ambilDetail(userLocation.latitude, userLocation.longitude);
+    }
+
     getAllWisata()
       .then((res) => {
         if (!aktif) return
@@ -47,9 +58,11 @@ export default function PilihWisata() {
       .finally(() => {
         if (aktif) setLoadingWisata(false)
       })
+
     return () => {
       aktif = false
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const ambilDetail = async (lat, lon) => {
@@ -77,6 +90,7 @@ export default function PilihWisata() {
           longitude: pos.coords.longitude,
         }
         setUserLocation(lokasi)
+        sessionStorage.setItem("spk_user_loc", JSON.stringify(lokasi))
         ambilDetail(lokasi.latitude, lokasi.longitude)
       },
       (err) => {
@@ -98,6 +112,7 @@ export default function PilihWisata() {
 
   const onPilihPeta = (loc) => {
     setUserLocation(loc)
+    sessionStorage.setItem("spk_user_loc", JSON.stringify(loc))
     setMapVisible(false)
     ambilDetail(loc.latitude, loc.longitude)
   }
@@ -140,7 +155,7 @@ export default function PilihWisata() {
     }
 
     // Lempar lokasi user ke halaman PilihPreferensi
-    navigate("/wisatawan/pilih-preferensi", {
+    navigate("/wisatawan/filter-wisata", {
       state: { userLocation: userLocation }
     })
   }
@@ -264,7 +279,7 @@ export default function PilihWisata() {
 
       <div className="flex justify-content-end mb-5">
         <Button
-          label="Lanjut: Detail Preferensi"
+          label="Lanjut: Filter Wisata"
           icon="pi pi-arrow-right"
           iconPos="right"
           onClick={handleLanjut}

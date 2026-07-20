@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react-router-dom"
+import { useLocation, useNavigate , Link} from "react-router-dom"
 import { useMemo, useState } from "react"
 import { Card } from "primereact/card"
 import { Button } from "primereact/button"
@@ -8,7 +8,6 @@ import { Message } from "primereact/message"
 import { Tag } from "primereact/tag"
 import { Dialog } from "primereact/dialog"
 import { Dropdown } from "primereact/dropdown"
-
 // Default diubah menjadi 4 desimal
 const fmt = (v, d = 4) =>
   v === null || v === undefined || isNaN(Number(v))
@@ -143,14 +142,8 @@ const skorTemplate = (rowData) => fmt(rowData.skor_rekomendasi, 4)
               severity="info"
               outlined
               onClick={() => setPerhitunganOpen(true)}
-            />
-            <Button
-              label="Yuk, Isi Kuesioner" 
-              icon="pi pi-file-edit"
-              severity="warning"
-              className="font-bold p-button-raised p-button-lg shadow-4 border-round-md"
-              onClick={() => window.open("https://forms.gle/d64koYCtrktx9Cgr6", "_blank", "noopener,noreferrer")}
-            />
+            /> 
+         
           </div>
 
           <Card className="shadow-2 mb-4">
@@ -291,9 +284,9 @@ const skorTemplate = (rowData) => fmt(rowData.skor_rekomendasi, 4)
                     />
                   )}
                 </div>
-                <p className="text-500 text-xs mt-2 mb-0">
-                  Detail 6 langkah AHP (matriks → ternormalisasi → eigen → λmax → CI/CR) dapat dilihat di halaman <b>Preferensi Kriteria</b>.
-                </p>
+               <p className="text-500 text-xs mt-2 mb-0">
+  Detail 6 langkah AHP (matriks → ternormalisasi → eigen → λmax → CI/CR) dapat dilihat di <Link to="/wisatawan/pilih-kriteria" className="font-bold text-blue-600 no-underline hover:underline">menu Pilih Kriteria</Link>.
+</p>
               </>
             )}
 
